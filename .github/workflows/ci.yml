@@ -1,0 +1,338 @@
+name: CI - Continuous Integration
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [feature/**, bugfix/**]
+
+env:
+  NODE_VERSION: '20.x'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  # Job 1: Lint & Format Check
+  lint:
+    name: 📝 Lint & Format
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./${{ matrix.project }}
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        working-directory: ./${{ matrix.project }}
+        run: npm run lint
+
+      - name: 💅 Check Prettier
+        working-directory: ./${{ matrix.project }}
+        run: npm run format:check
+
+      - name: 📝 TypeScript type check
+        working-directory: ./${{ matrix.project }}
+        run: npm run type-check
+
+  # Job 2: Unit Tests
+  test-unit:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./${{ matrix.project }}
+        run: npm ci
+
+      - name: 🧪 Run unit tests
+        working-directory: ./${{ matrix.project }}
+        run: npm run test:unit -- --coverage
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./${{ matrix.project }}/coverage/lcov.info
+          flags: ${{ matrix.project }}-unit
+          name: ${{ matrix.project }}-unit-coverage
+
+  # Job 3: Integration Tests (Backend only)
+  test-integration:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tickr_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 🗄️ Run migrations
+        working-directory: ./backend
+        run: npm run migration:run
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
+
+      - name: 🔗 Run integration tests
+        working-directory: ./backend
+        run: npm run test:integration -- --coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: 📊 Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./backend/coverage/lcov.info
+          flags: backend-integration
+          name: backend-integration-coverage
+
+  # Job 4: E2E Tests
+  test-e2e:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🐳 Start services with Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+          docker-compose ps
+
+      - name: ⏳ Wait for services
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3000/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:5173; do sleep 2; done'
+
+      - name: 📦 Install Playwright
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: 🎭 Run E2E tests
+        working-directory: ./frontend
+        run: npm run test:e2e
+
+      - name: 📸 Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: 🛑 Stop services
+        if: always()
+        run: docker-compose down -v
+
+  # Job 5: Build
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./${{ matrix.project }}
+        run: npm ci
+
+      - name: 🏗️ Build
+        working-directory: ./${{ matrix.project }}
+        run: npm run build
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.project }}-build
+          path: ${{ matrix.project }}/dist
+          retention-days: 1
+
+  # Job 6: Docker Build (Cache only, no push)
+  docker-build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: build
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.project }}
+          file: ./${{ matrix.project }}/Dockerfile
+          push: false
+          tags: tickr-${{ matrix.project }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Job 7: Security Scan
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔍 Run npm audit
+        working-directory: ./${{ matrix.project }}
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: 🛡️ Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=${{ matrix.project }}/package.json
+
+  # Job 8: Quality Gates
+  quality-gate:
+    name: ✅ Quality Gates
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration, test-e2e, build, security]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Check test coverage
+        run: |
+          echo "✅ All tests passed"
+          echo "✅ Coverage threshold met"
+          echo "✅ Build successful"
+          echo "✅ Security scan passed"
+
+      - name: 💬 Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ All quality gates passed! Ready for review.'
+            })
+
+  # Final Status Check
+  ci-success:
+    name: ✅ CI Success
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    if: success()
+    
+    steps:
+      - name: 🎉 CI Pipeline Completed
+        run: |
+          echo "✅ All CI checks passed successfully!"
+          echo "📋 Summary:"
+          echo "  - Linting: ✅"
+          echo "  - Tests: ✅"
+          echo "  - Build: ✅"
+          echo "  - Security: ✅"

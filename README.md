@@ -76,9 +76,8 @@ Tickr/
 │       └── Dockerfile.*
 │
 ├── scripts/                       # 🛠️ Scripts utilitaires
-│   ├── setup.sh                  # Setup environnement local
-│   ├── deploy.sh                 # Déploiement
-│   └── seed-data.ts              # Données de test
+│   ├── localstack-init.sh                  # Setup local cloud stack
+│   └── init-db.sql             # init db
 │
 └── README.md                      # 📖 Ce fichier
 ```
@@ -165,55 +164,242 @@ Le backend est structuré en **6 modules isolés** communiquant uniquement via *
 ```bash
 # Vérifier les versions
 node --version    # >= 20.0.0
-npm --version     # >= 10.0.0
 docker --version  # >= 24.0.0
-psql --version    # >= 15.0
+make --version    # GNU Make 3.81+
 ```
 
-### Installation
+### Installation Rapide (Recommandé)
 
 ```bash
 # 1. Cloner le repository
 git clone https://github.com/IhebRjeb/Tickr.git
 cd Tickr
 
-# 2. Installer les dépendances Backend
-cd backend
-npm install
+# 2. Setup complet en une commande
+make setup
 
-# 3. Installer les dépendances Frontend
-cd ../frontend
-npm install
-
-# 4. Configurer les variables d'environnement
-cd ../backend
-cp .env.example .env
-# Éditer .env avec vos configurations
-
-# 5. Lancer les services Docker (PostgreSQL + Redis)
-docker-compose up -d
-
-# 6. Exécuter les migrations
-npm run migration:run
-
-# 7. Seed data (optionnel)
-npm run seed
-
-# 8. Lancer le backend
-npm run start:dev
-
-# 9. Dans un nouveau terminal, lancer le frontend
-cd ../frontend
-npm run dev
+# 3. Lancer l'environnement de développement
+make dev
 ```
 
-### Accès
+**C'est tout ! 🎉** L'application est maintenant disponible.
 
-- **Frontend :** http://localhost:5173
-- **Backend API :** http://localhost:3000
-- **API Docs (Swagger) :** http://localhost:3000/api/docs
-- **PostgreSQL :** localhost:5432
-- **Redis :** localhost:6379
+### Commandes Make Disponibles
+
+```bash
+# 🚀 Développement
+make dev              # Lance tous les services (DB, Backend, Frontend)
+make dev-backend      # Lance uniquement backend + DB
+make dev-frontend     # Lance uniquement frontend
+make stop             # Arrête tous les services
+
+# 📦 Installation & Setup
+make setup            # Setup initial complet (install + env + db)
+make install          # Installe les dépendances (backend + frontend)
+make env              # Copie les fichiers .env.example
+
+# 🗄️ Base de données
+make db-create        # Crée la base de données
+make db-migrate       # Exécute les migrations
+make db-seed          # Seed avec données de test
+make db-reset         # Reset complet (drop + create + migrate + seed)
+make db-studio        # Ouvre l'interface DB (Prisma Studio / pgAdmin)
+
+# 🧪 Tests
+make test             # Lance tous les tests
+make test-unit        # Tests unitaires uniquement
+make test-e2e         # Tests E2E uniquement
+make test-watch       # Tests en mode watch
+make test-cov         # Tests avec coverage
+
+# 🧹 Qualité du code
+make lint             # Lint backend + frontend
+make lint-fix         # Fix automatique des problèmes
+make format           # Format le code (Prettier)
+make type-check       # Vérification TypeScript
+
+# 🐳 Docker
+make docker-build     # Build les images Docker
+make docker-up        # Lance les containers
+make docker-down      # Arrête les containers
+make docker-logs      # Affiche les logs
+make docker-clean     # Nettoie images et volumes
+
+# 🔧 Utilitaires
+make logs             # Voir les logs en temps réel
+make shell-backend    # Shell dans le container backend
+make shell-db         # Connexion psql à la DB
+make clean            # Nettoie node_modules, dist, cache
+make help             # Affiche toutes les commandes
+```
+
+### Structure d'Environnement Moderne
+
+```
+Tickr/
+├── Makefile                       # 🎯 Orchestration complète
+├── docker-compose.yml             # 🐳 Services locaux
+├── docker-compose.dev.yml         # 🔧 Override pour dev
+├── docker-compose.prod.yml        # 🚀 Override pour prod
+│
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                 # ✅ CI Pipeline
+│       ├── cd-staging.yml         # 🔄 Deploy Staging
+│       └── cd-production.yml      # 🚀 Deploy Production
+│
+├── backend/
+│   ├── .env.example               # Template configuration
+│   ├── .env.local                 # Config locale (git-ignored)
+│   ├── Dockerfile                 # Multi-stage build
+│   └── Dockerfile.dev             # Dev avec hot-reload
+│
+└── frontend/
+    ├── .env.example
+    ├── .env.local
+    ├── Dockerfile
+    └── Dockerfile.dev
+```
+
+### Configuration Docker Compose Optimisée
+
+```yaml
+# docker-compose.yml - Services de base
+services:
+  postgres:
+    image: postgres:15.4-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+      target: development
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_cache:/app/.cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tickr
+      REDIS_URL: redis://redis:6379
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_cache:/app/.vite
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:3000
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_cache:
+  frontend_cache:
+```
+
+### Variables d'Environnement
+
+Les fichiers `.env.example` sont automatiquement copiés lors du `make setup`:
+
+```bash
+# backend/.env.local
+NODE_ENV=development
+PORT=3000
+
+# Database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tickr
+DATABASE_SCHEMA=public
+
+# Redis
+REDIS_URL=redis://localhost:6379
+REDIS_TTL=300
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=7d
+
+# AWS (local development avec LocalStack)
+AWS_REGION=eu-west-1
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+AWS_ENDPOINT=http://localhost:4566
+S3_BUCKET=tickr-dev
+
+# Payments (Sandbox)
+STRIPE_SECRET_KEY=sk_test_...
+CLICTOPAY_API_KEY=test_...
+
+# Notifications
+SES_FROM_EMAIL=dev@tickr.local
+SMS_PROVIDER=mock
+
+# Frontend URL
+FRONTEND_URL=http://localhost:5173
+```
+
+### Accès aux Services
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| 🎨 **Frontend** | http://localhost:5173 | - |
+| ⚙️ **Backend API** | http://localhost:3000 | - |
+| 📖 **API Docs** | http://localhost:3000/api/docs | - |
+| 📊 **Health Check** | http://localhost:3000/health | - |
+| 🗄️ **PostgreSQL** | localhost:5432 | `postgres` / `postgres` |
+| ⚡ **Redis** | localhost:6379 | - |
+| 📧 **Maildev** (emails locaux) | http://localhost:1080 | - |
+| 🗃️ **pgAdmin** | http://localhost:5050 | `admin@tickr.local` / `admin` |
+| ☁️ **LocalStack** (AWS local) | http://localhost:4566 | - |
+
+### Mode Watch & Hot Reload
+
+Tous les services supportent le **hot-reload automatique** :
+
+- **Backend :** Nodemon détecte les changements et redémarre
+- **Frontend :** Vite HMR (Hot Module Replacement)
+- **Database :** Migrations automatiques avec watch mode
+
+```bash
+# Développement avec logs en temps réel
+make dev
+
+# Dans un autre terminal, voir les logs
+make logs
+
+# Logs d'un service spécifique
+docker-compose logs -f backend
+docker-compose logs -f frontend
+```
 
 ---
 
@@ -299,19 +485,191 @@ Production:
   Database: RDS (db.t3.medium, Multi-AZ)
 ```
 
-### CI/CD Pipeline
+### CI/CD Pipeline Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    GitHub Repository                         │
+│                                                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                 │
+│  │ feature/ │  │ develop  │  │   main   │                 │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘                 │
+└───────┼─────────────┼─────────────┼────────────────────────┘
+        │             │             │
+        ▼             ▼             ▼
+   ┌─────────┐  ┌──────────┐  ┌──────────┐
+   │   CI    │  │CI + Deploy│ │CI + Deploy│
+   │ Workflow│  │  Staging  │ │Production │
+   └─────────┘  └──────────┘  └──────────┘
+```
+
+#### 🔄 Workflow: CI (Pull Requests & Feature Branches)
+
+**Trigger :** Push sur `feature/*` ou PR vers `develop`/`main`
 
 ```yaml
-GitHub Actions:
-  - ✅ Lint & Tests sur Pull Request
-  - ✅ Build Docker image
-  - ✅ Push vers ECR
-  - ✅ Deploy ECS Fargate
+Jobs:
+  1. 📝 Lint & Format Check
+     - ESLint (backend + frontend)
+     - Prettier check
+     - TypeScript type check
+     
+  2. 🧪 Tests
+     - Unit tests (Backend)
+     - Unit tests (Frontend)
+     - Integration tests
+     - E2E tests (Playwright)
+     - Coverage report → Codecov
+     
+  3. 🏗️ Build
+     - Build backend (TypeScript)
+     - Build frontend (Vite)
+     - Docker image build (cache)
+     
+  4. 🔒 Security Scan
+     - npm audit
+     - Snyk vulnerability scan
+     - SAST (Static Analysis)
+     - Dependency check
+     
+  5. 📊 Quality Gates
+     - Coverage > 80%
+     - No critical vulnerabilities
+     - Build successful
+     - All tests passing
 
-Branches:
-  - main → Production
-  - develop → Staging
-  - feature/* → Preview (optionnel)
+Duration: ~8-12 minutes
+```
+
+#### 🚀 Workflow: CD Staging (Develop Branch)
+
+**Trigger :** Push sur `develop`
+
+```yaml
+Jobs:
+  1-5. [Same as CI Workflow]
+  
+  6. 🐳 Build & Push
+     - Build Docker images (backend + frontend)
+     - Tag: ${GITHUB_SHA::7}
+     - Push to AWS ECR
+     
+  7. 📦 Deploy to Staging
+     - Update ECS task definition
+     - Deploy to staging cluster
+     - Health check validation
+     
+  8. 🧪 Smoke Tests
+     - API health endpoints
+     - Database connectivity
+     - Redis connectivity
+     - S3 access
+     
+  9. 📢 Notifications
+     - Slack: deployment status
+     - Email: team notification
+     - GitHub: deployment tag
+
+Environment: staging.tickr.tn
+Duration: ~15-20 minutes
+Auto-rollback: On health check failure
+```
+
+#### 🎯 Workflow: CD Production (Main Branch)
+
+**Trigger :** Push sur `main` (après merge de PR)
+
+```yaml
+Jobs:
+  1-5. [Same as CI Workflow]
+  
+  6. 🏷️ Semantic Versioning
+     - Generate version from commits
+     - Create Git tag
+     - Update CHANGELOG.md
+     
+  7. 🐳 Build & Push
+     - Build Docker images
+     - Tag: v${VERSION} + latest
+     - Push to AWS ECR
+     - Sign images (Cosign)
+     
+  8. ⏸️ Manual Approval Gate
+     - Required reviewers: 1
+     - Timeout: 24 hours
+     - Notification: Slack/Email
+     
+  9. 🚀 Blue/Green Deployment
+     - Deploy to green environment
+     - Run smoke tests
+     - Switch traffic (ALB)
+     - Keep blue for rollback
+     
+  10. 🧪 Production Tests
+      - Health checks
+      - Critical user journeys
+      - Performance benchmarks
+      
+  11. 📊 Monitoring
+      - CloudWatch alarms active
+      - Error rate < 1%
+      - Response time < 500ms
+      - Auto-rollback if issues
+      
+  12. 📢 Release Notifications
+      - GitHub Release created
+      - Slack: production deployed
+      - Status page updated
+      - Customer email (if major)
+
+Environment: tickr.tn
+Duration: ~25-30 minutes
+Rollback: One-click via GitHub Actions
+```
+
+#### 🔧 Workflow: Database Migrations
+
+**Trigger :** Manual dispatch or scheduled
+
+```yaml
+Jobs:
+  1. 🔍 Migration Validation
+     - Dry-run on staging clone
+     - Check for destructive changes
+     - Estimate execution time
+     
+  2. 📸 Backup
+     - RDS snapshot
+     - Export to S3
+     - Verify backup integrity
+     
+  3. ⚙️ Execute Migrations
+     - Run TypeORM migrations
+     - Progressive execution
+     - Real-time monitoring
+     
+  4. ✅ Validation
+     - Schema verification
+     - Data integrity checks
+     - Performance benchmarks
+     
+  5. 📢 Notification
+     - Slack: migration complete
+     - Update documentation
+
+Duration: Variable (5-30 min)
+Rollback: Automatic on failure
+```
+
+#### 📊 Workflow Monitoring Dashboard
+
+```
+GitHub Actions Dashboard:
+  - ✅ Success rate: >95%
+  - ⏱️ Average duration: CI=10min, CD=20min
+  - 📈 Deployment frequency: 2-3x/day (staging), 2x/week (prod)
+  - 🔄 Rollback rate: <2%
+  - 🐛 Bug escape rate: <5%
 ```
 
 **📖 Plus de détails :** [CI/CD Pipeline](docs/04-infrastructure/03-cicd-pipeline.md)

@@ -1,0 +1,282 @@
+name: CD Staging - Deploy to Staging Environment
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+  AWS_REGION: eu-west-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+  ECS_CLUSTER: tickr-staging-cluster
+  ECS_SERVICE_BACKEND: tickr-backend-staging
+  ECS_SERVICE_FRONTEND: tickr-frontend-staging
+
+jobs:
+  # Réutilise les jobs CI
+  ci:
+    name: 🔄 Run CI Pipeline
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  # Build & Push Docker Images
+  build-and-push:
+    name: 🐳 Build & Push to ECR
+    runs-on: ubuntu-latest
+    needs: ci
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    outputs:
+      backend-image: ${{ steps.backend.outputs.image }}
+      frontend-image: ${{ steps.frontend.outputs.image }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔑 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏷️ Generate image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/tickr-${{ matrix.project }}
+          tags: |
+            type=sha,prefix=staging-,format=short
+            type=raw,value=staging-latest
+            type=raw,value=staging-{{date 'YYYYMMDD-HHmmss'}}
+
+      - name: 🏗️ Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.project }}
+          file: ./${{ matrix.project }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=staging
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 📝 Output image URI
+        id: backend
+        if: matrix.project == 'backend'
+        run: echo "image=${{ env.ECR_REGISTRY }}/tickr-backend:staging-${{ github.sha::7 }}" >> $GITHUB_OUTPUT
+
+      - name: 📝 Output image URI
+        id: frontend
+        if: matrix.project == 'frontend'
+        run: echo "image=${{ env.ECR_REGISTRY }}/tickr-frontend:staging-${{ github.sha::7 }}" >> $GITHUB_OUTPUT
+
+  # Deploy Backend to ECS
+  deploy-backend:
+    name: 🚀 Deploy Backend
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment:
+      name: staging
+      url: https://api-staging.tickr.tn
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📥 Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition tickr-backend-staging \
+            --query taskDefinition > task-definition.json
+
+      - name: 🔄 Update task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: backend
+          image: ${{ needs.build-and-push.outputs.backend-image }}
+
+      - name: 🚀 Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_BACKEND }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: 🏥 Health check
+        run: |
+          for i in {1..30}; do
+            if curl -f https://api-staging.tickr.tn/health; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            echo "⏳ Waiting for backend... ($i/30)"
+            sleep 10
+          done
+          echo "❌ Backend health check failed"
+          exit 1
+
+  # Deploy Frontend to ECS
+  deploy-frontend:
+    name: 🎨 Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-backend]
+    environment:
+      name: staging
+      url: https://staging.tickr.tn
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📥 Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition tickr-frontend-staging \
+            --query taskDefinition > task-definition.json
+
+      - name: 🔄 Update task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: frontend
+          image: ${{ needs.build-and-push.outputs.frontend-image }}
+
+      - name: 🚀 Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_FRONTEND }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: 🏥 Health check
+        run: |
+          for i in {1..30}; do
+            if curl -f https://staging.tickr.tn; then
+              echo "✅ Frontend is healthy"
+              exit 0
+            fi
+            echo "⏳ Waiting for frontend... ($i/30)"
+            sleep 10
+          done
+          echo "❌ Frontend health check failed"
+          exit 1
+
+  # Run Smoke Tests
+  smoke-tests:
+    name: 🧪 Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🧪 API Health Check
+        run: |
+          curl -f https://api-staging.tickr.tn/health
+          curl -f https://api-staging.tickr.tn/api/docs
+
+      - name: 🧪 Frontend Health Check
+        run: curl -f https://staging.tickr.tn
+
+      - name: 🧪 Database Connectivity
+        run: |
+          response=$(curl -s https://api-staging.tickr.tn/health)
+          echo $response | jq -e '.database.status == "up"'
+
+      - name: 🧪 Redis Connectivity
+        run: |
+          response=$(curl -s https://api-staging.tickr.tn/health)
+          echo $response | jq -e '.redis.status == "up"'
+
+  # Notifications
+  notify:
+    name: 📢 Notify Team
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, smoke-tests]
+    if: always()
+    
+    steps:
+      - name: 📢 Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚀 Staging Deployment
+            Status: ${{ job.status }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha::7 }}
+            Author: ${{ github.actor }}
+            URL: https://staging.tickr.tn
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: 📧 Email notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: ❌ Staging deployment failed
+          body: |
+            Staging deployment failed!
+            
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            
+            Check the logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: team@tickr.tn
+          from: ci@tickr.tn
+
+  # Deployment Success
+  deployment-success:
+    name: ✅ Deployment Complete
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, smoke-tests]
+    
+    steps:
+      - name: 🎉 Staging Deployed
+        run: |
+          echo "✅ Staging deployment successful!"
+          echo "🔗 Frontend: https://staging.tickr.tn"
+          echo "🔗 Backend: https://api-staging.tickr.tn"
+          echo "📖 API Docs: https://api-staging.tickr.tn/api/docs"

@@ -1,0 +1,416 @@
+name: CD Production - Deploy to Production Environment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.2.3)'
+        required: false
+
+env:
+  NODE_VERSION: '20.x'
+  AWS_REGION: eu-west-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+  ECS_CLUSTER: tickr-production-cluster
+  ECS_SERVICE_BACKEND: tickr-backend-production
+  ECS_SERVICE_FRONTEND: tickr-frontend-production
+
+jobs:
+  # Run full CI pipeline
+  ci:
+    name: 🔄 Run CI Pipeline
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  # Semantic versioning and changelog
+  version:
+    name: 🏷️ Version & Changelog
+    runs-on: ubuntu-latest
+    needs: ci
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Generate version
+        id: version
+        uses: paulhatch/semantic-version@v5.3.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(BREAKING CHANGE:|MAJOR:)"
+          minor_pattern: "(feat:|FEATURE:)"
+          version_format: "${major}.${minor}.${patch}"
+
+      - name: 📋 Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: ".github/changelog-config.json"
+          fromTag: ${{ steps.version.outputs.previous_version }}
+          toTag: v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a v${{ steps.version.outputs.version }} -m "Release v${{ steps.version.outputs.version }}"
+          git push origin v${{ steps.version.outputs.version }}
+
+      - name: 📝 Update CHANGELOG.md
+        run: |
+          echo "## v${{ steps.version.outputs.version }} - $(date +%Y-%m-%d)" > CHANGELOG.tmp
+          echo "" >> CHANGELOG.tmp
+          echo "${{ steps.changelog.outputs.changelog }}" >> CHANGELOG.tmp
+          echo "" >> CHANGELOG.tmp
+          cat CHANGELOG.md >> CHANGELOG.tmp
+          mv CHANGELOG.tmp CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG for v${{ steps.version.outputs.version }}"
+          git push
+
+  # Build & Push Docker Images with signing
+  build-and-push:
+    name: 🐳 Build, Sign & Push
+    runs-on: ubuntu-latest
+    needs: version
+    
+    strategy:
+      matrix:
+        project: [backend, frontend]
+    
+    outputs:
+      backend-image: ${{ steps.backend.outputs.image }}
+      frontend-image: ${{ steps.frontend.outputs.image }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔑 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: 🏷️ Generate image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/tickr-${{ matrix.project }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ needs.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.version.outputs.version }}
+            type=raw,value=latest
+            type=raw,value=prod-{{date 'YYYYMMDD-HHmmss'}}
+            type=sha,prefix=prod-,format=long
+
+      - name: 🏗️ Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.project }}
+          file: ./${{ matrix.project }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            VERSION=${{ needs.version.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: ✍️ Sign image with Cosign
+        run: |
+          cosign sign --yes \
+            ${{ env.ECR_REGISTRY }}/tickr-${{ matrix.project }}:v${{ needs.version.outputs.version }}
+
+      - name: 📝 Output image URI
+        id: backend
+        if: matrix.project == 'backend'
+        run: echo "image=${{ env.ECR_REGISTRY }}/tickr-backend:v${{ needs.version.outputs.version }}" >> $GITHUB_OUTPUT
+
+      - name: 📝 Output image URI
+        id: frontend
+        if: matrix.project == 'frontend'
+        run: echo "image=${{ env.ECR_REGISTRY }}/tickr-frontend:v${{ needs.version.outputs.version }}" >> $GITHUB_OUTPUT
+
+  # Manual approval gate
+  approval:
+    name: ⏸️ Manual Approval
+    runs-on: ubuntu-latest
+    needs: [version, build-and-push]
+    environment:
+      name: production-approval
+    
+    steps:
+      - name: 📢 Notify for approval
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "🚀 Production Deployment Approval Required",
+              attachments: [{
+                color: 'warning',
+                fields: [
+                  {
+                    title: 'Version',
+                    value: 'v${{ needs.version.outputs.version }}',
+                    short: true
+                  },
+                  {
+                    title: 'Branch',
+                    value: '${{ github.ref_name }}',
+                    short: true
+                  },
+                  {
+                    title: 'Author',
+                    value: '${{ github.actor }}',
+                    short: true
+                  },
+                  {
+                    title: 'Approve',
+                    value: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+                    short: false
+                  }
+                ]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: ✅ Approved
+        run: echo "✅ Deployment approved for production"
+
+  # Blue/Green deployment - Backend
+  deploy-backend:
+    name: 🚀 Deploy Backend (Blue/Green)
+    runs-on: ubuntu-latest
+    needs: [version, build-and-push, approval]
+    environment:
+      name: production
+      url: https://api.tickr.tn
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📸 Snapshot current state
+        run: |
+          aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_BACKEND }} > backup-service-state.json
+
+      - name: 🟢 Deploy to Green environment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE_BACKEND }}-green \
+            --force-new-deployment \
+            --desired-count 2
+
+      - name: ⏳ Wait for green to be healthy
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_BACKEND }}-green
+
+      - name: 🧪 Smoke tests on green
+        run: |
+          for i in {1..10}; do
+            if curl -f https://api-green.tickr.tn/health; then
+              echo "✅ Green environment is healthy"
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
+
+      - name: 🔄 Switch traffic to green
+        run: |
+          aws elbv2 modify-listener \
+            --listener-arn ${{ secrets.ALB_LISTENER_ARN }} \
+            --default-actions \
+              Type=forward,TargetGroupArn=${{ secrets.TARGET_GROUP_GREEN_ARN }}
+
+      - name: 📊 Monitor for 5 minutes
+        run: |
+          echo "🔍 Monitoring green environment for 5 minutes..."
+          for i in {1..30}; do
+            response=$(curl -s https://api.tickr.tn/health)
+            if echo $response | jq -e '.status == "ok"'; then
+              echo "✅ Health check $i/30 passed"
+            else
+              echo "❌ Health check failed, rolling back!"
+              aws elbv2 modify-listener \
+                --listener-arn ${{ secrets.ALB_LISTENER_ARN }} \
+                --default-actions \
+                  Type=forward,TargetGroupArn=${{ secrets.TARGET_GROUP_BLUE_ARN }}
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: 🔵 Scale down blue environment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE_BACKEND }}-blue \
+            --desired-count 1
+
+  # Blue/Green deployment - Frontend
+  deploy-frontend:
+    name: 🎨 Deploy Frontend (Blue/Green)
+    runs-on: ubuntu-latest
+    needs: [version, build-and-push, approval, deploy-backend]
+    environment:
+      name: production
+      url: https://tickr.tn
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🟢 Deploy to Green environment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE_FRONTEND }}-green \
+            --force-new-deployment \
+            --desired-count 2
+
+      - name: ⏳ Wait for stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_FRONTEND }}-green
+
+      - name: 🔄 Switch traffic
+        run: |
+          aws elbv2 modify-listener \
+            --listener-arn ${{ secrets.ALB_LISTENER_FRONTEND_ARN }} \
+            --default-actions \
+              Type=forward,TargetGroupArn=${{ secrets.TARGET_GROUP_FRONTEND_GREEN_ARN }}
+
+  # Production tests
+  production-tests:
+    name: 🧪 Production Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    
+    steps:
+      - name: 🏥 Health checks
+        run: |
+          curl -f https://api.tickr.tn/health
+          curl -f https://tickr.tn
+
+      - name: 🎯 Critical user journeys
+        run: |
+          # Test search events
+          curl -f https://api.tickr.tn/api/events
+          
+          # Test authentication endpoint
+          curl -f https://api.tickr.tn/api/auth/health
+
+      - name: ⚡ Performance benchmarks
+        run: |
+          response_time=$(curl -o /dev/null -s -w '%{time_total}' https://api.tickr.tn/health)
+          if (( $(echo "$response_time > 0.5" | bc -l) )); then
+            echo "❌ Response time too high: ${response_time}s"
+            exit 1
+          fi
+          echo "✅ Response time OK: ${response_time}s"
+
+  # Create GitHub Release
+  release:
+    name: 📦 Create Release
+    runs-on: ubuntu-latest
+    needs: [version, production-tests]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🎉 Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.version.outputs.version }}
+          name: Release v${{ needs.version.outputs.version }}
+          body: ${{ needs.version.outputs.changelog }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Final notifications
+  notify:
+    name: 📢 Notify Team
+    runs-on: ubuntu-latest
+    needs: [version, deploy-backend, deploy-frontend, production-tests, release]
+    if: always()
+    
+    steps:
+      - name: 📢 Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚀 Production Deployment Complete!
+            Version: v${{ needs.version.outputs.version }}
+            Status: ${{ job.status }}
+            
+            🔗 Frontend: https://tickr.tn
+            🔗 Backend: https://api.tickr.tn
+            📖 Docs: https://api.tickr.tn/api/docs
+            📦 Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.version.outputs.version }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: 📊 Update status page
+        run: |
+          echo "Updating status page with new version..."
+          # Integration with status page service
+
+  # Deployment success
+  deployment-success:
+    name: ✅ Production Deployed
+    runs-on: ubuntu-latest
+    needs: [version, deploy-backend, deploy-frontend, production-tests, release]
+    
+    steps:
+      - name: 🎉 Success
+        run: |
+          echo "🎉 Production deployment v${{ needs.version.outputs.version }} successful!"
+          echo "🔗 Visit: https://tickr.tn"

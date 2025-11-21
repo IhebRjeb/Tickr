@@ -1,0 +1,121 @@
+# Tickr - Docker Compose Configuration
+# Services de base pour développement local
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15.4-alpine
+    container_name: tickr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tickr
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tickr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - tickr-network
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: tickr-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass tickr123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - tickr-network
+
+  # pgAdmin - PostgreSQL Web UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tickr-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@tickr.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./scripts/pgadmin-servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tickr-network
+
+  # Maildev - Capture des emails en développement
+  maildev:
+    image: maildev/maildev:latest
+    container_name: tickr-maildev
+    restart: unless-stopped
+    ports:
+      - "1080:1080"  # Web UI
+      - "1025:1025"  # SMTP
+    environment:
+      MAILDEV_INCOMING_USER: tickr
+      MAILDEV_INCOMING_PASS: tickr123
+    networks:
+      - tickr-network
+
+  # LocalStack - AWS Services en local (S3, SES, SNS)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: tickr-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"  # LocalStack Gateway
+      - "4510-4559:4510-4559"  # Services externes
+    environment:
+      SERVICES: s3,ses,sns,secretsmanager
+      DEBUG: 0
+      DATA_DIR: /tmp/localstack/data
+      DOCKER_HOST: unix:///var/run/docker.sock
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - localstack_data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts/localstack-init.sh:/docker-entrypoint-initaws.d/init.sh:ro
+    networks:
+      - tickr-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  localstack_data:
+    driver: local
+
+networks:
+  tickr-network:
+    driver: bridge
+    name: tickr-network

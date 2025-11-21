@@ -1,0 +1,124 @@
+# Tickr - Docker Compose Development Override
+# Services spécifiques au développement (backend + frontend)
+
+version: '3.9'
+
+services:
+  # Backend NestJS - Mode Développement avec Hot Reload
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: tickr-backend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Node.js Debug Port
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      
+      # Database
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: tickr
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tickr
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: tickr123
+      REDIS_URL: redis://:tickr123@redis:6379
+      REDIS_TTL: 300
+      
+      # JWT
+      JWT_SECRET: dev-super-secret-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      
+      # AWS Local (LocalStack)
+      AWS_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_ENDPOINT: http://localstack:4566
+      S3_BUCKET: tickr-dev
+      S3_ENDPOINT: http://localstack:4566
+      
+      # Email (Maildev)
+      SMTP_HOST: maildev
+      SMTP_PORT: 1025
+      SMTP_USER: tickr
+      SMTP_PASS: tickr123
+      SMTP_FROM: noreply@tickr.local
+      
+      # Frontend URL
+      FRONTEND_URL: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
+      
+      # Debug
+      DEBUG: tickr:*
+      LOG_LEVEL: debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_cache:/app/.cache
+      - backend_dist:/app/dist
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      maildev:
+        condition: service_started
+      localstack:
+        condition: service_started
+    command: npm run start:dev
+    networks:
+      - tickr-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend React + Vite - Mode Développement avec HMR
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: tickr-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:3000
+      VITE_APP_NAME: Tickr
+      VITE_APP_VERSION: 1.0.0
+      VITE_ENABLE_DEVTOOLS: true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_cache:/app/.vite
+      - frontend_dist:/app/dist
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - tickr-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  backend_cache:
+    driver: local
+  backend_dist:
+    driver: local
+  frontend_cache:
+    driver: local
+  frontend_dist:
+    driver: local
