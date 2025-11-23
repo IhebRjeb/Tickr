@@ -1,7 +1,7 @@
 # Tickr - Docker Compose Development Override
 # Services spécifiques au développement (backend + frontend)
 
-version: '3.9'
+# version: '3.9'
 
 services:
   # Backend NestJS - Mode Développement avec Hot Reload
