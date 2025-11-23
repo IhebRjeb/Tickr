@@ -64,7 +64,6 @@ services:
       - ./backend:/app
       - /app/node_modules
       - backend_cache:/app/.cache
-      - backend_dist:/app/dist
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,7 +103,6 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - frontend_cache:/app/.vite
-      - frontend_dist:/app/dist
     depends_on:
       - backend
     command: npm run dev -- --host 0.0.0.0
@@ -116,9 +114,5 @@ services:
 volumes:
   backend_cache:
     driver: local
-  backend_dist:
-    driver: local
   frontend_cache:
-    driver: local
-  frontend_dist:
     driver: local
