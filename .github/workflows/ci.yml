@@ -199,8 +199,8 @@ jobs:
 
       - name: 🐳 Start services with Docker Compose
         run: |
-          docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-          docker-compose ps
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+          docker compose ps
 
       - name: ⏳ Wait for services
         run: |
@@ -224,10 +224,11 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 7
+          if-no-files-found: ignore
 
       - name: 🛑 Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Job 6: Build
   build:
