@@ -6,6 +6,11 @@ on:
   push:
     branches: [feature/**, bugfix/**]
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 env:
   NODE_VERSION: '20.x'
   POSTGRES_VERSION: '15'
@@ -106,7 +111,7 @@ jobs:
 
       - name: 🧪 Run unit tests
         working-directory: ./${{ matrix.project }}
-        run: npm run test:unit -- --coverage
+        run: npm run test:unit
 
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -146,6 +151,12 @@ jobs:
         ports:
           - 6379:6379
     
+    env:
+      # Use DATABASE_URL for integration tests (cleaner than individual vars)
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+    
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -164,15 +175,10 @@ jobs:
       - name: 🗄️ Run migrations
         working-directory: ./backend
         run: npm run migration:run
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
 
       - name: 🔗 Run integration tests
         working-directory: ./backend
-        run: npm run test:integration -- --coverage
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
-          REDIS_URL: redis://localhost:6379
+        run: npm run test:integration
 
       - name: 📊 Upload coverage
         uses: codecov/codecov-action@v4
@@ -198,15 +204,20 @@ jobs:
 
       - name: 🐳 Start services with Docker Compose
         run: |
-          docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-          docker-compose ps
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+          docker compose ps
 
       - name: ⏳ Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000/health; do sleep 2; done'
-          timeout 60 bash -c 'until curl -f http://localhost:5173; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3001; do sleep 2; done'
 
-      - name: 📦 Install Playwright
+      - name: � Fix permissions
+        run: |
+          sudo chown -R $USER:$USER frontend/node_modules || true
+          sudo chown -R $USER:$USER backend/node_modules || true
+
+      - name: �📦 Install Playwright
         working-directory: ./frontend
         run: |
           npm ci
@@ -223,10 +234,11 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 7
+          if-no-files-found: ignore
 
       - name: 🛑 Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Job 6: Build
   build:
@@ -256,12 +268,18 @@ jobs:
       - name: 🏗️ Build
         working-directory: ./${{ matrix.project }}
         run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3000
 
       - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.project }}-build
-          path: ${{ matrix.project }}/dist
+          path: |
+            ${{ matrix.project == 'backend' && 'backend/dist' || '' }}
+            ${{ matrix.project == 'frontend' && 'frontend/.next/standalone' || '' }}
+            ${{ matrix.project == 'frontend' && 'frontend/.next/static' || '' }}
+            ${{ matrix.project == 'frontend' && 'frontend/public' || '' }}
           retention-days: 1
 
   # Job 7: Docker Build (Cache only, no push)

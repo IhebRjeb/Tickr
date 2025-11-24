@@ -48,7 +48,10 @@ docs/
 │   ├── 06-architecture-quick-ref.md    # Quick commands & fixes
 │   ├── 07-tests-verification.md        # CI/CD integration verification
 │   ├── 08-ci-integration-complete.md   # Complete CI/CD summary
-│   └── 09-backend-setup-guide.md       # NestJS initialization guide
+│   ├── 09-backend-setup-guide.md       # NestJS initialization guide
+│   ├── 10-development-cicd-alignment.md # Dev/CI/CD alignment guide
+│   ├── 11-database-testing-strategy.md # Database testing strategy
+│   └── DATABASE_TESTING_QUICK_GUIDE.md # Database testing quick guide
 │
 ├── 04-infrastructure/                  # INFRASTRUCTURE & DÉPLOIEMENT
 │   ├── 01-aws-architecture.md          # ECS, RDS, S3, EventBridge
@@ -56,11 +59,17 @@ docs/
 │   ├── 03-cicd-pipeline.md             # GitHub Actions
 │   └── 04-monitoring.md                # CloudWatch, X-Ray, alerting
 │
-└── 05-git-workflow/                    # GIT WORKFLOW & CI/CD
+├── 05-git-workflow/                    # GIT WORKFLOW & CI/CD
     ├── 00-summary.md                   # Git workflow overview
     ├── 01-branching-strategy.md        # Branching model
     ├── 02-errors-and-fixes.md          # Common issues & solutions
     └── 03-architecture-tests-in-cicd.md # Architecture tests in pipeline
+│
+└── 06-testing/                         # TESTING GUIDES
+    ├── README.md                       # Testing overview & quick reference
+    ├── 01-frontend-testing-architecture.md # Frontend test separation
+    ├── 02-frontend-testing-guide.md    # Vitest & Playwright guide
+    └── 03-backend-testing-guide.md     # Jest, Integration & E2E tests
 ```
 
 ---
@@ -204,10 +213,11 @@ docs/
 |-----------|-------|-----------|----------|
 | Fonctionnel | 3 | 100% ✅ | P0 |
 | Technique | 4 | 100% ✅ | P0 |
-| Architecture | 10 | 100% ✅ | P0 |
+| Architecture | 13 | 100% ✅ | P0 |
 | Infrastructure | 4 | 100% ✅ | P1 |
 | Git Workflow | 4 | 100% ✅ | P0 |
-| **Total** | **25** | **100%** | - |
+| Testing | 4 | 100% ✅ | P0 |
+| **Total** | **32** | **100%** | - |
 
 ### Temps de Lecture
 

@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/IhebRjeb/Tickr)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Stack](https://img.shields.io/badge/stack-React%20%7C%20NestJS%20%7C%20PostgreSQL-orange.svg)](docs/02-technique/01-stack-technique.md)
+[![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20NestJS%20%7C%20PostgreSQL-orange.svg)](docs/02-technique/01-stack-technique.md)
 
 > Plateforme web de billetterie en ligne pour le marché tunisien, permettant aux organisateurs d'événements de créer, gérer et vendre des billets digitaux avec paiement en ligne et entrée par QR code.
 
@@ -95,11 +95,13 @@ Tickr/
 - **Architecture :** Hexagonale (Ports & Adapters)
 
 ### Frontend
-- **Framework :** React 18+ avec TypeScript
-- **Build Tool :** Vite 5.x
-- **UI/Styling :** TailwindCSS + Headless UI
+- **Framework :** Next.js 16 (App Router)
+- **UI Library :** React 19
+- **Langage :** TypeScript 5.9+
+- **UI/Styling :** TailwindCSS 4 + Headless UI
 - **State Management :** React Query + Zustand
 - **Forms :** React Hook Form + Zod
+- **Testing :** Vitest + Testing Library + Playwright
 
 ### Infrastructure (AWS)
 - **Compute :** ECS Fargate
@@ -314,11 +316,11 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - frontend_cache:/app/.vite
+      - frontend_cache:/app/.next
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3000
 
 volumes:
   postgres_data:
@@ -364,14 +366,14 @@ SES_FROM_EMAIL=dev@tickr.local
 SMS_PROVIDER=mock
 
 # Frontend URL
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:3001
 ```
 
 ### Accès aux Services
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| 🎨 **Frontend** | http://localhost:5173 | - |
+| 🎨 **Frontend (Next.js)** | http://localhost:3001 | - |
 | ⚙️ **Backend API** | http://localhost:3000 | - |
 | 📖 **API Docs** | http://localhost:3000/api/docs | - |
 | 📊 **Health Check** | http://localhost:3000/health | - |
@@ -386,7 +388,7 @@ FRONTEND_URL=http://localhost:5173
 Tous les services supportent le **hot-reload automatique** :
 
 - **Backend :** Nodemon détecte les changements et redémarre
-- **Frontend :** Vite HMR (Hot Module Replacement)
+- **Frontend :** Next.js Fast Refresh (HMR)
 - **Database :** Migrations automatiques avec watch mode
 
 ```bash
@@ -480,7 +482,7 @@ npm run test
 
 ```yaml
 Development:
-  URL: http://localhost:5173
+  URL: http://localhost:3001
   Backend: http://localhost:3000
   Database: Docker local
 
@@ -533,7 +535,7 @@ Jobs:
      
   3. 🏗️ Build
      - Build backend (TypeScript)
-     - Build frontend (Vite)
+     - Build frontend (Next.js)
      - Docker image build (cache)
      
   4. 🔒 Security Scan

@@ -1,89 +1,129 @@
-# 🎨 Tickr Frontend
+# Tickr Frontend
 
-**Stack:** React 19 + TypeScript + Vite + TailwindCSS
+Plateforme de billetterie en ligne - Interface utilisateur moderne construite avec Next.js 16.
 
----
+## 🛠️ Stack Technique
 
-## 🚀 Quick Start
+- **Framework**: Next.js 16 (App Router)
+- **UI Library**: React 19
+- **Language**: TypeScript 5
+- **Styling**: TailwindCSS 4
+- **State Management**: 
+  - React Query (TanStack Query) - Server state
+  - Zustand - Client state
+- **Forms**: React Hook Form + Zod
+- **HTTP Client**: Axios
+- **Testing**: Vitest + Testing Library
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 20 LTS or higher
+- npm or yarn
+
+### Installation
 
 ```bash
 # Install dependencies
 npm install
 
-# Start dev server
+# Copy environment variables
+cp .env.example .env.local
+
+# Start development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
----
-
-## 📦 Tech Stack
-
-- **Framework:** React 19 with TypeScript
-- **Build Tool:** Vite 7.x
-- **Styling:** TailwindCSS + HeadlessUI
-- **State Management:** Zustand + React Query
-- **Routing:** React Router DOM
-- **Forms:** React Hook Form + Zod
-- **HTTP Client:** Axios
-- **Icons:** Heroicons
-- **Testing:** Vitest + Testing Library
-
----
-
-## 📂 Project Structure
-
-```
-frontend/
-├── src/
-│   ├── app/                    # App configuration & routing
-│   ├── components/             # Reusable UI components
-│   ├── pages/                  # Page components
-│   ├── hooks/                  # Custom React hooks
-│   ├── services/               # API services
-│   ├── store/                  # Zustand stores
-│   ├── types/                  # TypeScript types
-│   ├── utils/                  # Utility functions
-│   └── assets/                 # Static assets
-│
-├── public/                     # Public assets
-├── .env.local                  # Local environment (git-ignored)
-├── tailwind.config.js          # Tailwind configuration
-├── vite.config.ts              # Vite configuration
-└── package.json
-```
-
----
-
-## 🔧 Environment Variables
-
-File: `.env.local` (created from `.env.example`)
-
-```env
-VITE_API_URL=http://localhost:3000
-VITE_API_TIMEOUT=30000
-VITE_APP_NAME=Tickr
-VITE_APP_VERSION=1.0.0
-```
-
----
+The app will be available at [http://localhost:3001](http://localhost:3001).
 
 ## 📝 Available Scripts
 
 ```bash
-npm run dev           # Dev server (http://localhost:5173)
-npm run build         # Build for production
-npm run preview       # Preview production build
-npm run test          # Run tests
-npm run lint          # Run ESLint
-npm run format        # Format code with Prettier
+# Development
+npm run dev              # Start Next.js dev server (port 3001)
+npm run build            # Build for production
+npm run start            # Start production server
+npm run lint             # Run ESLint
+npm run type-check       # Run TypeScript type checking
+
+# Testing
+npm run test             # Run unit tests with Vitest
+npm run test:ui          # Run tests with UI
 ```
 
----
+## 📁 Project Structure
 
-**Ready to build! 🎉**
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Home page
+│   ├── globals.css        # Global styles
+│   ├── events/            # Events routes
+│   ├── tickets/           # Tickets routes
+│   ├── auth/              # Auth routes
+│   └── dashboard/         # Dashboard routes
+│
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   └── layout/           # Layout components
+│
+├── lib/                  # Utilities & configurations
+│   ├── api/             # API client
+│   ├── hooks/           # Custom React hooks
+│   └── utils.ts         # Helper functions
+│
+└── types/               # TypeScript type definitions
+```
+
+## 🔧 Environment Variables
+
+Create a `.env.local` file with the following variables:
+
+```bash
+# API Backend
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_TIMEOUT=30000
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME=Tickr
+NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_APP_ENV=development
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_DEVTOOLS=true
+NEXT_PUBLIC_ENABLE_ANALYTICS=false
+```
+
+## 🐳 Docker
+
+### Development
+
+```bash
+docker build -f Dockerfile.dev -t tickr-frontend:dev .
+docker run -p 3001:3001 -v $(pwd):/app tickr-frontend:dev
+```
+
+### Production
+
+```bash
+docker build -f Dockerfile -t tickr-frontend:prod .
+docker run -p 3001:3001 tickr-frontend:prod
+```
+
+## 📚 Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [TailwindCSS Documentation](https://tailwindcss.com/docs)
+- [React Query Documentation](https://tanstack.com/query/latest)
+
+## 🤝 Contributing
+
+Please read the main project README for contribution guidelines.
+
+## 📄 License
+
+This project is proprietary and confidential.
+

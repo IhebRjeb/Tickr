@@ -34,10 +34,11 @@ Local Development (make dev)
 │   └── Command: npm run start:dev
 │
 └── Frontend (Docker Container with HMR)
-    ├── React 19 + Vite 7
+    ├── Next.js 16 (App Router)
+    ├── React 19
     ├── TypeScript 5.9
     ├── Volume mount: ./frontend → /app
-    └── Command: npm run dev
+    └── Command: npm run dev (port 3001)
 ```
 
 ### CI/CD Pipeline (GitHub Actions)
@@ -89,9 +90,10 @@ backend/
 #### Frontend
 ```
 frontend/
-├── Dockerfile                 ✅ Production with Nginx
-├── Dockerfile.dev             ✅ Development with Vite HMR
-└── .dockerignore             ✅ Optimized build context
+├── Dockerfile                 ✅ Production with Next.js standalone
+├── Dockerfile.dev             ✅ Development with Next.js HMR
+├── .dockerignore             ✅ Optimized build context
+└── .env.example              ✅ Environment template
 ```
 
 #### Infrastructure
@@ -284,10 +286,18 @@ SWAGGER_PATH=api/docs
 ### Frontend (.env.example → .env.local)
 
 ```bash
-VITE_API_URL=http://localhost:3000
-VITE_APP_NAME=Tickr
-VITE_APP_VERSION=1.0.0
-VITE_ENABLE_DEVTOOLS=true
+# API Backend
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_TIMEOUT=30000
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME=Tickr
+NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_APP_ENV=development
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_DEVTOOLS=true
+NEXT_PUBLIC_ENABLE_ANALYTICS=false
 ```
 
 ---
@@ -318,21 +328,21 @@ VITE_ENABLE_DEVTOOLS=true
 ### Frontend Dockerfile (Production)
 
 **Features:**
-- ✅ Multi-stage: Builder (Node) + Production (Nginx)
-- ✅ Vite optimized build
-- ✅ Nginx reverse proxy
-- ✅ Static file serving with caching
-- ✅ API proxy to backend
+- ✅ Multi-stage: Dependencies + Builder + Runner
+- ✅ Next.js standalone output
+- ✅ Optimized for Docker deployment
+- ✅ Static files copied correctly
 - ✅ Health checks
+- ✅ Non-root user (security)
 
-**Build Size:** ~50MB (estimated)
+**Build Size:** ~150MB (estimated with standalone)
 
 ### Frontend Dockerfile.dev (Development)
 
 **Features:**
-- ✅ Vite HMR enabled
+- ✅ Next.js dev server with HMR
 - ✅ Volume mounts for instant updates
-- ✅ Development server on 0.0.0.0
+- ✅ Development server on 0.0.0.0:3001
 - ✅ Hot Module Replacement
 
 ---
@@ -341,10 +351,10 @@ VITE_ENABLE_DEVTOOLS=true
 
 ### Local Development
 - [x] All services start with `make dev`
-- [x] Hot reload works (backend: NestJS watch, frontend: Vite HMR)
+- [x] Hot reload works (backend: NestJS watch, frontend: Next.js HMR)
 - [x] Environment variables loaded from .env.local
 - [x] Database migrations run successfully
-- [x] All ports accessible (3000, 5173, 5432, 6379, 1080, 5050)
+- [x] All ports accessible (3000, 3001, 5432, 6379, 1080, 5050)
 - [x] Volume mounts preserve node_modules
 
 ### CI/CD Pipeline

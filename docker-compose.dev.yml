@@ -54,8 +54,8 @@ services:
       SMTP_FROM: noreply@tickr.local
       
       # Frontend URL
-      FRONTEND_URL: http://localhost:5173
-      CORS_ORIGIN: http://localhost:5173
+      FRONTEND_URL: http://localhost:3001
+      CORS_ORIGIN: http://localhost:3001
       
       # Debug
       DEBUG: tickr:*
@@ -83,29 +83,32 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend React + Vite - Mode Développement avec HMR
+  # Frontend Next.js - Mode Développement avec HMR
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-      target: development
     container_name: tickr-frontend-dev
     restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "3001:3001"
     environment:
       NODE_ENV: development
-      VITE_API_URL: http://localhost:3000
-      VITE_APP_NAME: Tickr
-      VITE_APP_VERSION: 1.0.0
-      VITE_ENABLE_DEVTOOLS: true
+      PORT: 3001
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_API_URL: http://backend:3000
+      NEXT_PUBLIC_APP_NAME: Tickr
+      NEXT_PUBLIC_APP_VERSION: 1.0.0
+      NEXT_PUBLIC_APP_ENV: development
+      NEXT_PUBLIC_ENABLE_DEVTOOLS: "true"
+      NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+      WATCHPACK_POLLING: "true"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - frontend_cache:/app/.vite
+      - /app/.next
     depends_on:
       - backend
-    command: npm run dev -- --host 0.0.0.0
     networks:
       - tickr-network
     stdin_open: true
@@ -113,6 +116,4 @@ services:
 
 volumes:
   backend_cache:
-    driver: local
-  frontend_cache:
     driver: local

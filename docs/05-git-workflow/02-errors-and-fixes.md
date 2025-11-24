@@ -556,17 +556,22 @@ LOG_LEVEL=debug
 ### 📄 Fichier: .env.example (Frontend)
 
 ```bash
-# API
-VITE_API_URL=http://localhost:3000
+# API Backend
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_TIMEOUT=30000
 
-# App
-VITE_APP_NAME=Tickr
-VITE_APP_VERSION=1.0.0
-VITE_APP_ENV=development
+# App Configuration
+NEXT_PUBLIC_APP_NAME=Tickr
+NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_APP_ENV=development
 
-# Features
-VITE_ENABLE_DEVTOOLS=true
-VITE_ENABLE_ANALYTICS=false
+# Feature Flags
+NEXT_PUBLIC_ENABLE_DEVTOOLS=true
+NEXT_PUBLIC_ENABLE_ANALYTICS=false
+
+# Optional: Analytics (production)
+# NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+# NEXT_PUBLIC_HOTJAR_ID=XXXXXXX
 ```
 
 ### 📄 Fichier: .dockerignore

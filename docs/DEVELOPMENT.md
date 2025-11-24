@@ -13,8 +13,8 @@ This document describes the modern, scalable development environment for Tickr. 
 │                                                              │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
 │  │Frontend  │  │ Backend  │  │PostgreSQL│  │  Redis   │  │
-│  │React+Vite│  │  NestJS  │  │  15.4    │  │   7.x    │  │
-│  │Port: 5173│  │Port: 3000│  │Port: 5432│  │Port: 6379│  │
+│  │Next.js 16│  │  NestJS  │  │  15.4    │  │   7.x    │  │
+│  │Port: 3001│  │Port: 3000│  │Port: 5432│  │Port: 6379│  │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
 │                                                              │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                 │
@@ -179,10 +179,18 @@ FRONTEND_URL=http://localhost:5173
 ### Frontend (.env.local)
 
 ```bash
-VITE_API_URL=http://localhost:3000
-VITE_APP_NAME=Tickr
-VITE_APP_VERSION=1.0.0
-VITE_ENABLE_DEVTOOLS=true
+# API Backend
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_TIMEOUT=30000
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME=Tickr
+NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_APP_ENV=development
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_DEVTOOLS=true
+NEXT_PUBLIC_ENABLE_ANALYTICS=false
 ```
 
 ## Docker Compose Files
@@ -200,7 +208,7 @@ Core services that run in all environments:
 
 Development-specific services:
 - Backend (hot-reload enabled)
-- Frontend (Vite HMR)
+- Frontend (Next.js HMR)
 - Debug ports exposed
 - Volume mounting for live code
 - Verbose logging

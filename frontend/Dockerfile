@@ -1,47 +1,49 @@
-# Tickr Frontend - Production Dockerfile
-# Multi-stage build with Nginx
+# Multi-stage build for Next.js
 
-# Stage 1: Build
-FROM node:20-alpine AS builder
-
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
 
-# Copy source code
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the application
+# Build arguments
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_ENV=production
+
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_APP_ENV=${NEXT_PUBLIC_APP_ENV}
+
+# Build Next.js app
 RUN npm run build
 
-# Stage 2: Production with Nginx
-FROM nginx:alpine AS production
+# Stage 3: Runner
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3001
+ENV HOSTNAME="0.0.0.0"
 
-# Copy built application from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Note: nginx.conf is mounted via docker-compose volume
-# See docker-compose.prod.yml for volume configuration
+# Copy built application
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Create nginx cache directory
-RUN mkdir -p /var/cache/nginx && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /usr/share/nginx/html
+USER nextjs
 
-# Expose ports
-EXPOSE 80 443
+EXPOSE 3001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost/health || curl -f http://localhost/ || exit 1
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]
