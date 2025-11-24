@@ -106,7 +106,7 @@ jobs:
 
       - name: 🧪 Run unit tests
         working-directory: ./${{ matrix.project }}
-        run: npm run test:unit -- --coverage
+        run: npm run test:unit
 
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v4
