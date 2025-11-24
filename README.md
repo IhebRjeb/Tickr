@@ -55,7 +55,7 @@ Tickr/
 │   ├── test/                     # Tests
 │   └── migrations/               # Migrations DB
 │
-├── frontend/                      # 🎨 Application React (à venir)
+├── frontend/                      # 🎨 Application NextJs (à venir)
 │   ├── src/
 │   │   ├── app/                  # Routes & pages
 │   │   ├── components/           # Composants UI
