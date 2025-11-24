@@ -146,6 +146,12 @@ jobs:
         ports:
           - 6379:6379
     
+    env:
+      # Use DATABASE_URL for integration tests (cleaner than individual vars)
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+    
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -164,15 +170,10 @@ jobs:
       - name: 🗄️ Run migrations
         working-directory: ./backend
         run: npm run migration:run
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
 
       - name: 🔗 Run integration tests
         working-directory: ./backend
         run: npm run test:integration -- --coverage
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tickr_test
-          REDIS_URL: redis://localhost:6379
 
       - name: 📊 Upload coverage
         uses: codecov/codecov-action@v4
