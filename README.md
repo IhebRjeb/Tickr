@@ -316,11 +316,11 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - frontend_cache:/app/.vite
+      - frontend_cache:/app/.next
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3000
 
 volumes:
   postgres_data:
@@ -535,7 +535,7 @@ Jobs:
      
   3. 🏗️ Build
      - Build backend (TypeScript)
-     - Build frontend (Vite)
+     - Build frontend (Next.js)
      - Docker image build (cache)
      
   4. 🔒 Security Scan
