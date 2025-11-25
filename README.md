@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20NestJS%20%7C%20PostgreSQL-orange.svg)](docs/02-technique/01-stack-technique.md)
 
-> Plateforme web de billetterie en ligne pour le marché tunisien, permettant aux organisateurs d'événements de créer, gérer et vendre des billets digitaux avec paiement en ligne et entrée par QR code.
+> Plateforme web de billetterie en ligne pour le marché tunisien, permettant aux organisateurs d'événements de créer, gérer et vendre des billets digitaux avec paiement en ligne et entrée par QR code (check-in).
 
 ---
 
