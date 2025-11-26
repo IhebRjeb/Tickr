@@ -19,12 +19,12 @@ services:
       NODE_ENV: development
       PORT: 3000
       
-      # Database
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_NAME: tickr
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
+      # Database (must match DB_* naming expected by app)
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: tickr
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tickr
       
       # Redis
@@ -36,7 +36,8 @@ services:
       
       # JWT
       JWT_SECRET: dev-super-secret-key-change-in-production
-      JWT_EXPIRES_IN: 7d
+      JWT_ACCESS_EXPIRATION: 15m
+      JWT_REFRESH_EXPIRATION: 7d
       
       # AWS Local (LocalStack)
       AWS_REGION: eu-west-1
