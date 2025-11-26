@@ -32,15 +32,15 @@ export abstract class DomainException extends Error {
     this.timestamp = new Date();
     
     // Capture stack trace (Node.js)
-    if (typeof (Error as any).captureStackTrace === 'function') {
-      (Error as any).captureStackTrace(this, this.constructor);
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, this.constructor);
     }
   }
 
   /**
    * Serialize l'exception pour logs/debug
    */
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       name: this.name,
       code: this.code,
