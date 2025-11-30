@@ -42,7 +42,7 @@ export abstract class DomainEvent {
   /**
    * Serialize l'événement pour logs/debug
    */
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       eventId: this.eventId,
       eventName: this.eventName,
@@ -54,11 +54,11 @@ export abstract class DomainEvent {
   /**
    * Retourne les données spécifiques de l'événement
    */
-  protected getData(): Record<string, any> {
-    const data: Record<string, any> = {};
+  protected getData(): Record<string, unknown> {
+    const data: Record<string, unknown> = {};
     Object.keys(this).forEach((key) => {
       if (key !== 'occurredOn' && key !== 'eventId') {
-        data[key] = (this as any)[key];
+        data[key] = (this as Record<string, unknown>)[key];
       }
     });
     return data;

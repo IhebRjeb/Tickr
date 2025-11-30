@@ -204,13 +204,27 @@ jobs:
 
       - name: 🐳 Start services with Docker Compose
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-          docker compose ps
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
 
       - name: ⏳ Wait for services
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000/health; do sleep 2; done'
-          timeout 60 bash -c 'until curl -f http://localhost:3001; do sleep 2; done'
+          echo "Waiting for backend to be ready..."
+          timeout 180 bash -c 'until curl -f http://localhost:3000/api/health 2>/dev/null; do echo "Backend not ready, waiting..."; sleep 5; done' || {
+            echo "Backend failed to start. Checking logs..."
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml logs backend
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml logs postgres
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml logs redis
+            exit 1
+          }
+          echo "Backend is ready!"
+          echo "Waiting for frontend..."
+          timeout 180 bash -c 'until curl -f http://localhost:3001 2>/dev/null; do echo "Frontend not ready, waiting..."; sleep 5; done' || {
+            echo "Frontend failed to start. Checking logs..."
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml logs frontend
+            exit 1
+          }
+          echo "Frontend is ready!"
 
       - name: � Fix permissions
         run: |
@@ -238,7 +252,7 @@ jobs:
 
       - name: 🛑 Stop services
         if: always()
-        run: docker compose down -v
+        run: docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
 
   # Job 6: Build
   build:
@@ -327,11 +341,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./${{ matrix.project }}
+        run: npm ci
 
       - name: 🔍 Run npm audit
         working-directory: ./${{ matrix.project }}
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+        run: npm audit --audit-level=high || true
 
       - name: 🛡️ Run Snyk security scan
         uses: snyk/actions/node@master
