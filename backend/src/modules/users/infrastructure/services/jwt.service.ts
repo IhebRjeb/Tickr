@@ -263,6 +263,20 @@ export class JwtTokenService {
   }
 
   /**
+   * Get access token expiration in seconds
+   */
+  getAccessTokenExpiration(): number {
+    return this.parseExpirationToSeconds(this.accessTokenExpiration);
+  }
+
+  /**
+   * Get refresh token expiration in seconds
+   */
+  getRefreshTokenExpiration(): number {
+    return this.parseExpirationToSeconds(this.refreshTokenExpiration);
+  }
+
+  /**
    * Get configuration values (for testing/debugging)
    */
   getConfig(): {
