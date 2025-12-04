@@ -1,5 +1,5 @@
-import { UpdateProfileHandler } from '@modules/users/application/commands/update-profile.handler';
 import { UpdateProfileCommand } from '@modules/users/application/commands/update-profile.command';
+import { UpdateProfileHandler } from '@modules/users/application/commands/update-profile.handler';
 import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 

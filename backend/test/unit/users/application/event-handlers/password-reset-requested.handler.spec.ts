@@ -1,5 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { PasswordResetRequestedEventHandler } from '../../../../../src/modules/users/application/event-handlers/password-reset-requested.handler';
 import { PasswordResetRequestedEvent } from '../../../../../src/modules/users/domain/events/password-reset-requested.event';
 

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { UserEntity } from '../entities/user.orm-entity';
+
 import { UserEntityPort } from '../../../application/ports/user.repository.port';
 import { UserRole } from '../../../domain/value-objects/user-role.vo';
+import { UserEntity } from '../entities/user.orm-entity';
 
 /**
  * User Persistence Mapper

@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { CqrsModule } from '@nestjs/cqrs';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { CqrsModule } from '@nestjs/cqrs';
-import { Repository } from 'typeorm';
-import { UsersModule } from '../../../src/modules/users/infrastructure/users.module';
-import { UserEntity } from '../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { USER_REPOSITORY } from '../../../src/modules/users/application/ports/user.repository.port';
-import { JwtTokenService } from '../../../src/modules/users/infrastructure/services/jwt.service';
-import { PasswordService } from '../../../src/modules/users/infrastructure/services/password.service';
+import { EmailVerifiedGuard } from '../../../src/modules/users/infrastructure/guards/email-verified.guard';
 import { JwtAuthGuard } from '../../../src/modules/users/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../src/modules/users/infrastructure/guards/roles.guard';
-import { EmailVerifiedGuard } from '../../../src/modules/users/infrastructure/guards/email-verified.guard';
+import { UserEntity } from '../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
+import { JwtTokenService } from '../../../src/modules/users/infrastructure/services/jwt.service';
+import { PasswordService } from '../../../src/modules/users/infrastructure/services/password.service';
+import { UsersModule } from '../../../src/modules/users/infrastructure/users.module';
 
 // Mock repository
 const mockRepository = {
@@ -72,16 +72,12 @@ describe('UsersModule', () => {
   describe('Module Exports', () => {
     it('should define exported providers correctly', () => {
       // UsersModule exports these providers for use by other modules
-      const expectedExports = [
-        'JwtAuthGuard',
-        'RolesGuard', 
-        'EmailVerifiedGuard',
-        'JwtTokenService',
-        'PasswordService',
-      ];
+      const exports = Reflect.getMetadata('exports', UsersModule);
 
       // Verify the module structure includes expected exports
       expect(UsersModule).toBeDefined();
+      expect(exports).toBeDefined();
+      expect(exports.length).toBeGreaterThan(0);
     });
   });
 
@@ -121,11 +117,12 @@ describe('UsersModule', () => {
     it('should include repository provider with custom token', () => {
       const providers = Reflect.getMetadata('providers', UsersModule);
       
-      const repositoryProvider = providers.find(
+      const hasRepositoryProvider = providers.find(
         (p: any) => p.provide === USER_REPOSITORY || p === USER_REPOSITORY,
       );
       
       // Repository should be configured with custom injection token
+      expect(hasRepositoryProvider).toBeDefined();
       expect(providers.some(
         (p: any) => typeof p === 'object' && p.provide === USER_REPOSITORY,
       )).toBe(true);

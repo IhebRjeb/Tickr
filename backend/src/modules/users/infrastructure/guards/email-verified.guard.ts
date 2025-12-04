@@ -6,6 +6,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+
 import { USER_REPOSITORY } from '../../application/ports/user.repository.port';
 import type { UserRepositoryPort } from '../../application/ports/user.repository.port';
 
@@ -85,7 +86,7 @@ export class EmailVerifiedGuard implements CanActivate {
     // Note: emailVerified field needs to be added to UserEntityPort
     // For now, we'll assume email is verified if user exists
     // This should be updated when emailVerified is added to the entity
-    const emailVerified = (fullUser as any).emailVerified ?? true;
+    const emailVerified = (fullUser as unknown as { emailVerified?: boolean }).emailVerified ?? true;
 
     if (!emailVerified) {
       throw new ForbiddenException(

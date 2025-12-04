@@ -1,9 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { GetUserByIdQuery } from './get-user-by-id.query';
-import { USER_REPOSITORY } from '../ports/user.repository.port';
-import type { UserRepositoryPort } from '../ports/user.repository.port';
+
 import { UserDto } from '../dtos/user.dto';
 import { UserMapper } from '../mappers/user.mapper';
+import { USER_REPOSITORY } from '../ports/user.repository.port';
+import type { UserRepositoryPort } from '../ports/user.repository.port';
+
+import { GetUserByIdQuery } from './get-user-by-id.query';
 
 /**
  * Handler for GetUserByIdQuery

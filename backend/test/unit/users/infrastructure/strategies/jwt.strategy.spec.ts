@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
+import { JwtPayload } from '@modules/users/infrastructure/services/jwt.service';
+import { JwtStrategy, JwtUser } from '@modules/users/infrastructure/strategies/jwt.strategy';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtStrategy, JwtUser } from '@modules/users/infrastructure/strategies/jwt.strategy';
-import { JwtPayload, TokenType } from '@modules/users/infrastructure/services/jwt.service';
-import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;

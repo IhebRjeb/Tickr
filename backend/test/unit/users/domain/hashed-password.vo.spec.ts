@@ -1,5 +1,5 @@
-import { HashedPasswordVO } from '@modules/users/domain/value-objects/hashed-password.vo';
 import { WeakPasswordException } from '@modules/users/domain/exceptions/weak-password.exception';
+import { HashedPasswordVO } from '@modules/users/domain/value-objects/hashed-password.vo';
 
 describe('HashedPasswordVO Value Object', () => {
   const validPassword = 'SecurePass123!';

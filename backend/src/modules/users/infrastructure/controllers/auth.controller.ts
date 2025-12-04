@@ -11,24 +11,26 @@ import {
   ForbiddenException,
   Inject,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
-import { AuthGuard } from '@nestjs/passport';
-import { JwtTokenService, TokenPair } from '../services/jwt.service';
-import { PasswordService } from '../services/password.service';
+
 import { USER_REPOSITORY } from '../../application/ports/user.repository.port';
 import type { UserRepositoryPort, UserEntityPort } from '../../application/ports/user.repository.port';
-import { Public } from '../decorators/auth.decorators';
-import { ValidatedUser } from '../strategies/local.strategy';
 import { UserRole } from '../../domain/value-objects/user-role.vo';
+import { Public } from '../decorators/auth.decorators';
+import { TokenType } from '../persistence/entities/verification-token.orm-entity';
+import { VerificationTokenRepository } from '../persistence/repositories/verification-token.repository';
+import { JwtTokenService, TokenPair } from '../services/jwt.service';
+import { PasswordService } from '../services/password.service';
+import { ValidatedUser } from '../strategies/local.strategy';
+
 import {
   RegisterUserDto,
-  LoginDto,
   VerifyEmailDto,
   RequestPasswordResetDto,
   ResetPasswordDto,
@@ -94,6 +96,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
+    private readonly verificationTokenRepository: VerificationTokenRepository,
   ) {}
 
   /**
@@ -136,6 +139,7 @@ export class AuthController {
       lastName: dto.lastName,
       role: UserRole.PARTICIPANT,
       phone: dto.phone || null,
+      passwordHash: hashedPassword.hash,
       isActive: true,
       lastLoginAt: null,
       createdAt: new Date(),
@@ -221,14 +225,25 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async verifyEmail(@Body() dto: VerifyEmailDto): Promise<SuccessResponse> {
-    // TODO: Implement email verification
-    // 1. Find verification token in database
-    // 2. Check if token is valid and not expired
-    // 3. Update user's emailVerified status
-    // 4. Delete used token
+    // Find and validate verification token
+    const tokenEntity = await this.verificationTokenRepository.findValidToken(
+      dto.token,
+      TokenType.EMAIL_VERIFICATION,
+    );
 
-    // For now, return a placeholder response
-    throw new BadRequestException('Invalid or expired verification token');
+    if (!tokenEntity) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    // Update user's emailVerified status
+    await this.userRepository.updateEmailVerified(tokenEntity.userId, true);
+
+    // Mark token as used
+    await this.verificationTokenRepository.markAsUsed(tokenEntity.id);
+
+    return {
+      message: 'Email verified successfully. You can now log in.',
+    };
   }
 
   /**
@@ -249,11 +264,27 @@ export class AuthController {
   async requestPasswordReset(
     @Body() dto: RequestPasswordResetDto,
   ): Promise<SuccessResponse> {
-    // TODO: Implement password reset request
-    // 1. Find user by email (don't reveal if user exists)
-    // 2. Generate password reset token
-    // 3. Store token with expiration
-    // 4. Send reset email via event
+    // Find user by email (don't reveal if user exists)
+    const user = await this.userRepository.findByEmail(dto.email);
+
+    if (user) {
+      // Generate password reset token (expires in 1 hour)
+      // Token is generated but email sending is not yet implemented
+      // When notification service is ready, emit event with token
+      await this.verificationTokenRepository.createPasswordResetToken(
+        user.id,
+        1, // 1 hour expiry
+      );
+
+      // TODO: Send reset email via event/notification service
+      // const token = await this.verificationTokenRepository.createPasswordResetToken(...)
+      // await this.eventEmitter.emit('user.password-reset-requested', {
+      //   userId: user.id,
+      //   email: user.email,
+      //   token: token,
+      //   resetUrl: `${process.env.FRONTEND_URL}/reset-password?token=${token}`,
+      // });
+    }
 
     // Always return success to prevent email enumeration
     return {
@@ -275,15 +306,39 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<SuccessResponse> {
-    // TODO: Implement password reset
-    // 1. Find and validate reset token
-    // 2. Check if token is not expired
-    // 3. Hash new password
-    // 4. Update user's password
-    // 5. Delete used token
-    // 6. Invalidate all existing sessions/tokens
+    // Find and validate reset token
+    const tokenEntity = await this.verificationTokenRepository.findValidToken(
+      dto.token,
+      TokenType.PASSWORD_RESET,
+    );
 
-    throw new BadRequestException('Invalid or expired reset token');
+    if (!tokenEntity) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Hash new password
+    const hashedPassword = await this.passwordService.createHashedPassword(
+      dto.newPassword,
+    );
+
+    // Update user's password
+    await this.userRepository.updatePassword(
+      tokenEntity.userId,
+      hashedPassword.hash,
+    );
+
+    // Mark token as used
+    await this.verificationTokenRepository.markAsUsed(tokenEntity.id);
+
+    // Invalidate all password reset tokens for this user
+    await this.verificationTokenRepository.invalidateUserTokens(
+      tokenEntity.userId,
+      TokenType.PASSWORD_RESET,
+    );
+
+    return {
+      message: 'Password reset successfully. You can now log in with your new password.',
+    };
   }
 
   /**

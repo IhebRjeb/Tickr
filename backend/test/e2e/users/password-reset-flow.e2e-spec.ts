@@ -1,42 +1,43 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule, JwtService } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { CqrsModule } from '@nestjs/cqrs';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { CqrsModule } from '@nestjs/cqrs';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
 // Infrastructure
+import { ChangePasswordHandler } from '../../../src/modules/users/application/commands/change-password.handler';
+import { DeactivateUserHandler } from '../../../src/modules/users/application/commands/deactivate-user.handler';
+import { UpdateProfileHandler } from '../../../src/modules/users/application/commands/update-profile.handler';
+import { EmailVerifiedEventHandler } from '../../../src/modules/users/application/event-handlers/email-verified.handler';
+import { PasswordResetRequestedEventHandler } from '../../../src/modules/users/application/event-handlers/password-reset-requested.handler';
+import { UserRegisteredEventHandler } from '../../../src/modules/users/application/event-handlers/user-registered.handler';
+import { UserMapper } from '../../../src/modules/users/application/mappers/user.mapper';
+import { USER_REPOSITORY } from '../../../src/modules/users/application/ports/user.repository.port';
+import { GetUserByEmailHandler } from '../../../src/modules/users/application/queries/get-user-by-email.handler';
+import { GetUserByIdHandler } from '../../../src/modules/users/application/queries/get-user-by-id.handler';
+import { GetUsersByRoleHandler } from '../../../src/modules/users/application/queries/get-users-by-role.handler';
+import { UserRole } from '../../../src/modules/users/domain/value-objects/user-role.vo';
 import { AuthController } from '../../../src/modules/users/infrastructure/controllers/auth.controller';
 import { UsersController } from '../../../src/modules/users/infrastructure/controllers/users.controller';
+import { EmailVerifiedGuard } from '../../../src/modules/users/infrastructure/guards/email-verified.guard';
+import { JwtAuthGuard } from '../../../src/modules/users/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../src/modules/users/infrastructure/guards/roles.guard';
+import { UserPersistenceMapper } from '../../../src/modules/users/infrastructure/persistence/mappers/user-persistence.mapper';
+import { VerificationTokenRepository } from '../../../src/modules/users/infrastructure/persistence/repositories/verification-token.repository';
 import { JwtTokenService } from '../../../src/modules/users/infrastructure/services/jwt.service';
 import { PasswordService } from '../../../src/modules/users/infrastructure/services/password.service';
 import { TokenService } from '../../../src/modules/users/infrastructure/services/token.service';
-import { LocalStrategy } from '../../../src/modules/users/infrastructure/strategies/local.strategy';
 import { JwtStrategy } from '../../../src/modules/users/infrastructure/strategies/jwt.strategy';
-import { JwtAuthGuard } from '../../../src/modules/users/infrastructure/guards/jwt-auth.guard';
-import { RolesGuard } from '../../../src/modules/users/infrastructure/guards/roles.guard';
-import { EmailVerifiedGuard } from '../../../src/modules/users/infrastructure/guards/email-verified.guard';
-import { UserPersistenceMapper } from '../../../src/modules/users/infrastructure/persistence/mappers/user-persistence.mapper';
+import { LocalStrategy } from '../../../src/modules/users/infrastructure/strategies/local.strategy';
 
 // Application
-import { USER_REPOSITORY } from '../../../src/modules/users/application/ports/user.repository.port';
-import { UserMapper } from '../../../src/modules/users/application/mappers/user.mapper';
-import { ChangePasswordHandler } from '../../../src/modules/users/application/commands/change-password.handler';
-import { UpdateProfileHandler } from '../../../src/modules/users/application/commands/update-profile.handler';
-import { DeactivateUserHandler } from '../../../src/modules/users/application/commands/deactivate-user.handler';
-import { GetUserByIdHandler } from '../../../src/modules/users/application/queries/get-user-by-id.handler';
-import { GetUserByEmailHandler } from '../../../src/modules/users/application/queries/get-user-by-email.handler';
-import { GetUsersByRoleHandler } from '../../../src/modules/users/application/queries/get-users-by-role.handler';
-import { UserRegisteredEventHandler } from '../../../src/modules/users/application/event-handlers/user-registered.handler';
-import { EmailVerifiedEventHandler } from '../../../src/modules/users/application/event-handlers/email-verified.handler';
-import { PasswordResetRequestedEventHandler } from '../../../src/modules/users/application/event-handlers/password-reset-requested.handler';
 
 // Domain
-import { UserRole } from '../../../src/modules/users/domain/value-objects/user-role.vo';
 
 /**
  * In-memory user repository for E2E testing
@@ -119,6 +120,82 @@ class InMemoryUserRepository {
   async seedUser(userData: any) {
     return this.save(userData);
   }
+
+  async findByEmailWithPassword(email: string) {
+    const userId = this.emailIndex.get(email.toLowerCase());
+    return userId ? this.users.get(userId) : null;
+  }
+
+  async updateEmailVerified(userId: string, verified: boolean) {
+    const user = this.users.get(userId);
+    if (user) {
+      user.emailVerified = verified;
+      this.users.set(userId, user);
+    }
+  }
+
+  async updatePassword(userId: string, passwordHash: string) {
+    const user = this.users.get(userId);
+    if (user) {
+      user.passwordHash = passwordHash;
+      this.users.set(userId, user);
+    }
+  }
+}
+
+/**
+ * Mock Verification Token Repository for E2E testing
+ */
+class MockVerificationTokenRepository {
+  private tokens: Map<string, any> = new Map();
+
+  async findValidToken(token: string, type: string) {
+    const tokenEntity = Array.from(this.tokens.values()).find(
+      t => t.token === token && t.type === type && !t.usedAt && t.expiresAt > new Date()
+    );
+    return tokenEntity || null;
+  }
+
+  async markAsUsed(id: string) {
+    const token = this.tokens.get(id);
+    if (token) {
+      token.usedAt = new Date();
+      this.tokens.set(id, token);
+    }
+  }
+
+  async createEmailVerificationToken(userId: string, expiresInHours: number) {
+    const token = `email-verify-${Date.now()}`;
+    const id = `token-${Date.now()}`;
+    this.tokens.set(id, {
+      id, userId, token, type: 'EMAIL_VERIFICATION',
+      expiresAt: new Date(Date.now() + expiresInHours * 60 * 60 * 1000), usedAt: null,
+    });
+    return token;
+  }
+
+  async createPasswordResetToken(userId: string, expiresInHours: number) {
+    const token = `password-reset-${Date.now()}`;
+    const id = `token-${Date.now()}`;
+    this.tokens.set(id, {
+      id, userId, token, type: 'PASSWORD_RESET',
+      expiresAt: new Date(Date.now() + expiresInHours * 60 * 60 * 1000), usedAt: null,
+    });
+    return token;
+  }
+
+  async invalidateUserTokens(userId: string, type: string) {
+    for (const [id, token] of this.tokens.entries()) {
+      if (token.userId === userId && token.type === type) {
+        token.usedAt = new Date();
+        this.tokens.set(id, token);
+      }
+    }
+  }
+
+  clear() {
+    this.tokens.clear();
+  }
 }
 
 /**
@@ -130,11 +207,13 @@ class InMemoryUserRepository {
 describe('E2E: Password Reset Flow', () => {
   let app: INestApplication<App>;
   let userRepository: InMemoryUserRepository;
+  let verificationTokenRepository: MockVerificationTokenRepository;
   let jwtService: JwtTokenService;
   let passwordService: PasswordService;
 
   beforeAll(async () => {
     userRepository = new InMemoryUserRepository();
+    verificationTokenRepository = new MockVerificationTokenRepository();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -162,6 +241,7 @@ describe('E2E: Password Reset Flow', () => {
       controllers: [AuthController, UsersController],
       providers: [
         { provide: USER_REPOSITORY, useValue: userRepository },
+        { provide: VerificationTokenRepository, useValue: verificationTokenRepository },
         UserPersistenceMapper,
         UserMapper,
         JwtTokenService,

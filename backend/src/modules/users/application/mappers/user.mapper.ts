@@ -1,6 +1,6 @@
-import { UserEntityPort } from '../ports/user.repository.port';
-import { UserDto } from '../dtos/user.dto';
 import { UserProfileDto } from '../dtos/user-profile.dto';
+import { UserDto } from '../dtos/user.dto';
+import { UserEntityPort } from '../ports/user.repository.port';
 
 /**
  * User Mapper

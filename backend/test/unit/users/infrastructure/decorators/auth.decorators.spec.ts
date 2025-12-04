@@ -1,13 +1,13 @@
-import { ExecutionContext } from '@nestjs/common';
-import { ROLES_KEY } from '@modules/users/infrastructure/guards/roles.guard';
-import { IS_PUBLIC_KEY } from '@modules/users/infrastructure/guards/jwt-auth.guard';
-import { REQUIRE_EMAIL_VERIFIED_KEY } from '@modules/users/infrastructure/guards/email-verified.guard';
 import {
   Roles,
   Public,
   SkipEmailVerification,
   CurrentUser,
 } from '@modules/users/infrastructure/decorators/auth.decorators';
+import { REQUIRE_EMAIL_VERIFIED_KEY } from '@modules/users/infrastructure/guards/email-verified.guard';
+import { IS_PUBLIC_KEY } from '@modules/users/infrastructure/guards/jwt-auth.guard';
+import { ROLES_KEY } from '@modules/users/infrastructure/guards/roles.guard';
+import { ExecutionContext } from '@nestjs/common';
 
 describe('Auth Decorators', () => {
   describe('Roles', () => {
@@ -89,7 +89,7 @@ describe('Auth Decorators', () => {
 
       // CurrentUser is a param decorator factory, so we need to simulate its execution
       // The actual decorator behavior is tested through the factory function
-      const decoratorFactory = CurrentUser();
+      const _decoratorFactory = CurrentUser();
       
       // The factory returns a function that NestJS calls with (data, ctx)
       // We can test the underlying logic by examining the ctx behavior

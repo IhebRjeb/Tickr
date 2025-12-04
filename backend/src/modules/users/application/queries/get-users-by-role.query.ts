@@ -1,5 +1,6 @@
 import { BaseQuery } from '@shared/application/interfaces/query.interface';
 import { PaginatedResult } from '@shared/application/interfaces/repository.interface';
+
 import { UserRole } from '../../domain/value-objects/user-role.vo';
 import { UserDto } from '../dtos/user.dto';
 

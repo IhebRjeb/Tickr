@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { UsersController } from '@modules/users/infrastructure/controllers/users.controller';
-import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
 import { ChangePasswordHandler } from '@modules/users/application/commands/change-password.handler';
-import { UpdateProfileHandler } from '@modules/users/application/commands/update-profile.handler';
 import { DeactivateUserHandler } from '@modules/users/application/commands/deactivate-user.handler';
+import { UpdateProfileHandler } from '@modules/users/application/commands/update-profile.handler';
+import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
 import { GetUserByIdHandler } from '@modules/users/application/queries/get-user-by-id.handler';
 import { GetUsersByRoleHandler } from '@modules/users/application/queries/get-users-by-role.handler';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
+import { UsersController } from '@modules/users/infrastructure/controllers/users.controller';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Result } from '@shared/domain/result';
 
 describe('UsersController', () => {
@@ -279,7 +279,7 @@ describe('UsersController', () => {
       mockGetUsersByRoleHandler.execute.mockResolvedValue(paginatedRoleResult);
       mockUserRepository.findById.mockResolvedValue(mockUser);
 
-      const result = await controller.getUsers({ page: 1, limit: 10, role: UserRole.ADMIN });
+      await controller.getUsers({ page: 1, limit: 10, role: UserRole.ADMIN });
 
       expect(mockGetUsersByRoleHandler.execute).toHaveBeenCalled();
     });
@@ -296,7 +296,7 @@ describe('UsersController', () => {
     it('should enforce maximum limit', async () => {
       mockUserRepository.findActiveUsers.mockResolvedValue(paginatedResult);
 
-      const result = await controller.getUsers({ limit: 500 });
+      await controller.getUsers({ limit: 500 });
 
       // Limit should be capped at 100
       expect(mockUserRepository.findActiveUsers).toHaveBeenCalledWith(

@@ -1,7 +1,7 @@
-import { InvalidEmailException } from '@modules/users/domain/exceptions/invalid-email.exception';
-import { WeakPasswordException } from '@modules/users/domain/exceptions/weak-password.exception';
-import { InvalidPhoneFormatException } from '@modules/users/domain/exceptions/invalid-phone.exception';
 import { DuplicateEmailException } from '@modules/users/domain/exceptions/duplicate-email.exception';
+import { InvalidEmailException } from '@modules/users/domain/exceptions/invalid-email.exception';
+import { InvalidPhoneFormatException } from '@modules/users/domain/exceptions/invalid-phone.exception';
+import { WeakPasswordException } from '@modules/users/domain/exceptions/weak-password.exception';
 
 describe('Domain Exceptions', () => {
   describe('InvalidEmailException', () => {

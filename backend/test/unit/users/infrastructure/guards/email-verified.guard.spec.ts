@@ -1,12 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
+import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 import {
   EmailVerifiedGuard,
   REQUIRE_EMAIL_VERIFIED_KEY,
 } from '@modules/users/infrastructure/guards/email-verified.guard';
-import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
-import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('EmailVerifiedGuard', () => {
   let guard: EmailVerifiedGuard;

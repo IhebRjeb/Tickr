@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
-import { LocalStrategy, ValidatedUser } from '@modules/users/infrastructure/strategies/local.strategy';
-import { PasswordService } from '@modules/users/infrastructure/services/password.service';
 import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
+import { PasswordService } from '@modules/users/infrastructure/services/password.service';
+import { LocalStrategy, ValidatedUser } from '@modules/users/infrastructure/strategies/local.strategy';
+import { UnauthorizedException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('LocalStrategy', () => {
   let strategy: LocalStrategy;
@@ -17,6 +17,8 @@ describe('LocalStrategy', () => {
     lastName: 'Doe',
     role: UserRole.PARTICIPANT,
     phone: null,
+    passwordHash: 'hashed-password',
+    emailVerified: true,
     isActive: true,
     lastLoginAt: null,
     createdAt: new Date(),
@@ -26,9 +28,11 @@ describe('LocalStrategy', () => {
   beforeEach(async () => {
     mockUserRepository = {
       findByEmail: jest.fn(),
+      findByEmailWithPassword: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
       existsByEmail: jest.fn(),
+      updateLastLogin: jest.fn().mockResolvedValue(undefined),
     };
 
     mockPasswordService = {
@@ -53,26 +57,33 @@ describe('LocalStrategy', () => {
 
   describe('validate', () => {
     it('should throw UnauthorizedException when user is not found', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(null);
 
       await expect(strategy.validate('unknown@example.com', 'password123'))
         .rejects.toThrow(UnauthorizedException);
       
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('unknown@example.com');
+      expect(mockUserRepository.findByEmailWithPassword).toHaveBeenCalledWith('unknown@example.com');
     });
 
     it('should throw UnauthorizedException when user is deactivated', async () => {
       const inactiveUser = { ...mockUser, isActive: false };
-      mockUserRepository.findByEmail.mockResolvedValue(inactiveUser);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(inactiveUser);
 
       await expect(strategy.validate('test@example.com', 'password123'))
         .rejects.toThrow(new UnauthorizedException('Account is deactivated'));
     });
 
+    it('should throw UnauthorizedException when password is invalid', async () => {
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUser);
+      mockPasswordService.compare.mockResolvedValue(false);
+
+      await expect(strategy.validate('test@example.com', 'wrong-password'))
+        .rejects.toThrow(UnauthorizedException);
+    });
+
     it('should return validated user when credentials are valid', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
-      // Note: Password comparison is commented out in current implementation
-      // mockPasswordService.compare.mockResolvedValue(true);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUser);
+      mockPasswordService.compare.mockResolvedValue(true);
 
       const result = await strategy.validate('test@example.com', 'password123');
 
@@ -83,12 +94,13 @@ describe('LocalStrategy', () => {
         lastName: mockUser.lastName,
         role: mockUser.role,
         isActive: mockUser.isActive,
-        emailVerified: true, // Default value in current implementation
+        emailVerified: true,
       });
     });
 
     it('should not include sensitive data in validated user', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUser);
+      mockPasswordService.compare.mockResolvedValue(true);
 
       const result = await strategy.validate('test@example.com', 'password123');
 
@@ -99,17 +111,19 @@ describe('LocalStrategy', () => {
     });
 
     it('should use email as username field', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUser);
+      mockPasswordService.compare.mockResolvedValue(true);
 
       await strategy.validate('test@example.com', 'password123');
 
-      // Verify it's calling findByEmail (not findByUsername)
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('test@example.com');
+      // Verify it's calling findByEmailWithPassword
+      expect(mockUserRepository.findByEmailWithPassword).toHaveBeenCalledWith('test@example.com');
     });
 
     it('should handle different user roles correctly', async () => {
       const adminUser = { ...mockUser, role: UserRole.ADMIN };
-      mockUserRepository.findByEmail.mockResolvedValue(adminUser);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(adminUser);
+      mockPasswordService.compare.mockResolvedValue(true);
 
       const result = await strategy.validate('admin@example.com', 'password123');
 

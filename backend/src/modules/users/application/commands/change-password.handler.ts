@@ -1,9 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { ChangePasswordCommand } from './change-password.command';
+
+import { HashedPasswordVO } from '../../domain/value-objects/hashed-password.vo';
 import { USER_REPOSITORY } from '../ports/user.repository.port';
 import type { UserRepositoryPort } from '../ports/user.repository.port';
-import { HashedPasswordVO } from '../../domain/value-objects/hashed-password.vo';
+
+import { ChangePasswordCommand } from './change-password.command';
 
 /**
  * Error types for ChangePassword operation
@@ -68,7 +70,7 @@ export class ChangePasswordHandler {
       // Update user with new password
       const updatedUser = {
         ...user,
-        // passwordHash: newHashedPassword.hash, // Would be set on full user entity
+        passwordHash: newHashedPassword.hash,
         updatedAt: new Date(),
       };
 

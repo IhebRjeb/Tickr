@@ -1,4 +1,4 @@
-import { TokenService, TokenWithExpiry } from '../../../../../src/modules/users/infrastructure/services/token.service';
+import { TokenService } from '../../../../../src/modules/users/infrastructure/services/token.service';
 
 describe('TokenService', () => {
   let service: TokenService;
@@ -101,7 +101,6 @@ describe('TokenService', () => {
     });
 
     it('should handle fractional hours', () => {
-      const beforeCall = new Date();
       const result = service.generateTokenWithExpiry(0.5);
       
       // setHours with 0.5 doesn't work as expected - it adds 0 hours

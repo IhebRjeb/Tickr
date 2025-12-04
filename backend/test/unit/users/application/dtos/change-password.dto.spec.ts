@@ -1,5 +1,5 @@
-import { validate } from 'class-validator';
 import { ChangePasswordDto } from '@modules/users/application/dtos/change-password.dto';
+import { validate } from 'class-validator';
 
 describe('ChangePasswordDto', () => {
   describe('currentPassword validation', () => {

@@ -1,5 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { EmailVerifiedEventHandler } from '../../../../../src/modules/users/application/event-handlers/email-verified.handler';
 import { EmailVerifiedEvent } from '../../../../../src/modules/users/domain/events/email-verified.event';
 

@@ -1,7 +1,8 @@
 import { SetMetadata, createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { ROLES_KEY } from '../guards/roles.guard';
-import { IS_PUBLIC_KEY } from '../guards/jwt-auth.guard';
+
 import { REQUIRE_EMAIL_VERIFIED_KEY } from '../guards/email-verified.guard';
+import { IS_PUBLIC_KEY } from '../guards/jwt-auth.guard';
+import { ROLES_KEY } from '../guards/roles.guard';
 
 /**
  * Roles Decorator

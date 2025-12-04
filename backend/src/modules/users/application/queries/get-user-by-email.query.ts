@@ -1,4 +1,5 @@
 import { BaseQuery } from '@shared/application/interfaces/query.interface';
+
 import { UserDto } from '../dtos/user.dto';
 
 /**

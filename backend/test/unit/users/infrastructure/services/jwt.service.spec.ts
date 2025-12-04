@@ -1,18 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { UserRole } from '../../../../../src/modules/users/domain/value-objects/user-role.vo';
 import {
   JwtTokenService,
   JwtPayload,
   TokenType,
 } from '../../../../../src/modules/users/infrastructure/services/jwt.service';
-import { UserRole } from '../../../../../src/modules/users/domain/value-objects/user-role.vo';
 
 describe('JwtTokenService', () => {
   let service: JwtTokenService;
   let nestJwtService: jest.Mocked<NestJwtService>;
-  let configService: jest.Mocked<ConfigService>;
+  let _configService: jest.Mocked<ConfigService>;
 
   const mockPayload = {
     userId: '123e4567-e89b-12d3-a456-426614174000',
@@ -55,7 +56,7 @@ describe('JwtTokenService', () => {
 
     service = module.get<JwtTokenService>(JwtTokenService);
     nestJwtService = module.get(NestJwtService);
-    configService = module.get(ConfigService);
+    _configService = module.get(ConfigService);
   });
 
   describe('signAccessToken', () => {

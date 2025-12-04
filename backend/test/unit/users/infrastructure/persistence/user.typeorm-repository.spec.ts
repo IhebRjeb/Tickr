@@ -1,9 +1,10 @@
 import { Repository } from 'typeorm';
-import { UserTypeOrmRepository } from '../../../../../src/modules/users/infrastructure/persistence/repositories/user.typeorm-repository';
+
+import { UserEntityPort } from '../../../../../src/modules/users/application/ports/user.repository.port';
+import { UserRole } from '../../../../../src/modules/users/domain/value-objects/user-role.vo';
 import { UserEntity } from '../../../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
 import { UserPersistenceMapper } from '../../../../../src/modules/users/infrastructure/persistence/mappers/user-persistence.mapper';
-import { UserRole } from '../../../../../src/modules/users/domain/value-objects/user-role.vo';
-import { UserEntityPort } from '../../../../../src/modules/users/application/ports/user.repository.port';
+import { UserTypeOrmRepository } from '../../../../../src/modules/users/infrastructure/persistence/repositories/user.typeorm-repository';
 
 describe('UserTypeOrmRepository', () => {
   let repository: UserTypeOrmRepository;

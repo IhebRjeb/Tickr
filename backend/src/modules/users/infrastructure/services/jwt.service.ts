@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
+
 import { UserRole } from '../../domain/value-objects/user-role.vo';
 
 /**
@@ -154,7 +155,7 @@ export class JwtTokenService {
       }
 
       return payload;
-    } catch (error) {
+    } catch {
       // Don't leak error details - generic message
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -180,7 +181,7 @@ export class JwtTokenService {
       }
 
       return payload;
-    } catch (error) {
+    } catch {
       // Don't leak error details - generic message
       throw new UnauthorizedException('Invalid or expired token');
     }

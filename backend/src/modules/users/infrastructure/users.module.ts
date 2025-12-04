@@ -1,57 +1,43 @@
 import { Module, Provider } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-
-// Domain Events - Note: Export removed as index.ts was removed for architecture compliance
-// Import domain events directly where needed
-
-// Persistence Layer
-import { UserEntity } from './persistence/entities/user.orm-entity';
-import { UserTypeOrmRepository } from './persistence/repositories/user.typeorm-repository';
-import { UserPersistenceMapper } from './persistence/mappers/user-persistence.mapper';
-
-// Application Layer - Ports
-import { USER_REPOSITORY } from '../application/ports/user.repository.port';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Application Layer - Command Handlers
 import { ChangePasswordHandler } from '../application/commands/change-password.handler';
-import { UpdateProfileHandler } from '../application/commands/update-profile.handler';
 import { DeactivateUserHandler } from '../application/commands/deactivate-user.handler';
-
-// Application Layer - Query Handlers
-import { GetUserByIdHandler } from '../application/queries/get-user-by-id.handler';
-import { GetUserByEmailHandler } from '../application/queries/get-user-by-email.handler';
-import { GetUsersByRoleHandler } from '../application/queries/get-users-by-role.handler';
-
+import { UpdateProfileHandler } from '../application/commands/update-profile.handler';
 // Application Layer - Event Handlers
-import { UserRegisteredEventHandler } from '../application/event-handlers/user-registered.handler';
 import { EmailVerifiedEventHandler } from '../application/event-handlers/email-verified.handler';
 import { PasswordResetRequestedEventHandler } from '../application/event-handlers/password-reset-requested.handler';
-
+import { UserRegisteredEventHandler } from '../application/event-handlers/user-registered.handler';
 // Application Layer - Mappers
 import { UserMapper } from '../application/mappers/user.mapper';
+import { USER_REPOSITORY } from '../application/ports/user.repository.port';
+import { GetUserByEmailHandler } from '../application/queries/get-user-by-email.handler';
+import { GetUserByIdHandler } from '../application/queries/get-user-by-id.handler';
+import { GetUsersByRoleHandler } from '../application/queries/get-users-by-role.handler';
 
+import { AuthController } from './controllers/auth.controller';
+import { UsersController } from './controllers/users.controller';
+import { EmailVerifiedGuard } from './guards/email-verified.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { UserEntity } from './persistence/entities/user.orm-entity';
+import { VerificationTokenEntity } from './persistence/entities/verification-token.orm-entity';
+import { UserPersistenceMapper } from './persistence/mappers/user-persistence.mapper';
+import { UserTypeOrmRepository } from './persistence/repositories/user.typeorm-repository';
+import { VerificationTokenRepository } from './persistence/repositories/verification-token.repository';
 // Infrastructure Layer - Services
 import { JwtTokenService } from './services/jwt.service';
 import { PasswordService } from './services/password.service';
 import { TokenService } from './services/token.service';
-
 // Infrastructure Layer - Strategies
-import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-
-// Infrastructure Layer - Guards
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
-import { EmailVerifiedGuard } from './guards/email-verified.guard';
-
-// Infrastructure Layer - Controllers
-import { AuthController } from './controllers/auth.controller';
-import { UsersController } from './controllers/users.controller';
+import { LocalStrategy } from './strategies/local.strategy';
 
 /**
  * Command Handlers for CQRS
@@ -122,7 +108,7 @@ const repositoryProvider: Provider = {
 @Module({
   imports: [
     // TypeORM for persistence
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, VerificationTokenEntity]),
 
     // CQRS for command/query separation
     CqrsModule,
@@ -171,6 +157,7 @@ const repositoryProvider: Provider = {
 
     // Repository
     repositoryProvider,
+    VerificationTokenRepository,
 
     // Services
     JwtTokenService,

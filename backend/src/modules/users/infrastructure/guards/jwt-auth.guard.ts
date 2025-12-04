@@ -3,8 +3,8 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
 export const IS_PUBLIC_KEY = 'isPublic';
@@ -71,10 +71,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @returns User object
    * @throws UnauthorizedException if authentication fails
    */
-  handleRequest<TUser = any>(
-    err: any,
+  handleRequest<TUser = unknown>(
+    err: Error | null,
     user: TUser,
-    info: any,
+    _info: unknown,
   ): TUser {
     // Generic error message to avoid information leakage
     if (err || !user) {

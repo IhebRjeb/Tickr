@@ -1,4 +1,5 @@
 import { ValueObject } from '@shared/domain/value-object.base';
+
 import { InvalidPhoneFormatException } from '../exceptions/invalid-phone.exception';
 
 interface PhoneProps {
@@ -71,7 +72,7 @@ export class PhoneVO extends ValueObject<PhoneProps> {
     }
 
     // Clean input: remove spaces, dashes, parentheses
-    let cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    let cleaned = phone.replace(/[\s\-()]/g, '');
 
     // Handle local format (without country code) - must start with 2-9
     if (/^[2-9][0-9]{7}$/.test(cleaned)) {

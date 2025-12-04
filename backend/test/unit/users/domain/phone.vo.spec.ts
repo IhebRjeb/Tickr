@@ -1,5 +1,5 @@
-import { PhoneVO } from '@modules/users/domain/value-objects/phone.vo';
 import { InvalidPhoneFormatException } from '@modules/users/domain/exceptions/invalid-phone.exception';
+import { PhoneVO } from '@modules/users/domain/value-objects/phone.vo';
 
 describe('PhoneVO Value Object', () => {
   describe('create', () => {

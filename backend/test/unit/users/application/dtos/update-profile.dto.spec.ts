@@ -1,5 +1,5 @@
-import { validate } from 'class-validator';
 import { UpdateProfileDto } from '@modules/users/application/dtos/update-profile.dto';
+import { validate } from 'class-validator';
 
 describe('UpdateProfileDto', () => {
   describe('firstName validation', () => {

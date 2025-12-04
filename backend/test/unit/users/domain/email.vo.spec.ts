@@ -1,5 +1,5 @@
-import { EmailVO } from '@modules/users/domain/value-objects/email.vo';
 import { InvalidEmailException } from '@modules/users/domain/exceptions/invalid-email.exception';
+import { EmailVO } from '@modules/users/domain/value-objects/email.vo';
 
 describe('EmailVO Value Object', () => {
   describe('create', () => {

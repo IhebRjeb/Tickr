@@ -1,4 +1,5 @@
 import { ValueObject } from '@shared/domain/value-object.base';
+
 import { InvalidEmailException } from '../exceptions/invalid-email.exception';
 
 interface EmailProps {

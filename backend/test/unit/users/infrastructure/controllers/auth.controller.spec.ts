@@ -1,15 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
+import { HashedPasswordVO } from '@modules/users/domain/value-objects/hashed-password.vo';
+import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
+import { AuthController } from '@modules/users/infrastructure/controllers/auth.controller';
+import { VerificationTokenRepository } from '@modules/users/infrastructure/persistence/repositories/verification-token.repository';
+import { JwtTokenService } from '@modules/users/infrastructure/services/jwt.service';
+import { PasswordService } from '@modules/users/infrastructure/services/password.service';
 import {
   UnauthorizedException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { AuthController } from '@modules/users/infrastructure/controllers/auth.controller';
-import { JwtTokenService } from '@modules/users/infrastructure/services/jwt.service';
-import { PasswordService } from '@modules/users/infrastructure/services/password.service';
-import { USER_REPOSITORY } from '@modules/users/application/ports/user.repository.port';
-import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
-import { HashedPasswordVO } from '@modules/users/domain/value-objects/hashed-password.vo';
+import { Test, TestingModule } from '@nestjs/testing';
 
 // Mock crypto.randomUUID
 const mockUUID = '123e4567-e89b-12d3-a456-426614174000';
@@ -22,6 +23,7 @@ describe('AuthController', () => {
   let mockJwtService: any;
   let mockPasswordService: any;
   let mockUserRepository: any;
+  let mockVerificationTokenRepository: any;
 
   const mockUser = {
     id: mockUUID,
@@ -64,12 +66,21 @@ describe('AuthController', () => {
       updateLastLogin: jest.fn(),
     };
 
+    mockVerificationTokenRepository = {
+      findValidToken: jest.fn(),
+      markAsUsed: jest.fn(),
+      createEmailVerificationToken: jest.fn(),
+      createPasswordResetToken: jest.fn(),
+      invalidateUserTokens: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: JwtTokenService, useValue: mockJwtService },
         { provide: PasswordService, useValue: mockPasswordService },
         { provide: USER_REPOSITORY, useValue: mockUserRepository },
+        { provide: VerificationTokenRepository, useValue: mockVerificationTokenRepository },
       ],
     }).compile();
 

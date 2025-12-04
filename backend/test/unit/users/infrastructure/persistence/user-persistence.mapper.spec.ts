@@ -1,6 +1,6 @@
-import { UserPersistenceMapper } from '../../../../../src/modules/users/infrastructure/persistence/mappers/user-persistence.mapper';
-import { UserEntity } from '../../../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
 import { UserRole } from '../../../../../src/modules/users/domain/value-objects/user-role.vo';
+import { UserEntity } from '../../../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
+import { UserPersistenceMapper } from '../../../../../src/modules/users/infrastructure/persistence/mappers/user-persistence.mapper';
 
 describe('UserPersistenceMapper', () => {
   let mapper: UserPersistenceMapper;

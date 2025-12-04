@@ -1,5 +1,5 @@
-import { ChangePasswordHandler } from '@modules/users/application/commands/change-password.handler';
 import { ChangePasswordCommand } from '@modules/users/application/commands/change-password.command';
+import { ChangePasswordHandler } from '@modules/users/application/commands/change-password.handler';
 import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 

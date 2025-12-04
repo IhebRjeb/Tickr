@@ -1,8 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { DeactivateUserCommand } from './deactivate-user.command';
+
 import { USER_REPOSITORY } from '../ports/user.repository.port';
 import type { UserRepositoryPort } from '../ports/user.repository.port';
+
+import { DeactivateUserCommand } from './deactivate-user.command';
 
 /**
  * Error types for DeactivateUser operation

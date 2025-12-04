@@ -22,26 +22,26 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { RolesGuard } from '../guards/roles.guard';
-import { Roles, CurrentUser } from '../decorators/auth.decorators';
+
+import { ChangePasswordCommand } from '../../application/commands/change-password.command';
+import { ChangePasswordHandler } from '../../application/commands/change-password.handler';
+import { DeactivateUserCommand } from '../../application/commands/deactivate-user.command';
+import { DeactivateUserHandler } from '../../application/commands/deactivate-user.handler';
+import { UpdateProfileCommand } from '../../application/commands/update-profile.command';
+import { UpdateProfileHandler } from '../../application/commands/update-profile.handler';
+import { ChangePasswordDto } from '../../application/dtos/change-password.dto';
+import { UpdateProfileDto } from '../../application/dtos/update-profile.dto';
+import { UserProfileDto } from '../../application/dtos/user-profile.dto';
 import { USER_REPOSITORY } from '../../application/ports/user.repository.port';
 import type { UserRepositoryPort, UserEntityPort } from '../../application/ports/user.repository.port';
-import { ChangePasswordHandler } from '../../application/commands/change-password.handler';
-import { ChangePasswordCommand } from '../../application/commands/change-password.command';
-import { UpdateProfileHandler } from '../../application/commands/update-profile.handler';
-import { UpdateProfileCommand } from '../../application/commands/update-profile.command';
-import { DeactivateUserHandler } from '../../application/commands/deactivate-user.handler';
-import { DeactivateUserCommand } from '../../application/commands/deactivate-user.command';
 import { GetUserByIdHandler } from '../../application/queries/get-user-by-id.handler';
 import { GetUserByIdQuery } from '../../application/queries/get-user-by-id.query';
 import { GetUsersByRoleHandler } from '../../application/queries/get-users-by-role.handler';
 import { GetUsersByRoleQuery } from '../../application/queries/get-users-by-role.query';
-import { UserProfileDto } from '../../application/dtos/user-profile.dto';
-import { UpdateProfileDto } from '../../application/dtos/update-profile.dto';
-import { ChangePasswordDto } from '../../application/dtos/change-password.dto';
 import { UserRole } from '../../domain/value-objects/user-role.vo';
-import type { JwtUser } from '../strategies/jwt.strategy';
+import { Roles, CurrentUser } from '../decorators/auth.decorators';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 
 /**
  * Pagination query parameters

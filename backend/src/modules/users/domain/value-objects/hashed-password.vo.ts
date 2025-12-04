@@ -1,6 +1,6 @@
+import { ValueObject } from '@shared/domain/value-object.base';
 import * as bcrypt from 'bcrypt';
 
-import { ValueObject } from '@shared/domain/value-object.base';
 import { WeakPasswordException } from '../exceptions/weak-password.exception';
 
 interface HashedPasswordProps {
@@ -39,7 +39,7 @@ const DEFAULT_POLICY: PasswordPolicy = {
  */
 export class HashedPasswordVO extends ValueObject<HashedPasswordProps> {
   private static readonly SALT_ROUNDS = 10;
-  private static readonly SPECIAL_CHARS = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+  private static readonly SPECIAL_CHARS = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
 
   /**
    * Get the hashed password value

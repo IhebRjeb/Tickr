@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
-import { PasswordService } from '../services/password.service';
+
 import { USER_REPOSITORY } from '../../application/ports/user.repository.port';
 import type { UserRepositoryPort } from '../../application/ports/user.repository.port';
+import { PasswordService } from '../services/password.service';
 
 /**
  * Validated user data returned by LocalStrategy
@@ -59,8 +60,8 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
    * @throws UnauthorizedException if credentials are invalid
    */
   async validate(email: string, password: string): Promise<ValidatedUser> {
-    // Find user by email
-    const user = await this.userRepository.findByEmail(email);
+    // Find user by email with password hash
+    const user = await this.userRepository.findByEmailWithPassword(email);
 
     if (!user) {
       // Don't reveal whether user exists
@@ -72,15 +73,25 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    // Note: In full implementation, user entity would have passwordHash field
-    // For now, we'll need to extend the repository or use a separate auth repository
-    // This is a placeholder that shows the pattern
+    // Check if password hash exists
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
     // Verify password
-    // const isPasswordValid = await this.passwordService.compare(password, user.passwordHash);
-    // if (!isPasswordValid) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
+    const isPasswordValid = await this.passwordService.compare(
+      password,
+      user.passwordHash,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Update last login timestamp (fire and forget)
+    this.userRepository.updateLastLogin(user.id).catch(() => {
+      // Silently ignore errors - login should not fail if this fails
+    });
 
     // Return validated user (without sensitive data)
     return {
@@ -90,7 +101,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       lastName: user.lastName,
       role: user.role,
       isActive: user.isActive,
-      emailVerified: true, // TODO: Get from user entity when available
+      emailVerified: user.emailVerified,
     };
   }
 }

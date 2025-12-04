@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+
 import { HashedPasswordVO } from '../../domain/value-objects/hashed-password.vo';
 
 /**

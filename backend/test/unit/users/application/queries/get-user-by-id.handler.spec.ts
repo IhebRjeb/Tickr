@@ -1,6 +1,6 @@
+import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { GetUserByIdHandler } from '@modules/users/application/queries/get-user-by-id.handler';
 import { GetUserByIdQuery } from '@modules/users/application/queries/get-user-by-id.query';
-import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 
 describe('GetUserByIdHandler', () => {

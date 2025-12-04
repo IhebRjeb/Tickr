@@ -1,8 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
-import { PasswordService } from '../../../../../src/modules/users/infrastructure/services/password.service';
+
 import { HashedPasswordVO } from '../../../../../src/modules/users/domain/value-objects/hashed-password.vo';
+import { PasswordService } from '../../../../../src/modules/users/infrastructure/services/password.service';
 
 // Mock bcrypt
 jest.mock('bcrypt', () => ({
@@ -12,7 +13,7 @@ jest.mock('bcrypt', () => ({
 
 describe('PasswordService', () => {
   let service: PasswordService;
-  let configService: jest.Mocked<ConfigService>;
+  let _configService: jest.Mocked<ConfigService>;
 
   const mockConfigService = {
     get: jest.fn(),
@@ -33,7 +34,7 @@ describe('PasswordService', () => {
     }).compile();
 
     service = module.get<PasswordService>(PasswordService);
-    configService = module.get(ConfigService);
+    _configService = module.get(ConfigService);
   });
 
   describe('constructor', () => {

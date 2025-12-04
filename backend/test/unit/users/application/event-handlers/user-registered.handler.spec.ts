@@ -1,5 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { UserRegisteredEventHandler } from '../../../../../src/modules/users/application/event-handlers/user-registered.handler';
 import { UserRegisteredEvent } from '../../../../../src/modules/users/domain/events/user-registered.event';
 

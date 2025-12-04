@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BaseTypeOrmRepository } from '@shared/infrastructure/database/base-typeorm.repository';
 import { PaginatedResult, PaginationOptions } from '@shared/application/interfaces/repository.interface';
-import { UserEntity } from '../entities/user.orm-entity';
-import { UserEntityPort, UserRepositoryPort } from '../../../application/ports/user.repository.port';
-import { UserPersistenceMapper } from '../mappers/user-persistence.mapper';
+import { BaseTypeOrmRepository } from '@shared/infrastructure/database/base-typeorm.repository';
+import { Repository } from 'typeorm';
+
+import { UserEntityPort, UserRepositoryPort, UserWithPasswordPort } from '../../../application/ports/user.repository.port';
 import { UserRole } from '../../../domain/value-objects/user-role.vo';
+import { UserEntity } from '../entities/user.orm-entity';
+import { UserPersistenceMapper } from '../mappers/user-persistence.mapper';
 
 /**
  * User TypeORM Repository
@@ -35,6 +36,22 @@ export class UserTypeOrmRepository
       where: { email: email.toLowerCase() },
     });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  /**
+   * Find user by email with password hash (for authentication)
+   */
+  async findByEmailWithPassword(email: string): Promise<UserWithPasswordPort | null> {
+    const entity = await this.repository.findOne({
+      where: { email: email.toLowerCase() },
+    });
+    if (!entity) return null;
+
+    return {
+      ...this.toDomain(entity),
+      passwordHash: entity.passwordHash,
+      emailVerified: entity.emailVerified,
+    };
   }
 
   /**
@@ -131,6 +148,25 @@ export class UserTypeOrmRepository
   }
 
   /**
+   * Update user's email verified status
+   */
+  async updateEmailVerified(userId: string, verified: boolean): Promise<void> {
+    await this.repository.update(userId, {
+      emailVerified: verified,
+    });
+  }
+
+  /**
+   * Update user's password hash
+   */
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.repository.update(userId, {
+      passwordHash,
+      updatedAt: new Date(),
+    });
+  }
+
+  /**
    * Find user by phone number
    */
   async findByPhone(phone: string): Promise<UserEntityPort | null> {
@@ -172,8 +208,9 @@ export class UserTypeOrmRepository
     entity.lastLoginAt = domain.lastLoginAt;
     entity.createdAt = domain.createdAt;
     entity.updatedAt = domain.updatedAt;
-    // Note: passwordHash, isOrganizer, emailVerified, phoneVerified
-    // are not part of UserEntityPort and handled separately
+    if (domain.passwordHash) {
+      entity.passwordHash = domain.passwordHash;
+    }
     return entity;
   }
 }

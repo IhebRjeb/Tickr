@@ -1,10 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PaginatedResult } from '@shared/application/interfaces/repository.interface';
-import { GetUsersByRoleQuery } from './get-users-by-role.query';
-import { USER_REPOSITORY } from '../ports/user.repository.port';
-import type { UserRepositoryPort } from '../ports/user.repository.port';
+
 import { UserDto } from '../dtos/user.dto';
 import { UserMapper } from '../mappers/user.mapper';
+import { USER_REPOSITORY } from '../ports/user.repository.port';
+import type { UserRepositoryPort } from '../ports/user.repository.port';
+
+import { GetUsersByRoleQuery } from './get-users-by-role.query';
 
 /**
  * Handler for GetUsersByRoleQuery

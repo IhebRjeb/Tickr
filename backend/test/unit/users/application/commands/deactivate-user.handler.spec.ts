@@ -1,5 +1,5 @@
-import { DeactivateUserHandler } from '@modules/users/application/commands/deactivate-user.handler';
 import { DeactivateUserCommand } from '@modules/users/application/commands/deactivate-user.command';
+import { DeactivateUserHandler } from '@modules/users/application/commands/deactivate-user.handler';
 import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 

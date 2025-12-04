@@ -1,6 +1,6 @@
+import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { GetUserByEmailHandler } from '@modules/users/application/queries/get-user-by-email.handler';
 import { GetUserByEmailQuery } from '@modules/users/application/queries/get-user-by-email.query';
-import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 
 describe('GetUserByEmailHandler', () => {

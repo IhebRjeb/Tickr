@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+
 import { UserRole } from '../../../domain/value-objects/user-role.vo';
 
 /**

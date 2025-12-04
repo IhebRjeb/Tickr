@@ -1,6 +1,6 @@
+import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { GetUsersByRoleHandler } from '@modules/users/application/queries/get-users-by-role.handler';
 import { GetUsersByRoleQuery } from '@modules/users/application/queries/get-users-by-role.query';
-import { UserRepositoryPort, UserEntityPort } from '@modules/users/application/ports/user.repository.port';
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 import { PaginatedResult } from '@shared/application/interfaces/repository.interface';
 

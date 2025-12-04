@@ -1,10 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { UpdateProfileCommand } from './update-profile.command';
-import { USER_REPOSITORY } from '../ports/user.repository.port';
-import type { UserRepositoryPort } from '../ports/user.repository.port';
+
 import { UserDto } from '../dtos/user.dto';
 import { UserMapper } from '../mappers/user.mapper';
+import { USER_REPOSITORY } from '../ports/user.repository.port';
+import type { UserRepositoryPort } from '../ports/user.repository.port';
+
+import { UpdateProfileCommand } from './update-profile.command';
 
 /**
  * Error types for UpdateProfile operation

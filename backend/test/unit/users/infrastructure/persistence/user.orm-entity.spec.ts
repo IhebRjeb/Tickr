@@ -1,5 +1,5 @@
-import { UserEntity } from '../../../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
 import { UserRole } from '../../../../../src/modules/users/domain/value-objects/user-role.vo';
+import { UserEntity } from '../../../../../src/modules/users/infrastructure/persistence/entities/user.orm-entity';
 
 describe('UserEntity', () => {
   describe('entity instantiation', () => {
