@@ -16,7 +16,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     return {
       type: 'postgres',
       url: databaseUrl,
-      entities: ['src/modules/**/infrastructure/persistence/entities/*.entity.ts'],
+      entities: ['src/modules/**/infrastructure/persistence/entities/*.orm-entity.ts'],
       migrations: ['src/shared/infrastructure/database/migrations/*.ts'],
       synchronize: false,
       logging: configService.get('NODE_ENV') === 'development',
@@ -32,7 +32,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     username: configService.get('DB_USERNAME', 'postgres'),
     password: configService.get('DB_PASSWORD', 'postgres'),
     database: configService.get('DB_DATABASE', 'tickr'),
-    entities: ['src/modules/**/infrastructure/persistence/entities/*.entity.ts'],
+    entities: ['src/modules/**/infrastructure/persistence/entities/*.orm-entity.ts'],
     migrations: ['src/shared/infrastructure/database/migrations/*.ts'],
     synchronize: false,
     logging: configService.get('NODE_ENV') === 'development',

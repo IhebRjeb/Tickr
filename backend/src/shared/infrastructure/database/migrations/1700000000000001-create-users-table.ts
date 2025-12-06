@@ -6,8 +6,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Creates the users.users table with all required columns and indexes.
  * This is the foundational migration for the Users bounded context.
  */
-export class CreateUsersTable1700000001 implements MigrationInterface {
-  name = 'CreateUsersTable1700000001';
+export class CreateUsersTable1700000000000001 implements MigrationInterface {
+  name = 'CreateUsersTable1700000000000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create users schema if it doesn't exist

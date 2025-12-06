@@ -1,13 +1,13 @@
-import { CreateUsersTable1700000001 } from '../../../../../src/shared/infrastructure/database/migrations/1700000001-create-users-table';
+import { CreateUsersTable1700000000000001 } from '../../../../../src/shared/infrastructure/database/migrations/1700000000000001-create-users-table';
 
-describe('CreateUsersTable1700000001 Migration', () => {
-  let migration: CreateUsersTable1700000001;
+describe('CreateUsersTable1700000000000001 Migration', () => {
+  let migration: CreateUsersTable1700000000000001;
   let mockQueryRunner: {
     query: jest.Mock;
   };
 
   beforeEach(() => {
-    migration = new CreateUsersTable1700000001();
+    migration = new CreateUsersTable1700000000000001();
     mockQueryRunner = {
       query: jest.fn().mockResolvedValue(undefined),
     };
@@ -15,7 +15,7 @@ describe('CreateUsersTable1700000001 Migration', () => {
 
   describe('migration metadata', () => {
     it('should have correct name', () => {
-      expect(migration.name).toBe('CreateUsersTable1700000001');
+      expect(migration.name).toBe('CreateUsersTable1700000000000001');
     });
   });
 
