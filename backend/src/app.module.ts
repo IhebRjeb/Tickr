@@ -9,6 +9,7 @@ import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import redisConfig from './config/redis.config';
+import { UsersModule } from './modules/users/infrastructure/users.module';
 import { CacheModule } from './shared/infrastructure/cache/cache.module';
 import { AllExceptionsFilter } from './shared/infrastructure/common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './shared/infrastructure/common/interceptors/logging.interceptor';
@@ -31,11 +32,9 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
         // Database
         DB_HOST: Joi.string().default('localhost'),
         DB_PORT: Joi.number().default(5432),
-        DB_USERNAME: Joi.string().required(),
-        DB_PASSWORD: Joi.string().required(),
-        DB_DATABASE: Joi.string().required(),
-        DB_POOL_MIN: Joi.number().default(5),
-        DB_POOL_MAX: Joi.number().default(20),
+        DB_USERNAME: Joi.string().default('postgres'),
+        DB_PASSWORD: Joi.string().default('postgres'),
+        DB_DATABASE: Joi.string().default('tickr'),
         
         // Redis
         REDIS_HOST: Joi.string().default('localhost'),
@@ -58,7 +57,8 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
     CacheModule,
     EventBusModule,
 
-    // Modules will be added here
+    // Feature Modules
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

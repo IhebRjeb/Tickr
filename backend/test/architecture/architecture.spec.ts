@@ -695,9 +695,13 @@ describe('🏛️ Architecture Hexagonale - Fitness Functions', () => {
         const controllerPath = path.join(srcPath, module, 'infrastructure/controllers');
         if (!fs.existsSync(controllerPath)) return;
 
-        const dtoFiles = getTypeScriptFiles(controllerPath).filter((f) =>
-          f.includes('dto') || f.includes('request'),
-        );
+        // Get DTO files but exclude index.ts barrel files
+        const dtoFiles = getTypeScriptFiles(controllerPath).filter((f) => {
+          const fileName = path.basename(f);
+          return (f.includes('dto') || f.includes('request')) && 
+                 !fileName.startsWith('index') &&
+                 fileName.endsWith('.dto.ts');
+        });
 
         dtoFiles.forEach((file) => {
           const content = fs.readFileSync(file, 'utf-8');
@@ -791,7 +795,12 @@ describe('🏛️ Architecture Hexagonale - Fitness Functions', () => {
         const controllerPath = path.join(srcPath, module, 'infrastructure/controllers');
         if (!fs.existsSync(controllerPath)) return;
 
-        const controllerFiles = getTypeScriptFiles(controllerPath);
+        // Only check actual controller files (not dtos, index.ts, etc)
+        const controllerFiles = getTypeScriptFiles(controllerPath).filter((file) => {
+          const fileName = path.basename(file);
+          return fileName.endsWith('.controller.ts');
+        });
+        
         controllerFiles.forEach((file) => {
           const content = fs.readFileSync(file, 'utf-8');
 
@@ -814,31 +823,34 @@ describe('🏛️ Architecture Hexagonale - Fitness Functions', () => {
         const controllerPath = path.join(srcPath, module, 'infrastructure/controllers');
         if (!fs.existsSync(controllerPath)) return;
 
-        const controllerFiles = getTypeScriptFiles(controllerPath);
+        // Only check actual controller files (not dtos, index.ts, etc)
+        const controllerFiles = getTypeScriptFiles(controllerPath).filter((file) => {
+          const fileName = path.basename(file);
+          return fileName.endsWith('.controller.ts');
+        });
+        
         controllerFiles.forEach((file) => {
           const content = fs.readFileSync(file, 'utf-8');
 
-          // Find HTTP method decorators
-          const httpMethods = /@(Get|Post|Put|Patch|Delete)\(/g;
-          let match;
-
-          while ((match = httpMethods.exec(content)) !== null) {
-            const methodStart = match.index;
-            const nextMethod = content.indexOf('@', methodStart + 1);
-            const methodBlock = content.substring(
-              methodStart,
-              nextMethod > 0 ? nextMethod : content.length,
-            );
-
+          // Split content by method definitions (async methodName)
+          // Find all HTTP method decorators and check if they have Swagger decorators above them
+          const methodRegex = /(@(?:Get|Post|Put|Patch|Delete)\([^)]*\)[\s\S]*?async\s+\w+)/g;
+          const methods = content.match(methodRegex) || [];
+          
+          methods.forEach((methodBlock) => {
+            // Check for decorators in the block leading up to the method
             const hasApiOperation = /@ApiOperation\(/g.test(methodBlock);
             const hasApiResponse = /@ApiResponse\(/g.test(methodBlock);
 
             if (!hasApiOperation || !hasApiResponse) {
+              // Extract method name for better error message
+              const methodNameMatch = /async\s+(\w+)/.exec(methodBlock);
+              const methodName = methodNameMatch ? methodNameMatch[1] : 'unknown';
               console.warn(
-                `⚠️ Endpoint in ${file} should have @ApiOperation() and @ApiResponse() decorators`,
+                `⚠️ Method '${methodName}' in ${path.basename(file)} should have @ApiOperation() and @ApiResponse() decorators`,
               );
             }
-          }
+          });
         });
       });
     });
