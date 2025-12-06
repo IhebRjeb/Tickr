@@ -2,6 +2,10 @@ import { Module, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+// Import all entities explicitly for reliability
+import { UserEntity } from '../../../modules/users/infrastructure/persistence/entities/user.orm-entity';
+import { VerificationTokenEntity } from '../../../modules/users/infrastructure/persistence/entities/verification-token.orm-entity';
+
 @Global()
 @Module({
   imports: [
@@ -15,12 +19,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'tickr'),
-        entities: [__dirname + '/../../modules/**/infrastructure/persistence/entities/*.entity{.ts,.js}'],
+        entities: [UserEntity, VerificationTokenEntity],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         logging: configService.get<string>('NODE_ENV') === 'development',
         migrationsTableName: 'migrations',
-        // Connection pooling
         extra: {
           min: configService.get<number>('DB_POOL_MIN', 5),
           max: configService.get<number>('DB_POOL_MAX', 20),
