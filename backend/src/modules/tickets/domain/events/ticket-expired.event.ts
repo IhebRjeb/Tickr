@@ -13,4 +13,14 @@ export class TicketExpiredEvent extends DomainEvent {
   ) {
     super();
   }
+
+  protected getData(): Record<string, unknown> {
+    return {
+      ticketId: this.ticketId,
+      eventId: this.eventId,
+      ticketTypeId: this.ticketTypeId,
+      userId: this.userId,
+      reservedUntil: this.reservedUntil.toISOString(),
+    };
+  }
 }

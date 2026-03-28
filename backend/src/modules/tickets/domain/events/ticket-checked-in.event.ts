@@ -13,4 +13,14 @@ export class TicketCheckedInEvent extends DomainEvent {
   ) {
     super();
   }
+
+  protected getData(): Record<string, unknown> {
+    return {
+      ticketId: this.ticketId,
+      eventId: this.eventId,
+      staffId: this.staffId,
+      locationGate: this.locationGate,
+      checkedInAt: this.checkedInAt.toISOString(),
+    };
+  }
 }

@@ -12,4 +12,13 @@ export class DuplicateCheckInAttemptedEvent extends DomainEvent {
   ) {
     super();
   }
+
+  protected getData(): Record<string, unknown> {
+    return {
+      ticketId: this.ticketId,
+      eventId: this.eventId,
+      staffId: this.staffId,
+      originalCheckedInAt: this.originalCheckedInAt.toISOString(),
+    };
+  }
 }

@@ -16,4 +16,17 @@ export class TicketReservedEvent extends DomainEvent {
   ) {
     super();
   }
+
+  protected getData(): Record<string, unknown> {
+    return {
+      ticketId: this.ticketId,
+      eventId: this.eventId,
+      ticketTypeId: this.ticketTypeId,
+      userId: this.userId,
+      qrCode: this.qrCode,
+      priceAmount: this.priceAmount,
+      priceCurrency: this.priceCurrency,
+      reservedUntil: this.reservedUntil.toISOString(),
+    };
+  }
 }

@@ -19,11 +19,15 @@ export * from './events/ticket-expired.event';
 export * from './events/duplicate-check-in-attempted.event';
 
 // Exceptions
-export * from './exceptions/invalid-ticket.exception';
+export * from './exceptions/check-in-outside-window.exception';
 export * from './exceptions/invalid-check-in.exception';
 export * from './exceptions/invalid-qr-code.exception';
-export * from './exceptions/ticket-not-confirmable.exception';
+export * from './exceptions/invalid-ticket.exception';
+export * from './exceptions/max-transfers-reached.exception';
+export * from './exceptions/ticket-already-checked-in.exception';
+export * from './exceptions/ticket-expired.exception';
 export * from './exceptions/ticket-not-cancellable.exception';
 export * from './exceptions/ticket-not-checkable-in.exception';
-export * from './exceptions/ticket-not-transferable.exception';
+export * from './exceptions/ticket-not-confirmable.exception';
 export * from './exceptions/ticket-not-expirable.exception';
+export * from './exceptions/ticket-not-transferable.exception';
