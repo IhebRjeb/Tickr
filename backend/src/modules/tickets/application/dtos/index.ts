@@ -5,6 +5,7 @@
 // ============================================
 export { HolderInfoDto, ReserveTicketsDto, ReserveTicketsResponseDto } from './reserve-tickets.dto';
 export { ConfirmTicketsDto, ConfirmTicketsResponseDto } from './confirm-tickets.dto';
+export { CancelTicketsDto } from './cancel-tickets.dto';
 export { CheckInDto, CheckInResponseDto } from './check-in.dto';
 export { TransferTicketDto, TransferTicketResponseDto } from './transfer-ticket.dto';
 

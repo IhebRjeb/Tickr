@@ -7,6 +7,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Redirect,
   UseGuards,
   ParseUUIDPipe,
   BadRequestException,
@@ -51,6 +52,7 @@ import {
   ReserveTicketsResponseDto,
   ConfirmTicketsDto,
   ConfirmTicketsResponseDto,
+  CancelTicketsDto,
   CheckInDto,
   CheckInResponseDto,
   TransferTicketDto,
@@ -285,7 +287,7 @@ export class TicketsController {
    * @route GET /api/tickets/:id/pdf
    */
   @Get(':id/pdf')
-  @HttpCode(HttpStatus.OK)
+  @Redirect()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Download ticket PDF' })
   @ApiParam({ name: 'id', description: 'Ticket UUID' })
@@ -296,7 +298,7 @@ export class TicketsController {
   async getTicketPdf(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: RequestUser,
-  ): Promise<{ url: string }> {
+  ): Promise<{ url: string; statusCode: number }> {
     // First verify access
     const query = new GetTicketByIdQuery(id, user.userId);
     const result = await this.getTicketByIdHandler.execute(query);
@@ -322,11 +324,10 @@ export class TicketsController {
       throw new NotFoundException('PDF is not available for this ticket');
     }
 
-    // Generate a fresh signed URL
-    const s3Key = `tickets/${id}.pdf`;
-    const signedUrl = await this.s3Storage.generateSignedUrl(s3Key);
+    // pdfUrl stores the S3 key — generate a fresh signed URL for download
+    const signedUrl = await this.s3Storage.generateSignedUrl(ticket.pdfUrl);
 
-    return { url: signedUrl };
+    return { url: signedUrl, statusCode: HttpStatus.FOUND };
   }
 
   // ============================================
@@ -400,22 +401,14 @@ export class TicketsController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel tickets' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        ticketIds: { type: 'array', items: { type: 'string', format: 'uuid' } },
-        reason: { type: 'string' },
-      },
-      required: ['ticketIds', 'reason'],
-    },
-  })
+  @ApiBody({ type: CancelTicketsDto })
   @ApiResponse({ status: 200, description: 'Tickets cancelled' })
   @ApiResponse({ status: 400, description: 'Cancellation failed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Tickets not found' })
   async cancelTickets(
-    @Body() dto: { ticketIds: string[]; reason: string },
+    @Body() dto: CancelTicketsDto,
+    @CurrentUser() _user: RequestUser,
   ): Promise<{ message: string }> {
     const command = new CancelTicketsCommand(dto.ticketIds, dto.reason);
 

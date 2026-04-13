@@ -77,9 +77,8 @@ export class TicketConfirmedInfraHandler {
       // 5. Upload to S3
       const s3Key = await this.s3Storage.uploadPDF(ticket.id, pdfBuffer);
 
-      // 6. Generate signed URL and update ticket
-      const signedUrl = await this.s3Storage.generateSignedUrl(s3Key);
-      ticket.setPdfUrl(signedUrl);
+      // 6. Store S3 key as pdfUrl (signed URL is generated on-demand by controller)
+      ticket.setPdfUrl(s3Key);
       await this.ticketRepository.save(ticket);
 
       this.logger.log(

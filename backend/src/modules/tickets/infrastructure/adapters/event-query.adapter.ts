@@ -85,10 +85,10 @@ export class EventQueryAdapter implements EventQueryPort {
       .createQueryBuilder()
       .update(TicketTypeOrmEntity)
       .set({
-        soldQuantity: () => `sold_quantity + ${Number(quantity)}`,
+        soldQuantity: () => 'sold_quantity + :qty',
       })
       .where('id = :id', { id: ticketTypeId })
-      .andWhere('quantity - sold_quantity >= :quantity', { quantity: Number(quantity) })
+      .andWhere('quantity - sold_quantity >= :qty', { qty: quantity })
       .execute();
 
     const success = (result.affected ?? 0) > 0;
@@ -114,10 +114,10 @@ export class EventQueryAdapter implements EventQueryPort {
       .createQueryBuilder()
       .update(TicketTypeOrmEntity)
       .set({
-        soldQuantity: () => `sold_quantity - ${Number(quantity)}`,
+        soldQuantity: () => 'sold_quantity - :qty',
       })
       .where('id = :id', { id: ticketTypeId })
-      .andWhere('sold_quantity >= :quantity', { quantity: Number(quantity) })
+      .andWhere('sold_quantity >= :qty', { qty: quantity })
       .execute();
 
     const success = (result.affected ?? 0) > 0;
