@@ -45,6 +45,16 @@
       "key": "ticketTypeId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "qrCode",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -798,6 +808,350 @@
             "description": "Remove a ticket type from an event."
           },
           "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎫 Tickets",
+      "description": "Ticket reservation, management, check-in, and transfer endpoints",
+      "item": [
+        {
+          "name": "Reserve Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.ticketIds && jsonData.ticketIds.length > 0) {",
+                  "        pm.collectionVariables.set('ticketId', jsonData.ticketIds[0]);",
+                  "        console.log('Ticket ID saved:', jsonData.ticketIds[0]);",
+                  "    }",
+                  "    pm.test('Tickets reserved successfully', function() {",
+                  "        pm.response.to.have.status(201);",
+                  "        pm.expect(jsonData).to.have.property('ticketIds');",
+                  "        pm.expect(jsonData).to.have.property('reservedUntil');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"ticketTypeId\": \"{{ticketTypeId}}\",\n  \"holders\": [\n    {\n      \"name\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"phone\": \"+21612345678\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/reserve",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "reserve"]
+            },
+            "description": "Reserve tickets for an event. Creates a 15-minute reservation hold.\n\n**Note:** Must be confirmed via the Confirm endpoint after payment."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Tickets",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketIds\": [\"{{ticketId}}\"],\n  \"orderId\": \"order-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "confirm"]
+            },
+            "description": "Confirm reserved tickets after payment.\n\nTransitions RESERVED tickets to CONFIRMED status. Typically called by the Payments module."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number" },
+                { "key": "limit", "value": "20", "description": "Items per page" },
+                { "key": "status", "value": "CONFIRMED", "description": "Filter by status", "disabled": true }
+              ]
+            },
+            "description": "Get the authenticated user's tickets with optional pagination and status filter.\n\n**Status values:** RESERVED, CONFIRMED, CANCELLED, CHECKED_IN, EXPIRED"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Ticket by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.qrCode) {",
+                  "        pm.collectionVariables.set('qrCode', jsonData.qrCode);",
+                  "        console.log('QR Code saved:', jsonData.qrCode);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", ":id"],
+              "variable": [
+                { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
+              ]
+            },
+            "description": "Get detailed information about a specific ticket. Accessible by ticket owner or the event organizer."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Ticket PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/:id/pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", ":id", "pdf"],
+              "variable": [
+                { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
+              ]
+            },
+            "description": "Download the ticket PDF.\n\nRedirects (302) to a signed S3 URL. Only the ticket owner can download."
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newOwnerEmail\": \"friend@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/:id/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", ":id", "transfer"],
+              "variable": [
+                { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
+              ]
+            },
+            "description": "Transfer a ticket to another user by email.\n\n**Limits:** Max 3 transfers per ticket.\n**Effect:** Generates a new QR code and assigns to the new owner."
+          },
+          "response": []
+        },
+        {
+          "name": "Check In Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "check-in"]
+            },
+            "description": "Check in a ticket at venue entrance using QR code.\n\n**Requires:** ORGANIZER or ADMIN role.\n\n**Time window:** Event start − 1 hour → Event end.\n\nDuplicate check-in attempts are rejected and logged as security alerts."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event Check-In Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/event/:eventId/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "event", ":eventId", "stats"],
+              "variable": [
+                { "key": "eventId", "value": "{{eventId}}", "description": "Event UUID" }
+              ]
+            },
+            "description": "Get aggregated check-in statistics for an event.\n\n**Requires:** ORGANIZER or ADMIN role.\n\n**Returns:** Total tickets, checked-in count, rate, breakdown by ticket type."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Workflow: Reserve → CheckIn",
+      "description": "Complete ticketing workflow: reserve tickets, confirm payment, get ticket details, and check in at the venue",
+      "item": [
+        {
+          "name": "1. Login (Participant)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "if (jsonData.user) pm.collectionVariables.set('userId', jsonData.user.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"participant@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "2. Browse Published Events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.length > 0) {",
+                  "    pm.collectionVariables.set('eventId', jsonData.data[0].id);",
+                  "    if (jsonData.data[0].ticketTypes && jsonData.data[0].ticketTypes.length > 0) {",
+                  "        pm.collectionVariables.set('ticketTypeId', jsonData.data[0].ticketTypes[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
+          }
+        },
+        {
+          "name": "3. Reserve Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.ticketIds && jsonData.ticketIds.length > 0) {",
+                  "    pm.collectionVariables.set('ticketId', jsonData.ticketIds[0]);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"ticketTypeId\": \"{{ticketTypeId}}\",\n  \"holders\": [{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\"\n  }]\n}" },
+            "url": { "raw": "{{baseUrl}}/tickets/reserve", "host": ["{{baseUrl}}"], "path": ["tickets", "reserve"] }
+          }
+        },
+        {
+          "name": "4. Confirm Tickets (Payment)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketIds\": [\"{{ticketId}}\"],\n  \"orderId\": \"order-001\"\n}" },
+            "url": { "raw": "{{baseUrl}}/tickets/confirm", "host": ["{{baseUrl}}"], "path": ["tickets", "confirm"] }
+          }
+        },
+        {
+          "name": "5. Get Ticket Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.qrCode) pm.collectionVariables.set('qrCode', jsonData.qrCode);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}"]
+            }
+          }
+        },
+        {
+          "name": "6. Login (Organizer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) pm.collectionVariables.set('accessToken', jsonData.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "7. Check In at Venue",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}" },
+            "url": { "raw": "{{baseUrl}}/tickets/check-in", "host": ["{{baseUrl}}"], "path": ["tickets", "check-in"] }
+          }
+        },
+        {
+          "name": "8. View Check-In Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/event/{{eventId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "event", "{{eventId}}", "stats"]
+            }
+          }
         }
       ]
     },
