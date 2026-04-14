@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including dev) for building
-RUN npm ci && \
+RUN npm ci --maxsockets 5 --retry 3 && \
     npm cache clean --force
 
 # Copy source code
@@ -37,7 +37,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && \
+RUN npm ci --only=production --maxsockets 5 --retry 3 && \
     npm cache clean --force
 
 # Copy built application from builder
