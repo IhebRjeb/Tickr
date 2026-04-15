@@ -10,6 +10,7 @@ import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import redisConfig from './config/redis.config';
 import { EventsModule } from './modules/events/infrastructure/events.module';
+import { TicketsModule } from './modules/tickets/infrastructure/tickets.module';
 import { UsersModule } from './modules/users/infrastructure/users.module';
 import { CacheModule } from './shared/infrastructure/cache/cache.module';
 import { AllExceptionsFilter } from './shared/infrastructure/common/filters/all-exceptions.filter';
@@ -61,6 +62,7 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
     // Feature Modules
     UsersModule,
     EventsModule,
+    TicketsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // Import all entities explicitly for reliability
 import { EventOrmEntity } from '../../../modules/events/infrastructure/persistence/entities/event.orm-entity';
 import { TicketTypeOrmEntity } from '../../../modules/events/infrastructure/persistence/entities/ticket-type.orm-entity';
+import { CheckInOrmEntity } from '../../../modules/tickets/infrastructure/persistence/entities/check-in.orm-entity';
+import { TicketOrmEntity } from '../../../modules/tickets/infrastructure/persistence/entities/ticket.orm-entity';
 import { UserEntity } from '../../../modules/users/infrastructure/persistence/entities/user.orm-entity';
 import { VerificationTokenEntity } from '../../../modules/users/infrastructure/persistence/entities/verification-token.orm-entity';
 
@@ -28,6 +30,9 @@ import { VerificationTokenEntity } from '../../../modules/users/infrastructure/p
           // Events module entities
           EventOrmEntity,
           TicketTypeOrmEntity,
+          // Tickets module entities
+          TicketOrmEntity,
+          CheckInOrmEntity,
         ],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
