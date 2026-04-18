@@ -96,7 +96,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-A-01 | Repository Port Interfaces | 3 | Highest | Application | ✅ |
 | NOTIF-A-02 | Provider Port Interfaces (Email & SMS) | 2 | Highest | Application | ✅ |
 | NOTIF-A-03 | SendNotification Command + Handler | 5 | Highest | Application | ✅ |
-| NOTIF-A-04 | SendBulkNotifications Command + Handler | 3 | High | Application | |
+| NOTIF-A-04 | SendBulkNotifications Command + Handler | 3 | High | Application | ✅ |
 | NOTIF-A-05 | UpdatePreferences Command + Handler | 3 | High | Application | ✅ |
 | NOTIF-A-06 | Unsubscribe Command + Handler | 2 | High | Application | ✅ |
 | NOTIF-A-07 | RetryFailedNotification Command + Handler | 2 | Medium | Application | ✅ |
