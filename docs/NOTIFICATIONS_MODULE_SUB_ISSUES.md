@@ -84,48 +84,48 @@ Verify all controller endpoints have complete Swagger documentation.
 
 ## Summary Table
 
-| Sub-Issue | Title | Points | Priority | Phase |
-|-----------|-------|--------|----------|-------|
-| NOTIF-D-01 | Notification Aggregate Root Entity | 5 | Highest | Domain |
-| NOTIF-D-02 | NotificationPreference Entity | 3 | High | Domain |
-| NOTIF-D-03 | NotificationTemplate Entity | 3 | High | Domain |
-| NOTIF-D-04 | Value Objects (6 VOs) | 3 | High | Domain |
-| NOTIF-D-05 | Domain Events (7 events) | 2 | High | Domain |
-| NOTIF-D-06 | Domain Exceptions (11 exceptions) | 2 | Medium | Domain |
-| NOTIF-D-07 | Domain Barrel Exports | 1 | Medium | Domain |
-| NOTIF-A-01 | Repository Port Interfaces | 3 | Highest | Application |
-| NOTIF-A-02 | Provider Port Interfaces (Email & SMS) | 2 | Highest | Application |
-| NOTIF-A-03 | SendNotification Command + Handler | 5 | Highest | Application |
-| NOTIF-A-04 | SendBulkNotifications Command + Handler | 3 | High | Application |
-| NOTIF-A-05 | UpdatePreferences Command + Handler | 2 | High | Application |
-| NOTIF-A-06 | Unsubscribe Command + Handler | 2 | High | Application |
-| NOTIF-A-07 | RetryFailedNotification Command + Handler | 2 | Medium | Application |
-| NOTIF-A-08 | ProcessScheduledNotifications (Cron) | 5 | High | Application |
-| NOTIF-A-09 | Query Handlers (4 queries) | 3 | High | Application |
-| NOTIF-A-10 | DTOs (Request/Response) | 3 | High | Application |
-| NOTIF-A-11 | Application Event Handlers | 3 | Medium | Application |
-| NOTIF-A-12 | Mappers (Domain ↔ DTO) | 2 | Medium | Application |
-| NOTIF-I-01 | TypeORM ORM Entities & Persistence Mappers | 5 | Highest | Infra |
-| NOTIF-I-02 | TypeORM Repository Implementations | 5 | Highest | Infra |
-| NOTIF-I-03 | Database Migration | 3 | Highest | Infra |
-| NOTIF-I-04 | AWS SES Email Provider Adapter | 5 | Highest | Infra |
-| NOTIF-I-05 | AWS SNS SMS Provider Adapter | 3 | High | Infra |
-| NOTIF-I-06 | Template Renderer Service | 3 | High | Infra |
-| NOTIF-I-07 | Notification Scheduler (Cron) | 3 | High | Infra |
-| NOTIF-I-08 | Rate Limiter Service | 3 | High | Infra |
-| NOTIF-I-09 | Notifications Controller | 5 | High | Infra |
-| NOTIF-I-10 | Cross-Module Event Handlers | 5 | Medium | Infra |
-| NOTIF-I-11 | Email Templates (Handlebars) | 3 | Medium | Infra |
-| NOTIF-I-12 | NestJS Module Wiring | 3 | High | Infra |
-| NOTIF-T-01 | Domain Layer Unit Tests | 5 | High | Testing |
-| NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing |
-| NOTIF-T-03 | Infrastructure Services Unit Tests | 3 | High | Testing |
-| NOTIF-T-04 | Integration Tests | 5 | Medium | Testing |
-| NOTIF-T-05 | E2E Tests | 3 | Medium | Testing |
-| NOTIF-X-01 | AWS Configuration & Environment Setup | 2 | Highest | Cross-cut |
-| NOTIF-X-02 | Install NPM Dependencies | 1 | Highest | Cross-cut |
-| NOTIF-X-03 | Architecture Tests Update | 2 | Medium | Cross-cut |
-| NOTIF-X-04 | API Documentation (Swagger) | 1 | Medium | Cross-cut |
+| Sub-Issue | Title | Points | Priority | Phase | Status |
+|-----------|-------|--------|----------|-------|--------|
+| NOTIF-D-01 | Notification Aggregate Root Entity | 5 | Highest | Domain | |
+| NOTIF-D-02 | NotificationPreference Entity | 3 | High | Domain | |
+| NOTIF-D-03 | NotificationTemplate Entity | 3 | High | Domain | |
+| NOTIF-D-04 | Value Objects (6 VOs) | 3 | High | Domain | ✅ |
+| NOTIF-D-05 | Domain Events (7 events) | 2 | High | Domain | |
+| NOTIF-D-06 | Domain Exceptions (11 exceptions) | 2 | Medium | Domain | |
+| NOTIF-D-07 | Domain Barrel Exports | 1 | Medium | Domain | |
+| NOTIF-A-01 | Repository Port Interfaces | 3 | Highest | Application | |
+| NOTIF-A-02 | Provider Port Interfaces (Email & SMS) | 2 | Highest | Application | |
+| NOTIF-A-03 | SendNotification Command + Handler | 5 | Highest | Application | |
+| NOTIF-A-04 | SendBulkNotifications Command + Handler | 3 | High | Application | |
+| NOTIF-A-05 | UpdatePreferences Command + Handler | 2 | High | Application | |
+| NOTIF-A-06 | Unsubscribe Command + Handler | 2 | High | Application | |
+| NOTIF-A-07 | RetryFailedNotification Command + Handler | 2 | Medium | Application | |
+| NOTIF-A-08 | ProcessScheduledNotifications (Cron) | 5 | High | Application | |
+| NOTIF-A-09 | Query Handlers (4 queries) | 3 | High | Application | |
+| NOTIF-A-10 | DTOs (Request/Response) | 3 | High | Application | |
+| NOTIF-A-11 | Application Event Handlers | 3 | Medium | Application | |
+| NOTIF-A-12 | Mappers (Domain ↔ DTO) | 2 | Medium | Application | |
+| NOTIF-I-01 | TypeORM ORM Entities & Persistence Mappers | 5 | Highest | Infra | |
+| NOTIF-I-02 | TypeORM Repository Implementations | 5 | Highest | Infra | |
+| NOTIF-I-03 | Database Migration | 3 | Highest | Infra | |
+| NOTIF-I-04 | AWS SES Email Provider Adapter | 5 | Highest | Infra | |
+| NOTIF-I-05 | AWS SNS SMS Provider Adapter | 3 | High | Infra | |
+| NOTIF-I-06 | Template Renderer Service | 3 | High | Infra | |
+| NOTIF-I-07 | Notification Scheduler (Cron) | 3 | High | Infra | |
+| NOTIF-I-08 | Rate Limiter Service | 3 | High | Infra | |
+| NOTIF-I-09 | Notifications Controller | 5 | High | Infra | |
+| NOTIF-I-10 | Cross-Module Event Handlers | 5 | Medium | Infra | |
+| NOTIF-I-11 | Email Templates (Handlebars) | 3 | Medium | Infra | |
+| NOTIF-I-12 | NestJS Module Wiring | 3 | High | Infra | |
+| NOTIF-T-01 | Domain Layer Unit Tests | 5 | High | Testing | |
+| NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing | |
+| NOTIF-T-03 | Infrastructure Services Unit Tests | 3 | High | Testing | |
+| NOTIF-T-04 | Integration Tests | 5 | Medium | Testing | |
+| NOTIF-T-05 | E2E Tests | 3 | Medium | Testing | |
+| NOTIF-X-01 | AWS Configuration & Environment Setup | 2 | Highest | Cross-cut | ✅ |
+| NOTIF-X-02 | Install NPM Dependencies | 1 | Highest | Cross-cut | ✅ |
+| NOTIF-X-03 | Architecture Tests Update | 2 | Medium | Cross-cut | |
+| NOTIF-X-04 | API Documentation (Swagger) | 1 | Medium | Cross-cut | |
 
 **Total Story Points: ~124**
 
