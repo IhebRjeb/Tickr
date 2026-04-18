@@ -91,7 +91,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-D-03 | NotificationTemplate Entity | 3 | High | Domain | |
 | NOTIF-D-04 | Value Objects (6 VOs) | 3 | High | Domain | ✅ |
 | NOTIF-D-05 | Domain Events (7 events) | 2 | High | Domain | ✅ |
-| NOTIF-D-06 | Domain Exceptions (11 exceptions) | 2 | Medium | Domain | |
+| NOTIF-D-06 | Domain Exceptions (11 exceptions) | 2 | Medium | Domain | ✅ |
 | NOTIF-D-07 | Domain Barrel Exports | 1 | Medium | Domain | |
 | NOTIF-A-01 | Repository Port Interfaces | 3 | Highest | Application | |
 | NOTIF-A-02 | Provider Port Interfaces (Email & SMS) | 2 | Highest | Application | |
