@@ -107,7 +107,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-A-12 | Mappers (Domain ↔ DTO) | 2 | Medium | Application | ✅ |
 | NOTIF-I-01 | TypeORM ORM Entities & Persistence Mappers | 5 | Highest | Infra | ✅ |
 | NOTIF-I-02 | TypeORM Repository Implementations | 5 | Highest | Infra | ✅ |
-| NOTIF-I-03 | Database Migration | 3 | Highest | Infra | |
+| NOTIF-I-03 | Database Migration | 3 | Highest | Infra | ✅ |
 | NOTIF-I-04 | AWS SES Email Provider Adapter | 5 | Highest | Infra | |
 | NOTIF-I-05 | AWS SNS SMS Provider Adapter | 3 | High | Infra | |
 | NOTIF-I-06 | Template Renderer Service | 3 | High | Infra | |
