@@ -100,7 +100,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-A-05 | UpdatePreferences Command + Handler | 3 | High | Application | ✅ |
 | NOTIF-A-06 | Unsubscribe Command + Handler | 2 | High | Application | ✅ |
 | NOTIF-A-07 | RetryFailedNotification Command + Handler | 2 | Medium | Application | ✅ |
-| NOTIF-A-08 | ProcessScheduledNotifications (Cron) | 5 | High | Application | |
+| NOTIF-A-08 | ProcessScheduledNotifications (Cron) | 5 | High | Application | ✅ |
 | NOTIF-A-09 | Query Handlers (4 queries) | 3 | High | Application | |
 | NOTIF-A-10 | DTOs (Request/Response) | 3 | High | Application | |
 | NOTIF-A-11 | Application Event Handlers | 3 | Medium | Application | |
