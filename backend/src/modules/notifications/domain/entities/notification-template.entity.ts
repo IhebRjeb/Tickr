@@ -148,8 +148,7 @@ export class NotificationTemplateEntity extends BaseEntity<NotificationTemplateE
     if (missing.length > 0) {
       return Result.fail(
         InvalidTemplateException.renderingFailed(
-          this._slug,
-          `Missing required variables: ${missing.join(', ')}`,
+          `Template '${this._slug}' missing required variables: ${missing.join(', ')}`,
         ),
       );
     }
