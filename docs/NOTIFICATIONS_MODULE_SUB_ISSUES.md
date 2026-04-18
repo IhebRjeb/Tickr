@@ -118,7 +118,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-I-11 | Email Templates (Handlebars) | 3 | Medium | Infra | ✅ |
 | NOTIF-I-12 | NestJS Module Wiring | 3 | Highest | Infra | ✅ |
 | NOTIF-T-01 | Domain Layer Unit Tests | 5 | High | Testing | ✅ |
-| NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing | |
+| NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing | ✅ |
 | NOTIF-T-03 | Infrastructure Services Unit Tests | 3 | High | Testing | |
 | NOTIF-T-04 | Integration Tests | 5 | Medium | Testing | |
 | NOTIF-T-05 | E2E Tests | 3 | Medium | Testing | |
