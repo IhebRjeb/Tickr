@@ -21,27 +21,18 @@
 
 ## Phase 5: Cross-Cutting
 
-### NOTIF-X-01 — AWS Configuration & Environment Setup
+### NOTIF-X-01 — AWS Configuration & Environment Setup ✅
 
-**Type:** Task | **Priority:** Highest | **Points:** 2
+**Type:** Task | **Priority:** Highest | **Points:** 2 | **Status: DONE**
 
 **Description:**
 Configure AWS SES and SNS credentials, update `.env.example`, and set up LocalStack for local development.
 
 **Acceptance Criteria:**
-- [ ] Add to `.env.example`:
-  ```env
-  AWS_SES_REGION=eu-west-1
-  AWS_SES_FROM_EMAIL=noreply@tickr.tn
-  AWS_SES_CONFIGURATION_SET=tickr-notifications
-  AWS_SNS_REGION=eu-west-1
-  NOTIFICATION_RATE_LIMIT_USER=20
-  NOTIFICATION_RATE_LIMIT_EMAIL_SEC=50
-  NOTIFICATION_RATE_LIMIT_SMS_MIN=100
-  ```
-- [ ] LocalStack SES/SNS configuration in `docker-compose.dev.yml`
-- [ ] Update `scripts/localstack-init.sh` with SES/SNS setup
-- [ ] Configuration module validation (fail fast on missing env vars)
+- [x] Add to `.env.example`: SES, SNS, and notification rate limit env vars
+- [x] LocalStack SES/SNS configuration in `docker-compose.dev.yml`
+- [x] Update `scripts/localstack-init.sh` with SES/SNS setup
+- [x] Configuration module validation — `notification.config.ts` created
 
 ---
 
