@@ -102,7 +102,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-A-07 | RetryFailedNotification Command + Handler | 2 | Medium | Application | ✅ |
 | NOTIF-A-08 | ProcessScheduledNotifications (Cron) | 5 | High | Application | ✅ |
 | NOTIF-A-09 | Query Handlers (4 queries) | 3 | High | Application | ✅ |
-| NOTIF-A-10 | DTOs (Request/Response) | 3 | High | Application | |
+| NOTIF-A-10 | DTOs (Request/Response) | 3 | High | Application | ✅ |
 | NOTIF-A-11 | Application Event Handlers | 3 | Medium | Application | |
 | NOTIF-A-12 | Mappers (Domain ↔ DTO) | 2 | Medium | Application | |
 | NOTIF-I-01 | TypeORM ORM Entities & Persistence Mappers | 5 | Highest | Infra | |
