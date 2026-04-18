@@ -94,7 +94,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-D-06 | Domain Exceptions (11 exceptions) | 2 | Medium | Domain | ✅ |
 | NOTIF-D-07 | Domain Barrel Exports | 1 | Medium | Domain | ✅ |
 | NOTIF-A-01 | Repository Port Interfaces | 3 | Highest | Application | ✅ |
-| NOTIF-A-02 | Provider Port Interfaces (Email & SMS) | 2 | Highest | Application | |
+| NOTIF-A-02 | Provider Port Interfaces (Email & SMS) | 2 | Highest | Application | ✅ |
 | NOTIF-A-03 | SendNotification Command + Handler | 5 | Highest | Application | |
 | NOTIF-A-04 | SendBulkNotifications Command + Handler | 3 | High | Application | |
 | NOTIF-A-05 | UpdatePreferences Command + Handler | 2 | High | Application | |
