@@ -119,9 +119,9 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-I-12 | NestJS Module Wiring | 3 | Highest | Infra | ✅ |
 | NOTIF-T-01 | Domain Layer Unit Tests | 5 | High | Testing | ✅ |
 | NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing | ✅ |
-| NOTIF-T-03 | Infrastructure Services Unit Tests | 3 | High | Testing | |
-| NOTIF-T-04 | Integration Tests | 5 | Medium | Testing | |
-| NOTIF-T-05 | E2E Tests | 3 | Medium | Testing | |
+| NOTIF-T-03 | Infrastructure Services Unit Tests | 3 | High | Testing | ✅ |
+| NOTIF-T-04 | Integration Tests | 5 | Medium | Testing | 🚧 |
+| NOTIF-T-05 | E2E Tests | 3 | Medium | Testing | 🚧 |
 | NOTIF-X-01 | AWS Configuration & Environment Setup | 2 | Highest | Cross-cut | ✅ |
 | NOTIF-X-02 | Install NPM Dependencies | 1 | Highest | Cross-cut | ✅ |
 | NOTIF-X-03 | Architecture Tests Update | 2 | Medium | Cross-cut | ✅ |
@@ -235,3 +235,28 @@ NOTIF-X-01 ─┤
                  NOTIF-X-03 (Arch Tests) ←── NOTIF-I-12
                  NOTIF-X-04 (API Docs) ←── NOTIF-I-09
 ```
+
+---
+
+## Progress Summary
+
+| Phase | Items | Done | Status |
+|-------|-------|------|--------|
+| Domain (D-01→D-07) | 7 | 7 | ✅ Complete |
+| Application (A-01→A-12) | 12 | 12 | ✅ Complete |
+| Infrastructure (I-01→I-12) | 12 | 12 | ✅ Complete |
+| Cross-cutting (X-01→X-03) | 3 | 3 | ✅ Complete |
+| T-01 Domain Unit Tests (186) | 1 | 1 | ✅ Complete |
+| T-02 Application Unit Tests (41) | 1 | 1 | ✅ Complete |
+| T-03 Infrastructure Unit Tests (36) | 1 | 1 | ✅ Complete |
+| T-04 Integration Tests | 1 | 0 | 🚧 Files created, needs running env |
+| T-05 E2E Tests | 1 | 0 | 🚧 Files created, needs running env |
+| X-04 API Documentation (Swagger) | 1 | 0 | Not started |
+
+**Overall: 37/40 sub-issues complete — 3 remaining**
+
+### Remaining Work
+
+1. **NOTIF-T-04** — Integration test file created at `test/integration/notifications/notifications.integration.spec.ts`. Tests handler→repository roundtrips with in-memory repos. Needs `make dev` environment to validate.
+2. **NOTIF-T-05** — E2E test file created at `test/e2e/notifications/notification-lifecycle.e2e-spec.ts` with helpers at `test/e2e/notifications/helpers/test-setup.ts`. Tests all 6 controller endpoints via supertest. 400/500 errors likely due to DTO validation or missing env — needs debugging with running services.
+3. **NOTIF-X-04** — Swagger `@ApiProperty` / `@ApiResponse` review on controller and DTOs.

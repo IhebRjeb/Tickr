@@ -3,10 +3,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 /**
  * Create notifications schema and tables
  */
-export class CreateNotificationsTables1700000000000
+export class CreateNotificationsTables1700000000000005
   implements MigrationInterface
 {
-  name = 'CreateNotificationsTables1700000000000';
+  name = 'CreateNotificationsTables1700000000000005';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create schema
