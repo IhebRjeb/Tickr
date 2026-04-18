@@ -110,7 +110,7 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-I-03 | Database Migration | 3 | Highest | Infra | ✅ |
 | NOTIF-I-04 | AWS SES Email Provider Adapter | 5 | High | Infra | ✅ |
 | NOTIF-I-05 | AWS SNS SMS Provider Adapter | 3 | High | Infra | ✅ |
-| NOTIF-I-06 | Template Renderer Service | 3 | High | Infra | |
+| NOTIF-I-06 | Template Renderer Service | 3 | High | Infra | ✅ |
 | NOTIF-I-07 | Notification Scheduler (Cron) | 3 | High | Infra | |
 | NOTIF-I-08 | Rate Limiter Service | 3 | High | Infra | |
 | NOTIF-I-09 | Notifications Controller | 5 | High | Infra | |
