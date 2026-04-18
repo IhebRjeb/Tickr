@@ -114,8 +114,8 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-I-07 | Notification Scheduler (Cron) | 2 | High | Infra | ✅ |
 | NOTIF-I-08 | Rate Limiter Service | 3 | High | Infra | ✅ |
 | NOTIF-I-09 | Notifications Controller | 5 | High | Infra | ✅ |
-| NOTIF-I-10 | Cross-Module Event Handlers | 5 | Medium | Infra | |
-| NOTIF-I-11 | Email Templates (Handlebars) | 3 | Medium | Infra | |
+| NOTIF-I-10 | Cross-Module Event Handlers | 5 | Medium | Infra | ✅ |
+| NOTIF-I-11 | Email Templates (Handlebars) | 3 | Medium | Infra | ✅ |
 | NOTIF-I-12 | NestJS Module Wiring | 3 | High | Infra | |
 | NOTIF-T-01 | Domain Layer Unit Tests | 5 | High | Testing | |
 | NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing | |
