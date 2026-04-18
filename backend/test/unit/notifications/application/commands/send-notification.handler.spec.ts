@@ -34,7 +34,7 @@ describe('SendNotificationHandler', () => {
   const validUserId = '550e8400-e29b-41d4-a716-446655440001';
 
   const createCommand = (
-    overrides: Partial<ConstructorParameters<typeof SendNotificationCommand>> = {},
+    overrides: Partial<Record<number, unknown>> = {},
   ) => {
     const defaults = [
       validUserId,

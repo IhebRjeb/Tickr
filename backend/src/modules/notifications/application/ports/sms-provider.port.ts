@@ -1,23 +1,11 @@
+import type { SendSmsRequest, SendSmsResponse } from '../models/sms-provider.model';
+
+export type { SendSmsRequest, SendSmsResponse };
+
 /**
  * Injection token for SmsProvider
  */
 export const SMS_PROVIDER = Symbol('SMS_PROVIDER');
-
-/**
- * SMS send request
- */
-export interface SendSmsRequest {
-  phoneNumber: string;
-  message: string;
-}
-
-/**
- * SMS send response
- */
-export interface SendSmsResponse {
-  messageId: string;
-  success: boolean;
-}
 
 /**
  * SMS Provider Port

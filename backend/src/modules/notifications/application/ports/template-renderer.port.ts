@@ -1,16 +1,11 @@
+import type { RenderedTemplate } from '../models/template-renderer.model';
+
+export type { RenderedTemplate };
+
 /**
  * Injection token for TemplateRenderer
  */
 export const TEMPLATE_RENDERER = Symbol('TEMPLATE_RENDERER');
-
-/**
- * Rendered template output
- */
-export interface RenderedTemplate {
-  subject: string | null;
-  htmlBody: string;
-  textBody: string;
-}
 
 /**
  * Template Renderer Port

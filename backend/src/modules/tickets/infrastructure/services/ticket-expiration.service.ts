@@ -1,7 +1,9 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { EVENT_QUERY_PORT } from '../../application/ports/event-query.port';
 import type { EventQueryPort } from '../../application/ports/event-query.port';
@@ -33,7 +35,8 @@ export class TicketExpirationService {
     private readonly ticketRepository: TicketRepositoryPort,
     @Inject(EVENT_QUERY_PORT)
     private readonly eventQueryPort: EventQueryPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER)
+    private readonly eventPublisher: DomainEventPublisherPort,
     private readonly configService: ConfigService,
   ) {
     this.isEnabled = this.configService.get<boolean>(

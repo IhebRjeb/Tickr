@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { NotificationChannel } from '../../../domain/value-objects/notification-channel.vo';
 import { NotificationPriority } from '../../../domain/value-objects/notification-priority.vo';
@@ -46,7 +47,7 @@ export class ProcessScheduledNotificationsHandler {
     private readonly smsProvider: SmsProviderPort,
     @Inject(RATE_LIMITER)
     private readonly rateLimiter: RateLimiterPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   async execute(): Promise<{ processed: number; failed: number }> {

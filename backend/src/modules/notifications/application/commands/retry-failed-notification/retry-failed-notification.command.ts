@@ -11,7 +11,7 @@ export type RetryFailedNotificationError =
 /**
  * Result type for RetryFailedNotification operation
  */
-export interface RetryFailedNotificationResult {
+export interface RetryFailedNotificationResultCommand {
   readonly notificationId: string;
   readonly retryCount: number;
   readonly nextRetryAt: Date;

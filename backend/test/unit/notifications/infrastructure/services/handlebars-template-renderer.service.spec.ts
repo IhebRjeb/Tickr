@@ -2,6 +2,7 @@ import { HandlebarsTemplateRenderer } from '@modules/notifications/infrastructur
 import { NotificationTemplateRepositoryPort } from '@modules/notifications/application/ports/notification-template.repository.port';
 import { NotificationTemplateEntity } from '@modules/notifications/domain/entities/notification-template.entity';
 import { NotificationChannel } from '@modules/notifications/domain/value-objects/notification-channel.vo';
+import { TemplateCategory } from '@modules/notifications/domain/value-objects/template-category.vo';
 import { Result } from '@shared/domain/result';
 
 describe('HandlebarsTemplateRenderer', () => {
@@ -26,12 +27,13 @@ describe('HandlebarsTemplateRenderer', () => {
     body: string;
     subject: string | null;
     requiredVariables: string[];
-    defaultVariables: Record<string, unknown>;
+    defaultVariables: Record<string, string>;
   }> = {}) => {
     const result = NotificationTemplateEntity.create({
       name: 'Test Template',
       slug: overrides.slug ?? 'test-template',
       channel: NotificationChannel.EMAIL,
+      category: TemplateCategory.TRANSACTIONAL,
       body: overrides.body ?? '<h1>Hello {{name}}</h1>',
       subject: overrides.subject ?? 'Welcome {{name}}',
       requiredVariables: overrides.requiredVariables ?? ['name'],
@@ -84,8 +86,9 @@ describe('HandlebarsTemplateRenderer', () => {
         name: 'SMS Template',
         slug: 'no-subject',
         channel: NotificationChannel.SMS,
+        category: TemplateCategory.TRANSACTIONAL,
         body: '<p>{{msg}}</p>',
-        subject: null as any,
+        subject: null,
         requiredVariables: ['msg'],
         defaultVariables: {},
       });

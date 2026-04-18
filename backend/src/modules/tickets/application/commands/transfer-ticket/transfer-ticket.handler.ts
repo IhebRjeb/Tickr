@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { TICKET_REPOSITORY } from '../../ports/ticket.repository.port';
 import type { TicketRepositoryPort } from '../../ports/ticket.repository.port';
@@ -38,7 +39,7 @@ export class TransferTicketHandler {
     private readonly ticketRepository: TicketRepositoryPort,
     @Inject(USER_QUERY_PORT)
     private readonly userQuery: UserQueryPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   async execute(

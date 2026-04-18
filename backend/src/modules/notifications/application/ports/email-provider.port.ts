@@ -1,27 +1,11 @@
+import type { SendEmailRequest, SendEmailResponse } from '../models/email-provider.model';
+
+export type { SendEmailRequest, SendEmailResponse };
+
 /**
  * Injection token for EmailProvider
  */
 export const EMAIL_PROVIDER = Symbol('EMAIL_PROVIDER');
-
-/**
- * Email send request
- */
-export interface SendEmailRequest {
-  to: string;
-  subject: string;
-  htmlBody: string;
-  textBody?: string;
-  from?: string;
-  replyTo?: string;
-}
-
-/**
- * Email send response
- */
-export interface SendEmailResponse {
-  messageId: string;
-  success: boolean;
-}
 
 /**
  * Email Provider Port

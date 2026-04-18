@@ -1,5 +1,17 @@
 import { BaseQuery } from '@shared/application/interfaces/query.interface';
 
+import type { NotificationEntity } from '../../../domain/entities/notification.entity';
+
+/**
+ * Result type for GetUserNotifications
+ */
+export interface GetUserNotificationsResultQuery {
+  data: NotificationEntity[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 /**
  * Query to get user's notifications (paginated)
  */

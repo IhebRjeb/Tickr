@@ -24,7 +24,7 @@ export type SendNotificationError =
 /**
  * Result type for SendNotification operation
  */
-export interface SendNotificationResult {
+export interface SendNotificationResultCommand {
   readonly notificationId: string;
   readonly status: string;
 }

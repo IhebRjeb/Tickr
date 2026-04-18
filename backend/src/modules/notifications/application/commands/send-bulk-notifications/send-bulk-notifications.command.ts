@@ -24,7 +24,7 @@ export type SendBulkNotificationsError =
 /**
  * Result type for SendBulkNotifications operation
  */
-export interface SendBulkNotificationsResult {
+export interface SendBulkNotificationsResultCommand {
   readonly totalSent: number;
   readonly totalFailed: number;
   readonly notificationIds: string[];

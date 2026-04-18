@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { NotificationPreferenceEntity } from '../../../domain/entities/notification-preference.entity';
 import {
@@ -12,11 +13,11 @@ import {
 import {
   UpdatePreferencesCommand,
   type UpdatePreferencesError,
-  type UpdatePreferencesResult,
+  type UpdatePreferencesResultCommand,
 } from './update-preferences.command';
 
 // Re-export types
-export type { UpdatePreferencesResult, UpdatePreferencesError };
+export type { UpdatePreferencesResultCommand, UpdatePreferencesError };
 
 /**
  * Handler for UpdatePreferencesCommand
@@ -31,12 +32,12 @@ export class UpdatePreferencesHandler {
   constructor(
     @Inject(NOTIFICATION_PREFERENCE_REPOSITORY)
     private readonly preferenceRepo: NotificationPreferenceRepositoryPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   async execute(
     command: UpdatePreferencesCommand,
-  ): Promise<Result<UpdatePreferencesResult, UpdatePreferencesError>> {
+  ): Promise<Result<UpdatePreferencesResultCommand, UpdatePreferencesError>> {
     this.logger.debug(
       `Updating preferences for user ${command.userId}`,
     );

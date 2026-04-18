@@ -11,7 +11,7 @@ export type UpdatePreferencesError =
 /**
  * Result type for UpdatePreferences operation
  */
-export interface UpdatePreferencesResult {
+export interface UpdatePreferencesResultCommand {
   readonly userId: string;
   readonly emailEnabled: boolean;
   readonly smsEnabled: boolean;

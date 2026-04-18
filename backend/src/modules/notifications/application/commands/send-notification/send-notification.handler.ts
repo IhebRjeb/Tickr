@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { NotificationEntity } from '../../../domain/entities/notification.entity';
 import { NotificationChannel } from '../../../domain/value-objects/notification-channel.vo';
@@ -35,11 +36,11 @@ import {
 import {
   SendNotificationCommand,
   type SendNotificationError,
-  type SendNotificationResult,
+  type SendNotificationResultCommand,
 } from './send-notification.command';
 
 // Re-export types
-export type { SendNotificationResult, SendNotificationError };
+export type { SendNotificationResultCommand, SendNotificationError };
 
 /**
  * Handler for SendNotificationCommand
@@ -71,12 +72,12 @@ export class SendNotificationHandler {
     private readonly templateRenderer: TemplateRendererPort,
     @Inject(RATE_LIMITER)
     private readonly rateLimiter: RateLimiterPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   async execute(
     command: SendNotificationCommand,
-  ): Promise<Result<SendNotificationResult, SendNotificationError>> {
+  ): Promise<Result<SendNotificationResultCommand, SendNotificationError>> {
     this.logger.debug(
       `Sending ${command.channel} notification to user ${command.userId}`,
     );

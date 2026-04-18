@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import {
   NOTIFICATION_PREFERENCE_REPOSITORY,
@@ -26,7 +27,7 @@ export class UnsubscribeHandler {
   constructor(
     @Inject(NOTIFICATION_PREFERENCE_REPOSITORY)
     private readonly preferenceRepo: NotificationPreferenceRepositoryPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   async execute(

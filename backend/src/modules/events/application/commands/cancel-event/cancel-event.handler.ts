@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { EVENT_REPOSITORY } from '../../ports/event.repository.port';
 import type { EventRepositoryPort } from '../../ports/event.repository.port';
@@ -43,7 +44,7 @@ export class CancelEventHandler {
     private readonly eventRepository: EventRepositoryPort,
     @Inject(USER_VALIDATION_SERVICE)
     private readonly userValidationService: UserValidationServicePort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   /**

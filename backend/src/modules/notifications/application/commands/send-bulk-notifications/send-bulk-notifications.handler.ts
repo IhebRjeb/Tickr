@@ -10,12 +10,12 @@ import { SendNotificationHandler } from '../send-notification/send-notification.
 import {
   SendBulkNotificationsCommand,
   type SendBulkNotificationsError,
-  type SendBulkNotificationsResult,
+  type SendBulkNotificationsResultCommand,
 } from './send-bulk-notifications.command';
 
 // Re-export types
 export type {
-  SendBulkNotificationsResult,
+  SendBulkNotificationsResultCommand,
   SendBulkNotificationsError,
 };
 
@@ -38,7 +38,7 @@ export class SendBulkNotificationsHandler {
   async execute(
     command: SendBulkNotificationsCommand,
   ): Promise<
-    Result<SendBulkNotificationsResult, SendBulkNotificationsError>
+    Result<SendBulkNotificationsResultCommand, SendBulkNotificationsError>
   > {
     if (!command.recipients || command.recipients.length === 0) {
       return Result.fail({

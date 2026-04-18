@@ -35,6 +35,7 @@ import { NotificationTemplateEntity } from '@modules/notifications/domain/entiti
 import { NotificationChannel } from '@modules/notifications/domain/value-objects/notification-channel.vo';
 import { NotificationStatus } from '@modules/notifications/domain/value-objects/notification-status.vo';
 import { NotificationType } from '@modules/notifications/domain/value-objects/notification-type.vo';
+import { TemplateCategory } from '@modules/notifications/domain/value-objects/template-category.vo';
 
 // ============================================
 // Deterministic Test UUIDs
@@ -238,8 +239,9 @@ export class InMemoryNotificationTemplateRepository
       name: `Template ${slug}`,
       slug,
       channel,
+      category: TemplateCategory.TRANSACTIONAL,
       body: '<p>Hello {{name}}</p>',
-      subject: channel === NotificationChannel.EMAIL ? 'Hello {{name}}' : undefined,
+      subject: channel === NotificationChannel.EMAIL ? 'Hello {{name}}' : null,
       requiredVariables: ['name'],
       defaultVariables: {},
     });

@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import type { EventCategory } from '../../../domain/value-objects/event-category.vo';
 import { EventDateRangeVO } from '../../../domain/value-objects/event-date-range.vo';
@@ -47,7 +48,7 @@ export class UpdateEventHandler {
     private readonly eventRepository: EventRepositoryPort,
     @Inject(USER_VALIDATION_SERVICE)
     private readonly userValidationService: UserValidationServicePort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   /**

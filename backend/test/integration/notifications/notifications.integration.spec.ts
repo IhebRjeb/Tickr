@@ -23,7 +23,7 @@ import {
   MockRateLimiter,
   MockDomainEventPublisher,
   TEST_USER_IDS,
-} from '../e2e/notifications/helpers/test-setup';
+} from '../../e2e/notifications/helpers/test-setup';
 
 describe('Notifications Integration', () => {
   let sendHandler: SendNotificationHandler;
@@ -74,7 +74,7 @@ describe('Notifications Integration', () => {
     it('should send notification and query it back', async () => {
       const command = new SendNotificationCommand(
         TEST_USER_IDS.user1,
-        NotificationType.TRANSACTIONAL,
+        NotificationType.ORDER_CONFIRMATION,
         NotificationChannel.EMAIL,
         { email: 'user@tickr.tn' },
         'Test Subject',
@@ -103,7 +103,7 @@ describe('Notifications Integration', () => {
     it('should send notification and retrieve by ID', async () => {
       const command = new SendNotificationCommand(
         TEST_USER_IDS.user1,
-        NotificationType.TRANSACTIONAL,
+        NotificationType.ORDER_CONFIRMATION,
         NotificationChannel.EMAIL,
         { email: 'user@tickr.tn' },
         'Subject',
@@ -132,7 +132,7 @@ describe('Notifications Integration', () => {
     it('should NOT allow other user to retrieve notification', async () => {
       const command = new SendNotificationCommand(
         TEST_USER_IDS.user1,
-        NotificationType.TRANSACTIONAL,
+        NotificationType.ORDER_CONFIRMATION,
         NotificationChannel.EMAIL,
         { email: 'user@tickr.tn' },
         'Subject',
@@ -164,7 +164,7 @@ describe('Notifications Integration', () => {
         await sendHandler.execute(
           new SendNotificationCommand(
             TEST_USER_IDS.user1,
-            NotificationType.TRANSACTIONAL,
+            NotificationType.ORDER_CONFIRMATION,
             NotificationChannel.EMAIL,
             { email: 'user@tickr.tn' },
             `Subject ${i}`,
@@ -198,7 +198,7 @@ describe('Notifications Integration', () => {
       // First send creates default preferences internally
       const command = new SendNotificationCommand(
         TEST_USER_IDS.user1,
-        NotificationType.TRANSACTIONAL,
+        NotificationType.ORDER_CONFIRMATION,
         NotificationChannel.EMAIL,
         { email: 'user@tickr.tn' },
         'Subject',
@@ -219,7 +219,7 @@ describe('Notifications Integration', () => {
       await sendHandler.execute(
         new SendNotificationCommand(
           TEST_USER_IDS.user1,
-          NotificationType.TRANSACTIONAL,
+          NotificationType.ORDER_CONFIRMATION,
           NotificationChannel.EMAIL,
           { email: 'user@tickr.tn' },
           'Subject',
@@ -247,7 +247,7 @@ describe('Notifications Integration', () => {
       const result = await sendHandler.execute(
         new SendNotificationCommand(
           TEST_USER_IDS.user1,
-          NotificationType.MARKETING,
+          NotificationType.MARKETING_PROMO,
           NotificationChannel.EMAIL,
           { email: 'user@tickr.tn' },
           'Promo',
@@ -272,7 +272,7 @@ describe('Notifications Integration', () => {
       const result = await sendHandler.execute(
         new SendNotificationCommand(
           TEST_USER_IDS.user1,
-          NotificationType.TRANSACTIONAL,
+          NotificationType.ORDER_CONFIRMATION,
           NotificationChannel.EMAIL,
           { email: 'user@tickr.tn' },
           'Subject',
@@ -295,7 +295,7 @@ describe('Notifications Integration', () => {
       const result = await sendHandler.execute(
         new SendNotificationCommand(
           TEST_USER_IDS.user1,
-          NotificationType.TRANSACTIONAL,
+          NotificationType.ORDER_CONFIRMATION,
           NotificationChannel.SMS,
           { phone: '+21612345678' },
           null,

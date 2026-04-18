@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 
 import { CheckInEntity } from '../../../domain/entities/check-in.entity';
 import { QRCodeVO } from '../../../domain/value-objects/qr-code.vo';
@@ -48,7 +49,7 @@ export class CheckInTicketHandler {
     private readonly checkInRepository: CheckInRepositoryPort,
     @Inject(EVENT_QUERY_PORT)
     private readonly eventQuery: EventQueryPort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   async execute(

@@ -24,7 +24,7 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { JwtAuthGuard } from '@shared/infrastructure/common/guards/jwt-auth.guard';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
 import request from 'supertest';
 
 import {
@@ -78,7 +78,7 @@ describe('Notification Lifecycle E2E', () => {
         { provide: SMS_PROVIDER, useValue: smsProvider },
         { provide: TEMPLATE_RENDERER, useValue: templateRenderer },
         { provide: RATE_LIMITER, useValue: rateLimiter },
-        { provide: DomainEventPublisher, useValue: eventPublisher },
+        { provide: DOMAIN_EVENT_PUBLISHER, useValue: eventPublisher },
         JwtAuthGuard,
         SendNotificationHandler,
         UpdatePreferencesHandler,
@@ -99,6 +99,7 @@ describe('Notification Lifecycle E2E', () => {
         try {
           const payload = jwtService.verify(authHeader.substring(7));
           req.user = {
+            id: payload.sub,
             userId: payload.sub,
             email: payload.email,
             role: payload.role,
@@ -147,7 +148,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           subject: 'Ticket Confirmed',
@@ -171,7 +172,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           templateSlug: 'welcome',
@@ -188,7 +189,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'SMS',
           recipientPhone: '+21612345678',
           content: 'Your code is 1234',
@@ -203,7 +204,7 @@ describe('Notification Lifecycle E2E', () => {
         .post('/notifications')
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           content: 'test',
@@ -219,7 +220,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           subject: 'Test',
@@ -253,7 +254,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           subject: 'Test',
@@ -289,7 +290,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           subject: 'Test',
@@ -322,7 +323,7 @@ describe('Notification Lifecycle E2E', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           userId: TEST_USER_IDS.user1,
-          type: 'TRANSACTIONAL',
+          type: 'ORDER_CONFIRMATION',
           channel: 'EMAIL',
           recipientEmail: 'user1@tickr.tn',
           subject: 'Test',
