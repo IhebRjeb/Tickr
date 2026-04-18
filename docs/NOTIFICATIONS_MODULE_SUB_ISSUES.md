@@ -88,7 +88,7 @@ Verify all controller endpoints have complete Swagger documentation.
 |-----------|-------|--------|----------|-------|--------|
 | NOTIF-D-01 | Notification Aggregate Root Entity | 5 | Highest | Domain | ✅ |
 | NOTIF-D-02 | NotificationPreference Entity | 3 | High | Domain | ✅ |
-| NOTIF-D-03 | NotificationTemplate Entity | 3 | High | Domain | |
+| NOTIF-D-03 | NotificationTemplate Entity | 3 | High | Domain | ✅ |
 | NOTIF-D-04 | Value Objects (6 VOs) | 3 | High | Domain | ✅ |
 | NOTIF-D-05 | Domain Events (7 events) | 2 | High | Domain | ✅ |
 | NOTIF-D-06 | Domain Exceptions (11 exceptions) | 2 | Medium | Domain | ✅ |
