@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { REDIS_CLIENT } from '@shared/infrastructure/cache/cache.tokens';
 import Redis from 'ioredis';
+
 
 import { RateLimiterPort } from '../../application/ports/rate-limiter.port';
 
@@ -20,7 +22,7 @@ export class RedisRateLimiter implements RateLimiterPort {
   private readonly smsPerMinute: number;
 
   constructor(
-    @Inject('REDIS_CLIENT')
+    @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
     private readonly configService: ConfigService,
   ) {
