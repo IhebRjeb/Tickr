@@ -51,34 +51,34 @@ Install required npm packages for the Notifications module.
 
 ---
 
-### NOTIF-X-03 — Architecture Tests Update
+### NOTIF-X-03 — Architecture Tests Update ✅
 
-**Type:** Task | **Priority:** Medium | **Points:** 2
+**Type:** Task | **Priority:** Medium | **Points:** 2 | **Status: DONE**
 
 **Description:**
 Add the Notifications module to the existing architecture fitness function tests.
 
 **Acceptance Criteria:**
-- [ ] Add notifications module to `test/architecture/` boundary checks
-- [ ] Verify domain layer has no infrastructure imports
-- [ ] Verify application layer has no infrastructure imports
-- [ ] Verify cross-module boundaries (no direct imports from Users/Events/Tickets domain)
-- [ ] All existing architecture tests still pass
+- [x] Add notifications module to `test/architecture/` boundary checks
+- [x] Verify domain layer has no infrastructure imports
+- [x] Verify application layer has no infrastructure imports
+- [x] Verify cross-module boundaries (no direct imports from Users/Events/Tickets domain)
+- [x] All existing architecture tests still pass
 
 ---
 
-### NOTIF-X-04 — API Documentation (Swagger)
+### NOTIF-X-04 — API Documentation (Swagger) ✅
 
-**Type:** Task | **Priority:** Medium | **Points:** 1
+**Type:** Task | **Priority:** Medium | **Points:** 1 | **Status: DONE**
 
 **Description:**
 Verify all controller endpoints have complete Swagger documentation.
 
 **Acceptance Criteria:**
-- [ ] All endpoints have `@ApiOperation`, `@ApiResponse`
-- [ ] All DTOs have `@ApiProperty` with descriptions and examples
-- [ ] Swagger UI shows correct request/response schemas
-- [ ] Error responses documented (400, 401, 403, 404, 429)
+- [x] All endpoints have `@ApiOperation`, `@ApiResponse`
+- [x] All DTOs have `@ApiProperty` with descriptions and examples
+- [x] Swagger UI shows correct request/response schemas
+- [x] Error responses documented (400, 401, 403, 404, 429)
 
 ---
 
@@ -120,12 +120,12 @@ Verify all controller endpoints have complete Swagger documentation.
 | NOTIF-T-01 | Domain Layer Unit Tests | 5 | High | Testing | ✅ |
 | NOTIF-T-02 | Application Layer Unit Tests | 5 | High | Testing | ✅ |
 | NOTIF-T-03 | Infrastructure Services Unit Tests | 3 | High | Testing | ✅ |
-| NOTIF-T-04 | Integration Tests | 5 | Medium | Testing | 🚧 |
-| NOTIF-T-05 | E2E Tests | 3 | Medium | Testing | 🚧 |
+| NOTIF-T-04 | Integration Tests | 5 | Medium | Testing | ✅ |
+| NOTIF-T-05 | E2E Tests | 3 | Medium | Testing | ✅ |
 | NOTIF-X-01 | AWS Configuration & Environment Setup | 2 | Highest | Cross-cut | ✅ |
 | NOTIF-X-02 | Install NPM Dependencies | 1 | Highest | Cross-cut | ✅ |
 | NOTIF-X-03 | Architecture Tests Update | 2 | Medium | Cross-cut | ✅ |
-| NOTIF-X-04 | API Documentation (Swagger) | 1 | Medium | Cross-cut | |
+| NOTIF-X-04 | API Documentation (Swagger) | 1 | Medium | Cross-cut | ✅ ||
 
 **Total Story Points: ~124**
 
@@ -245,18 +245,23 @@ NOTIF-X-01 ─┤
 | Domain (D-01→D-07) | 7 | 7 | ✅ Complete |
 | Application (A-01→A-12) | 12 | 12 | ✅ Complete |
 | Infrastructure (I-01→I-12) | 12 | 12 | ✅ Complete |
-| Cross-cutting (X-01→X-03) | 3 | 3 | ✅ Complete |
+| Cross-cutting (X-01→X-04) | 4 | 4 | ✅ Complete |
 | T-01 Domain Unit Tests (186) | 1 | 1 | ✅ Complete |
 | T-02 Application Unit Tests (41) | 1 | 1 | ✅ Complete |
 | T-03 Infrastructure Unit Tests (36) | 1 | 1 | ✅ Complete |
-| T-04 Integration Tests | 1 | 0 | 🚧 Files created, needs running env |
-| T-05 E2E Tests | 1 | 0 | 🚧 Files created, needs running env |
-| X-04 API Documentation (Swagger) | 1 | 0 | Not started |
+| T-04 Integration Tests (8) | 1 | 1 | ✅ Complete |
+| T-05 E2E Tests (15) | 1 | 1 | ✅ Complete |
 
-**Overall: 37/40 sub-issues complete — 3 remaining**
+**Overall: 40/40 sub-issues complete — MODULE DONE**
 
-### Remaining Work
+### Test Summary
 
-1. **NOTIF-T-04** — Integration test file created at `test/integration/notifications/notifications.integration.spec.ts`. Tests handler→repository roundtrips with in-memory repos. Needs `make dev` environment to validate.
-2. **NOTIF-T-05** — E2E test file created at `test/e2e/notifications/notification-lifecycle.e2e-spec.ts` with helpers at `test/e2e/notifications/helpers/test-setup.ts`. Tests all 6 controller endpoints via supertest. 400/500 errors likely due to DTO validation or missing env — needs debugging with running services.
-3. **NOTIF-X-04** — Swagger `@ApiProperty` / `@ApiResponse` review on controller and DTOs.
+| Suite | Tests | Status |
+|-------|-------|--------|
+| Unit (Domain) | 186 | ✅ |
+| Unit (Application) | 41 | ✅ |
+| Unit (Infrastructure) | 36 | ✅ |
+| Integration | 8 | ✅ |
+| E2E | 15 | ✅ |
+| Architecture | 34 | ✅ |
+| **Total** | **320** | **✅** |

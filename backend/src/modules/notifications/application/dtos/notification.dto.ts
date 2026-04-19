@@ -1,4 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+} from 'class-validator';
 
 import { NotificationChannel } from '../../domain/value-objects/notification-channel.vo';
 import { NotificationPriority } from '../../domain/value-objects/notification-priority.vo';
@@ -9,46 +20,46 @@ import { NotificationType } from '../../domain/value-objects/notification-type.v
  * Response DTO for notification list views
  */
 export class NotificationDto {
-  @ApiProperty({ description: 'Notification ID' })
+  @ApiProperty({ description: 'Notification ID', example: '550e8400-e29b-41d4-a716-446655440001' })
   id!: string;
 
-  @ApiProperty({ description: 'User ID' })
+  @ApiProperty({ description: 'User ID', example: '550e8400-e29b-41d4-a716-446655440002' })
   userId!: string;
 
-  @ApiProperty({ enum: NotificationType })
+  @ApiProperty({ enum: NotificationType, description: 'Notification type' })
   type!: NotificationType;
 
-  @ApiProperty({ enum: NotificationChannel })
+  @ApiProperty({ enum: NotificationChannel, description: 'Delivery channel' })
   channel!: NotificationChannel;
 
-  @ApiProperty({ enum: NotificationPriority })
+  @ApiProperty({ enum: NotificationPriority, description: 'Priority level' })
   priority!: NotificationPriority;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Email subject line' })
   subject!: string | null;
 
-  @ApiProperty({ enum: NotificationStatus })
+  @ApiProperty({ enum: NotificationStatus, description: 'Current status' })
   status!: NotificationStatus;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Scheduled delivery time' })
   scheduledFor!: Date | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Time notification was sent' })
   sentAt!: Date | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Time notification was delivered' })
   deliveredAt!: Date | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Failure reason if failed' })
   failureReason!: string | null;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Number of retry attempts', example: 0 })
   retryCount!: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Creation timestamp' })
   createdAt!: Date;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Last update timestamp' })
   updatedAt!: Date;
 }
 
@@ -56,19 +67,19 @@ export class NotificationDto {
  * Response DTO for notification preferences
  */
 export class NotificationPreferenceDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'User ID', example: '550e8400-e29b-41d4-a716-446655440001' })
   userId!: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Email notifications enabled', example: true })
   emailEnabled!: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'SMS notifications enabled', example: true })
   smsEnabled!: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Marketing notifications enabled', example: false })
   marketingEnabled!: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Event reminder notifications enabled', example: true })
   eventRemindersEnabled!: boolean;
 }
 
@@ -76,40 +87,65 @@ export class NotificationPreferenceDto {
  * Request DTO for sending a notification
  */
 export class SendNotificationRequestDto {
-  @ApiProperty({ description: 'Target user ID' })
+  @ApiProperty({ description: 'Target user ID', example: '550e8400-e29b-41d4-a716-446655440001' })
+  @IsNotEmpty()
+  @IsUUID()
   userId!: string;
 
-  @ApiProperty({ enum: NotificationType })
+  @ApiProperty({ enum: NotificationType, description: 'Notification type', example: NotificationType.ORDER_CONFIRMATION })
+  @IsNotEmpty()
+  @IsEnum(NotificationType)
   type!: NotificationType;
 
-  @ApiProperty({ enum: NotificationChannel })
+  @ApiProperty({ enum: NotificationChannel, description: 'Delivery channel', example: NotificationChannel.EMAIL })
+  @IsNotEmpty()
+  @IsEnum(NotificationChannel)
   channel!: NotificationChannel;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Email subject line', example: 'Your order is confirmed' })
+  @IsOptional()
+  @IsString()
   subject?: string;
 
-  @ApiPropertyOptional({ description: 'Direct content (if no template)' })
+  @ApiPropertyOptional({ description: 'Direct content (if no template)', example: '<p>Hello!</p>' })
+  @IsOptional()
+  @IsString()
   content?: string;
 
-  @ApiPropertyOptional({ description: 'Template slug to render' })
+  @ApiPropertyOptional({ description: 'Template slug to render', example: 'order-confirmation' })
+  @IsOptional()
+  @IsString()
   templateSlug?: string;
 
-  @ApiPropertyOptional({ description: 'Data for template rendering' })
+  @ApiPropertyOptional({ description: 'Data for template rendering', example: { name: 'John' } })
+  @IsOptional()
+  @IsObject()
   templateData?: Record<string, unknown>;
 
-  @ApiPropertyOptional({ enum: NotificationPriority })
+  @ApiPropertyOptional({ enum: NotificationPriority, description: 'Message priority' })
+  @IsOptional()
+  @IsEnum(NotificationPriority)
   priority?: NotificationPriority;
 
-  @ApiPropertyOptional({ description: 'Schedule for future delivery' })
+  @ApiPropertyOptional({ description: 'Schedule for future delivery (ISO 8601)' })
+  @IsOptional()
+  @IsDateString()
   scheduledFor?: Date;
 
-  @ApiProperty({ description: 'Recipient email' })
+  @ApiPropertyOptional({ description: 'Recipient email', example: 'user@tickr.tn' })
+  @IsOptional()
+  @IsString()
   recipientEmail?: string;
 
-  @ApiPropertyOptional({ description: 'Recipient phone (+216XXXXXXXX)' })
+  @ApiPropertyOptional({ description: 'Recipient phone (+216XXXXXXXX)', example: '+21612345678' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+216\d{8}$/, { message: 'Phone must be a valid Tunisian number (+216XXXXXXXX)' })
   recipientPhone?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Additional metadata' })
+  @IsOptional()
+  @IsObject()
   metadata?: Record<string, unknown>;
 }
 
@@ -117,16 +153,24 @@ export class SendNotificationRequestDto {
  * Request DTO for updating preferences
  */
 export class UpdatePreferencesRequestDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Enable email notifications', example: true })
+  @IsOptional()
+  @IsBoolean()
   emailEnabled?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Enable SMS notifications', example: true })
+  @IsOptional()
+  @IsBoolean()
   smsEnabled?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Enable marketing notifications', example: false })
+  @IsOptional()
+  @IsBoolean()
   marketingEnabled?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Enable event reminder notifications', example: true })
+  @IsOptional()
+  @IsBoolean()
   eventRemindersEnabled?: boolean;
 }
 

@@ -18,6 +18,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
 import { CurrentUser } from '@shared/infrastructure/common/decorators/current-user.decorator';
@@ -72,8 +74,10 @@ export class NotificationsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Send a notification' })
+  @ApiBody({ type: SendNotificationRequestDto })
   @ApiResponse({ status: 201, description: 'Notification sent/scheduled' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 400, description: 'Validation error or send failure' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async sendNotification(
     @Body() dto: SendNotificationRequestDto,
   ): Promise<{ notificationId: string; status: string }> {
@@ -104,9 +108,10 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user notifications' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiResponse({ status: 200, type: PaginatedNotificationsDto })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
+  @ApiResponse({ status: 200, type: PaginatedNotificationsDto, description: 'Paginated notification list' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyNotifications(
     @CurrentUser('id') userId: string,
     @Query('page') page = 1,
@@ -126,7 +131,9 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get notification by ID' })
-  @ApiResponse({ status: 200, type: NotificationDto })
+  @ApiParam({ name: 'id', description: 'Notification UUID', type: 'string' })
+  @ApiResponse({ status: 200, type: NotificationDto, description: 'Notification details' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async getNotificationById(
     @Param('id', ParseUUIDPipe) id: string,
@@ -150,7 +157,8 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user notification preferences' })
-  @ApiResponse({ status: 200, type: NotificationPreferenceDto })
+  @ApiResponse({ status: 200, type: NotificationPreferenceDto, description: 'User preferences' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyPreferences(
     @CurrentUser('id') userId: string,
   ): Promise<NotificationPreferenceDto> {
@@ -164,7 +172,10 @@ export class NotificationsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update notification preferences' })
-  @ApiResponse({ status: 200, type: NotificationPreferenceDto })
+  @ApiBody({ type: UpdatePreferencesRequestDto })
+  @ApiResponse({ status: 200, type: NotificationPreferenceDto, description: 'Updated preferences' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMyPreferences(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdatePreferencesRequestDto,
@@ -200,6 +211,8 @@ export class NotificationsController {
   @Get('unsubscribe/:token/:category')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Unsubscribe via email link' })
+  @ApiParam({ name: 'token', description: 'Unsubscribe token from email', type: 'string' })
+  @ApiParam({ name: 'category', description: 'Preference category', enum: ['marketing', 'event_reminders'] })
   @ApiResponse({ status: 200, description: 'Unsubscribed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid token or category' })
   async unsubscribe(
