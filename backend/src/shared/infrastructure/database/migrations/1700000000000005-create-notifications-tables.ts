@@ -17,7 +17,7 @@ export class CreateNotificationsTables1700000000000005
       CREATE TABLE notifications.notifications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL,
-        type VARCHAR(30) NOT NULLp,
+        type VARCHAR(30) NOT NULL,
         channel VARCHAR(10) NOT NULL,
         priority VARCHAR(10) NOT NULL DEFAULT 'MEDIUM',
         subject VARCHAR(500),
