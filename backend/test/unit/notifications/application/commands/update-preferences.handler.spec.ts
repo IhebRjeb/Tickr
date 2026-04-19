@@ -2,12 +2,12 @@
  * @file UpdatePreferencesHandler Unit Tests
  */
 
-import { Logger } from '@nestjs/common';
 
-import type { NotificationPreferenceRepositoryPort } from '@modules/notifications/application/ports/notification-preference.repository.port';
 import { UpdatePreferencesCommand } from '@modules/notifications/application/commands/update-preferences/update-preferences.command';
 import { UpdatePreferencesHandler } from '@modules/notifications/application/commands/update-preferences/update-preferences.handler';
+import type { NotificationPreferenceRepositoryPort } from '@modules/notifications/application/ports/notification-preference.repository.port';
 import { NotificationPreferenceEntity } from '@modules/notifications/domain';
+import { Logger } from '@nestjs/common';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('UpdatePreferencesHandler', () => {

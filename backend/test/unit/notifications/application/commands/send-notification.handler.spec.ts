@@ -3,22 +3,22 @@
  * @description Tests for the send notification command handler
  */
 
-import { Logger } from '@nestjs/common';
 
+import { SendNotificationCommand } from '@modules/notifications/application/commands/send-notification/send-notification.command';
+import { SendNotificationHandler } from '@modules/notifications/application/commands/send-notification/send-notification.handler';
 import type { EmailProviderPort } from '@modules/notifications/application/ports/email-provider.port';
 import type { NotificationPreferenceRepositoryPort } from '@modules/notifications/application/ports/notification-preference.repository.port';
 import type { NotificationRepositoryPort } from '@modules/notifications/application/ports/notification.repository.port';
 import type { RateLimiterPort } from '@modules/notifications/application/ports/rate-limiter.port';
 import type { SmsProviderPort } from '@modules/notifications/application/ports/sms-provider.port';
 import type { TemplateRendererPort } from '@modules/notifications/application/ports/template-renderer.port';
-import { SendNotificationCommand } from '@modules/notifications/application/commands/send-notification/send-notification.command';
-import { SendNotificationHandler } from '@modules/notifications/application/commands/send-notification/send-notification.handler';
 import {
   NotificationChannel,
   NotificationPriority,
   NotificationType,
   NotificationPreferenceEntity,
 } from '@modules/notifications/domain';
+import { Logger } from '@nestjs/common';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('SendNotificationHandler', () => {

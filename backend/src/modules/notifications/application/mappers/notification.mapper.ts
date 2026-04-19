@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import type { NotificationEntity } from '../../domain/entities/notification.entity';
 import type { NotificationPreferenceEntity } from '../../domain/entities/notification-preference.entity';
+import type { NotificationEntity } from '../../domain/entities/notification.entity';
 import {
   NotificationDto,
   NotificationPreferenceDto,

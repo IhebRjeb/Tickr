@@ -4,8 +4,9 @@
  */
 
 import { SendNotificationHandler } from '@modules/notifications/application/commands/send-notification/send-notification.handler';
-import { UpdatePreferencesHandler } from '@modules/notifications/application/commands/update-preferences/update-preferences.handler';
 import { UnsubscribeHandler } from '@modules/notifications/application/commands/unsubscribe/unsubscribe.handler';
+import { UpdatePreferencesHandler } from '@modules/notifications/application/commands/update-preferences/update-preferences.handler';
+import { NotificationMapper } from '@modules/notifications/application/mappers/notification.mapper';
 import { EMAIL_PROVIDER } from '@modules/notifications/application/ports/email-provider.port';
 import { NOTIFICATION_PREFERENCE_REPOSITORY } from '@modules/notifications/application/ports/notification-preference.repository.port';
 import { NOTIFICATION_TEMPLATE_REPOSITORY } from '@modules/notifications/application/ports/notification-template.repository.port';
@@ -13,7 +14,6 @@ import { NOTIFICATION_REPOSITORY } from '@modules/notifications/application/port
 import { RATE_LIMITER } from '@modules/notifications/application/ports/rate-limiter.port';
 import { SMS_PROVIDER } from '@modules/notifications/application/ports/sms-provider.port';
 import { TEMPLATE_RENDERER } from '@modules/notifications/application/ports/template-renderer.port';
-import { NotificationMapper } from '@modules/notifications/application/mappers/notification.mapper';
 import { GetNotificationByIdHandler } from '@modules/notifications/application/queries/get-notification-by-id/get-notification-by-id.handler';
 import { GetUserNotificationsHandler } from '@modules/notifications/application/queries/get-user-notifications/get-user-notifications.handler';
 import { GetUserPreferencesHandler } from '@modules/notifications/application/queries/get-user-preferences/get-user-preferences.handler';
@@ -23,8 +23,8 @@ import type { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { JwtAuthGuard } from '@shared/infrastructure/common/guards/jwt-auth.guard';
 import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import { JwtAuthGuard } from '@shared/infrastructure/common/guards/jwt-auth.guard';
 import request from 'supertest';
 
 import {

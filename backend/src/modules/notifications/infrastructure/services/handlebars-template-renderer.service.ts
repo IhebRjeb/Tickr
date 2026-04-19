@@ -2,13 +2,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 
 import {
-  TemplateRendererPort,
-  RenderedTemplate,
-} from '../../application/ports/template-renderer.port';
-import {
   NOTIFICATION_TEMPLATE_REPOSITORY,
   type NotificationTemplateRepositoryPort,
 } from '../../application/ports/notification-template.repository.port';
+import {
+  TemplateRendererPort,
+  RenderedTemplate,
+} from '../../application/ports/template-renderer.port';
 
 /**
  * Handlebars Template Renderer

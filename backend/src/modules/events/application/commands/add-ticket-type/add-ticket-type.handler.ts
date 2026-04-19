@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Result } from '@shared/domain/result';
 import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
 import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
+import { Result } from '@shared/domain/result';
 
 import { TicketTypeEntity } from '../../../domain/entities/ticket-type.entity';
 import { SalesPeriodVO } from '../../../domain/value-objects/sales-period.vo';

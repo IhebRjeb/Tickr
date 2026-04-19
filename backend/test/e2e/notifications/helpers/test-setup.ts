@@ -4,8 +4,10 @@
  */
 
 import type {
-  NotificationRepositoryPort,
-} from '@modules/notifications/application/ports/notification.repository.port';
+  EmailProviderPort,
+  SendEmailRequest,
+  SendEmailResponse,
+} from '@modules/notifications/application/ports/email-provider.port';
 import type {
   NotificationPreferenceRepositoryPort,
 } from '@modules/notifications/application/ports/notification-preference.repository.port';
@@ -13,10 +15,11 @@ import type {
   NotificationTemplateRepositoryPort,
 } from '@modules/notifications/application/ports/notification-template.repository.port';
 import type {
-  EmailProviderPort,
-  SendEmailRequest,
-  SendEmailResponse,
-} from '@modules/notifications/application/ports/email-provider.port';
+  NotificationRepositoryPort,
+} from '@modules/notifications/application/ports/notification.repository.port';
+import type {
+  RateLimiterPort,
+} from '@modules/notifications/application/ports/rate-limiter.port';
 import type {
   SmsProviderPort,
   SendSmsRequest,
@@ -26,15 +29,11 @@ import type {
   TemplateRendererPort,
   RenderedTemplate,
 } from '@modules/notifications/application/ports/template-renderer.port';
-import type {
-  RateLimiterPort,
-} from '@modules/notifications/application/ports/rate-limiter.port';
-import { NotificationEntity } from '@modules/notifications/domain/entities/notification.entity';
 import { NotificationPreferenceEntity } from '@modules/notifications/domain/entities/notification-preference.entity';
 import { NotificationTemplateEntity } from '@modules/notifications/domain/entities/notification-template.entity';
+import { NotificationEntity } from '@modules/notifications/domain/entities/notification.entity';
 import { NotificationChannel } from '@modules/notifications/domain/value-objects/notification-channel.vo';
 import { NotificationStatus } from '@modules/notifications/domain/value-objects/notification-status.vo';
-import { NotificationType } from '@modules/notifications/domain/value-objects/notification-type.vo';
 import { TemplateCategory } from '@modules/notifications/domain/value-objects/template-category.vo';
 
 // ============================================

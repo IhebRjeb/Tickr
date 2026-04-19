@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { SendNotificationCommand } from '../commands/send-notification/send-notification.command';
-import { SendNotificationHandler } from '../commands/send-notification/send-notification.handler';
 import { NotificationChannel } from '../../domain/value-objects/notification-channel.vo';
 import { NotificationType } from '../../domain/value-objects/notification-type.vo';
+import { SendNotificationCommand } from '../commands/send-notification/send-notification.command';
+import { SendNotificationHandler } from '../commands/send-notification/send-notification.handler';
 
 /**
  * Application Event Handlers

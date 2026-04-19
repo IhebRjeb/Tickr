@@ -1,5 +1,5 @@
-import { NotificationScheduler } from '@modules/notifications/infrastructure/services/notification-scheduler.service';
 import { ProcessScheduledNotificationsHandler } from '@modules/notifications/application/commands/process-scheduled-notifications/process-scheduled-notifications.handler';
+import { NotificationScheduler } from '@modules/notifications/infrastructure/services/notification-scheduler.service';
 
 describe('NotificationScheduler', () => {
   let scheduler: NotificationScheduler;

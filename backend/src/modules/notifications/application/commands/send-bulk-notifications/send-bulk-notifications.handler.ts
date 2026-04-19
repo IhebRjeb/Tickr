@@ -1,9 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-
+import { Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
 
-import { NotificationChannel } from '../../../domain/value-objects/notification-channel.vo';
-import { NotificationPriority } from '../../../domain/value-objects/notification-priority.vo';
 import { SendNotificationCommand } from '../send-notification/send-notification.command';
 import { SendNotificationHandler } from '../send-notification/send-notification.handler';
 

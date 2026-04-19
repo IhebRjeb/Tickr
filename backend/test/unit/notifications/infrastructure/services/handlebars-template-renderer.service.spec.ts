@@ -1,9 +1,8 @@
-import { HandlebarsTemplateRenderer } from '@modules/notifications/infrastructure/services/handlebars-template-renderer.service';
 import { NotificationTemplateRepositoryPort } from '@modules/notifications/application/ports/notification-template.repository.port';
 import { NotificationTemplateEntity } from '@modules/notifications/domain/entities/notification-template.entity';
 import { NotificationChannel } from '@modules/notifications/domain/value-objects/notification-channel.vo';
 import { TemplateCategory } from '@modules/notifications/domain/value-objects/template-category.vo';
-import { Result } from '@shared/domain/result';
+import { HandlebarsTemplateRenderer } from '@modules/notifications/infrastructure/services/handlebars-template-renderer.service';
 
 describe('HandlebarsTemplateRenderer', () => {
   let renderer: HandlebarsTemplateRenderer;

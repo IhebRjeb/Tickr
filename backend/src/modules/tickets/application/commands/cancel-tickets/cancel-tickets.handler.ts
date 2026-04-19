@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Result } from '@shared/domain/result';
 import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
 import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
+import { Result } from '@shared/domain/result';
 
 import { EVENT_QUERY_PORT } from '../../ports/event-query.port';
 import type { EventQueryPort } from '../../ports/event-query.port';

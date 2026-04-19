@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-
 import { Result } from '@shared/domain/result';
 
 import {

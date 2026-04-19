@@ -2,7 +2,6 @@
  * @file GetNotificationByIdHandler Unit Tests
  */
 
-import { Logger } from '@nestjs/common';
 
 import type { NotificationRepositoryPort } from '@modules/notifications/application/ports/notification.repository.port';
 import { GetNotificationByIdHandler } from '@modules/notifications/application/queries/get-notification-by-id/get-notification-by-id.handler';
@@ -15,6 +14,7 @@ import {
   NotificationPriority,
   RecipientVO,
 } from '@modules/notifications/domain';
+import { Logger } from '@nestjs/common';
 
 describe('GetNotificationByIdHandler', () => {
   let handler: GetNotificationByIdHandler;

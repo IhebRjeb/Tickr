@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
 import { Result } from '@shared/domain/result';
 
+import type { NotificationEntity } from '../../../domain/entities/notification.entity';
 import {
   NOTIFICATION_REPOSITORY,
   type NotificationRepositoryPort,
@@ -12,7 +12,6 @@ import {
   type GetNotificationByIdError,
 } from './get-notification-by-id.query';
 
-import type { NotificationEntity } from '../../../domain/entities/notification.entity';
 
 /**
  * Handler for GetNotificationByIdQuery

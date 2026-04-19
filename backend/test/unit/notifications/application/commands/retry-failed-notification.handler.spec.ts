@@ -2,11 +2,10 @@
  * @file RetryFailedNotificationHandler Unit Tests
  */
 
-import { Logger } from '@nestjs/common';
 
-import type { NotificationRepositoryPort } from '@modules/notifications/application/ports/notification.repository.port';
 import { RetryFailedNotificationCommand } from '@modules/notifications/application/commands/retry-failed-notification/retry-failed-notification.command';
 import { RetryFailedNotificationHandler } from '@modules/notifications/application/commands/retry-failed-notification/retry-failed-notification.handler';
+import type { NotificationRepositoryPort } from '@modules/notifications/application/ports/notification.repository.port';
 import {
   NotificationEntity,
   NotificationStatus,
@@ -15,6 +14,7 @@ import {
   NotificationPriority,
   RecipientVO,
 } from '@modules/notifications/domain';
+import { Logger } from '@nestjs/common';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('RetryFailedNotificationHandler', () => {

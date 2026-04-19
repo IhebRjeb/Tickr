@@ -1,6 +1,6 @@
 import { BaseEntity } from '@shared/domain/base-entity';
 import { Result } from '@shared/domain/result';
-import { generateUUID, isUUID } from '@shared/domain/utils';
+import { generateUUID } from '@shared/domain/utils';
 
 import { InvalidTemplateException } from '../exceptions/invalid-template.exception';
 import { NotificationChannel } from '../value-objects/notification-channel.vo';

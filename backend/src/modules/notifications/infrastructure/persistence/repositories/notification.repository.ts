@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { NotificationRepositoryPort } from '../../../application/ports/notification.repository.port';
 import { NotificationEntity } from '../../../domain/entities/notification.entity';

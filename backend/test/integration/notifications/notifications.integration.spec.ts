@@ -4,16 +4,17 @@
  *              using in-memory repos (no real DB).
  */
 
-import { SendNotificationHandler } from '@modules/notifications/application/commands/send-notification/send-notification.handler';
 import { SendNotificationCommand } from '@modules/notifications/application/commands/send-notification/send-notification.command';
-import { UpdatePreferencesHandler } from '@modules/notifications/application/commands/update-preferences/update-preferences.handler';
+import { SendNotificationHandler } from '@modules/notifications/application/commands/send-notification/send-notification.handler';
 import { UpdatePreferencesCommand } from '@modules/notifications/application/commands/update-preferences/update-preferences.command';
-import { GetUserNotificationsHandler } from '@modules/notifications/application/queries/get-user-notifications/get-user-notifications.handler';
-import { GetUserNotificationsQuery } from '@modules/notifications/application/queries/get-user-notifications/get-user-notifications.query';
+import { UpdatePreferencesHandler } from '@modules/notifications/application/commands/update-preferences/update-preferences.handler';
 import { GetNotificationByIdHandler } from '@modules/notifications/application/queries/get-notification-by-id/get-notification-by-id.handler';
 import { GetNotificationByIdQuery } from '@modules/notifications/application/queries/get-notification-by-id/get-notification-by-id.query';
+import { GetUserNotificationsHandler } from '@modules/notifications/application/queries/get-user-notifications/get-user-notifications.handler';
+import { GetUserNotificationsQuery } from '@modules/notifications/application/queries/get-user-notifications/get-user-notifications.query';
 import { NotificationChannel } from '@modules/notifications/domain/value-objects/notification-channel.vo';
 import { NotificationType } from '@modules/notifications/domain/value-objects/notification-type.vo';
+
 import {
   InMemoryNotificationRepository,
   InMemoryNotificationPreferenceRepository,

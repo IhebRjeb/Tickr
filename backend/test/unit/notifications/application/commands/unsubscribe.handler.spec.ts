@@ -2,12 +2,12 @@
  * @file UnsubscribeHandler Unit Tests
  */
 
-import { Logger } from '@nestjs/common';
 
-import type { NotificationPreferenceRepositoryPort } from '@modules/notifications/application/ports/notification-preference.repository.port';
 import { UnsubscribeCommand } from '@modules/notifications/application/commands/unsubscribe/unsubscribe.command';
 import { UnsubscribeHandler } from '@modules/notifications/application/commands/unsubscribe/unsubscribe.handler';
+import type { NotificationPreferenceRepositoryPort } from '@modules/notifications/application/ports/notification-preference.repository.port';
 import { NotificationPreferenceEntity } from '@modules/notifications/domain';
+import { Logger } from '@nestjs/common';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('UnsubscribeHandler', () => {

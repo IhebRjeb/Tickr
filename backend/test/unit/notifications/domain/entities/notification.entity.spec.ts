@@ -10,7 +10,6 @@ import {
   NotificationChannel,
   NotificationPriority,
   RecipientVO,
-  isValidNotificationTransition,
   NotificationScheduledEvent,
   NotificationSentEvent,
   NotificationDeliveredEvent,

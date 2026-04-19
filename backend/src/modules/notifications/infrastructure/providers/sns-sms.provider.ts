@@ -1,6 +1,6 @@
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 import {
   SmsProviderPort,

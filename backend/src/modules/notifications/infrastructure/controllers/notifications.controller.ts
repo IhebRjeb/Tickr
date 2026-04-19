@@ -27,10 +27,10 @@ import { JwtAuthGuard } from '@shared/infrastructure/common/guards/jwt-auth.guar
 
 import { SendNotificationCommand } from '../../application/commands/send-notification/send-notification.command';
 import { SendNotificationHandler } from '../../application/commands/send-notification/send-notification.handler';
-import { UpdatePreferencesCommand } from '../../application/commands/update-preferences/update-preferences.command';
-import { UpdatePreferencesHandler } from '../../application/commands/update-preferences/update-preferences.handler';
 import { UnsubscribeCommand } from '../../application/commands/unsubscribe/unsubscribe.command';
 import { UnsubscribeHandler } from '../../application/commands/unsubscribe/unsubscribe.handler';
+import { UpdatePreferencesCommand } from '../../application/commands/update-preferences/update-preferences.command';
+import { UpdatePreferencesHandler } from '../../application/commands/update-preferences/update-preferences.handler';
 import {
   SendNotificationRequestDto,
   UpdatePreferencesRequestDto,
@@ -39,12 +39,12 @@ import {
   PaginatedNotificationsDto,
 } from '../../application/dtos/notification.dto';
 import { NotificationMapper } from '../../application/mappers/notification.mapper';
-import { GetNotificationByIdQuery } from '../../application/queries/get-notification-by-id/get-notification-by-id.query';
 import { GetNotificationByIdHandler } from '../../application/queries/get-notification-by-id/get-notification-by-id.handler';
-import { GetUserNotificationsQuery } from '../../application/queries/get-user-notifications/get-user-notifications.query';
+import { GetNotificationByIdQuery } from '../../application/queries/get-notification-by-id/get-notification-by-id.query';
 import { GetUserNotificationsHandler } from '../../application/queries/get-user-notifications/get-user-notifications.handler';
-import { GetUserPreferencesQuery } from '../../application/queries/get-user-preferences/get-user-preferences.query';
+import { GetUserNotificationsQuery } from '../../application/queries/get-user-notifications/get-user-notifications.query';
 import { GetUserPreferencesHandler } from '../../application/queries/get-user-preferences/get-user-preferences.handler';
+import { GetUserPreferencesQuery } from '../../application/queries/get-user-preferences/get-user-preferences.query';
 import { NotificationChannel } from '../../domain/value-objects/notification-channel.vo';
 import { NotificationPriority } from '../../domain/value-objects/notification-priority.vo';
 import { NotificationType } from '../../domain/value-objects/notification-type.vo';
