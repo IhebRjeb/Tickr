@@ -87,7 +87,7 @@ export class FailPaymentHandler {
 
     // 5. Publish events
     const events = order.pullDomainEvents();
-    await this.eventPublisher.publishAll(events);
+    await this.eventPublisher.publishMany(events);
 
     this.logger.log(
       `Payment failed for order ${order.id}. Attempt ${attemptCount}/${PaymentEntity.MAX_ATTEMPTS}. Can retry: ${canRetry}`,

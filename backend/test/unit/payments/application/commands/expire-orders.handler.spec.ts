@@ -61,7 +61,7 @@ describe('ExpireOrdersHandler', () => {
 
     mockEventPublisher = {
       publish: jest.fn(),
-      publishAll: jest.fn(),
+      publishMany: jest.fn(),
     } as any;
 
     handler = new ExpireOrdersHandler(
@@ -93,7 +93,7 @@ describe('ExpireOrdersHandler', () => {
       expect(result.expiredCount).toBe(2);
       expect(mockOrderRepo.save).toHaveBeenCalledTimes(2);
       expect(mockTicketReservation.cancelReservations).toHaveBeenCalledTimes(2);
-      expect(mockEventPublisher.publishAll).toHaveBeenCalledTimes(2);
+      expect(mockEventPublisher.publishMany).toHaveBeenCalledTimes(2);
     });
 
     it('should continue processing remaining orders if one fails', async () => {

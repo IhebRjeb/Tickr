@@ -80,7 +80,7 @@ export class ConfirmPaymentHandler {
 
     // 6. Publish events
     const events = order.pullDomainEvents();
-    await this.eventPublisher.publishAll(events);
+    await this.eventPublisher.publishMany(events);
 
     this.logger.log(`Order ${order.id} payment confirmed (tx: ${command.transactionId})`);
 

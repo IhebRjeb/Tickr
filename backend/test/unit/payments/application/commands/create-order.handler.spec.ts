@@ -67,7 +67,7 @@ describe('CreateOrderHandler', () => {
 
     mockEventPublisher = {
       publish: jest.fn(),
-      publishAll: jest.fn(),
+      publishMany: jest.fn(),
     } as any;
 
     mockConfigService = {
@@ -127,7 +127,7 @@ describe('CreateOrderHandler', () => {
   it('should publish domain events', async () => {
     await handler.execute(createValidCommand());
 
-    expect(mockEventPublisher.publishAll).toHaveBeenCalledTimes(1);
+    expect(mockEventPublisher.publishMany).toHaveBeenCalledTimes(1);
   });
 
   it('should reserve tickets via port', async () => {

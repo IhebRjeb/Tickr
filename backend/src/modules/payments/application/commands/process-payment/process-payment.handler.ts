@@ -127,7 +127,7 @@ export class ProcessPaymentHandler {
 
     // 11. Publish events
     const events = order.pullDomainEvents();
-    await this.eventPublisher.publishAll(events);
+    await this.eventPublisher.publishMany(events);
 
     this.logger.log(`Payment initiated for order ${order.id} via ${command.paymentMethod}`);
 

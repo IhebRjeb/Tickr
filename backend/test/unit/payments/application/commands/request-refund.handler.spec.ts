@@ -92,7 +92,7 @@ describe('RequestRefundHandler', () => {
 
     mockEventPublisher = {
       publish: jest.fn(),
-      publishAll: jest.fn(),
+      publishMany: jest.fn(),
     } as any;
 
     handler = new RequestRefundHandler(
@@ -123,7 +123,7 @@ describe('RequestRefundHandler', () => {
       expect(mockTicketReservation.cancelReservations).toHaveBeenCalled();
       expect(mockRefundRepo.save).toHaveBeenCalled();
       expect(mockOrderRepo.save).toHaveBeenCalled();
-      expect(mockEventPublisher.publishAll).toHaveBeenCalled();
+      expect(mockEventPublisher.publishMany).toHaveBeenCalled();
     });
 
     it('should fail if order not found', async () => {

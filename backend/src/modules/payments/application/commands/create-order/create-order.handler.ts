@@ -168,7 +168,7 @@ export class CreateOrderHandler {
 
     // 7. Publish domain events
     const events = order.pullDomainEvents();
-    await this.eventPublisher.publishAll(events);
+    await this.eventPublisher.publishMany(events);
 
     this.logger.log(`Order ${order.id} created successfully`);
 

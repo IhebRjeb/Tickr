@@ -52,7 +52,7 @@ export class ExpireOrdersHandler {
         await this.orderRepository.save(order);
 
         const events = order.pullDomainEvents();
-        await this.eventPublisher.publishAll(events);
+        await this.eventPublisher.publishMany(events);
 
         expiredCount++;
       } catch (error) {

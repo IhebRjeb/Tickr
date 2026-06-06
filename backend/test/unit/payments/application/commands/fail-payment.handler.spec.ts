@@ -92,7 +92,7 @@ describe('FailPaymentHandler', () => {
 
     mockEventPublisher = {
       publish: jest.fn(),
-      publishAll: jest.fn(),
+      publishMany: jest.fn(),
     } as any;
 
     handler = new FailPaymentHandler(
@@ -150,7 +150,7 @@ describe('FailPaymentHandler', () => {
       expect(result.value!.attemptNumber).toBe(3);
       expect(mockTicketReservation.cancelReservations).toHaveBeenCalled();
       expect(mockOrderRepo.save).toHaveBeenCalled();
-      expect(mockEventPublisher.publishAll).toHaveBeenCalled();
+      expect(mockEventPublisher.publishMany).toHaveBeenCalled();
     });
 
     it('should fail if order not found', async () => {

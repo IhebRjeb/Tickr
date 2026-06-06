@@ -91,7 +91,7 @@ describe('ProcessPaymentHandler', () => {
 
     mockEventPublisher = {
       publish: jest.fn(),
-      publishAll: jest.fn(),
+      publishMany: jest.fn(),
     } as any;
 
     handler = new ProcessPaymentHandler(
@@ -124,7 +124,7 @@ describe('ProcessPaymentHandler', () => {
       expect(mockProvider.createPaymentIntent).toHaveBeenCalledWith(order);
       expect(mockPaymentRepo.save).toHaveBeenCalled();
       expect(mockOrderRepo.save).toHaveBeenCalled();
-      expect(mockEventPublisher.publishAll).toHaveBeenCalled();
+      expect(mockEventPublisher.publishMany).toHaveBeenCalled();
     });
 
     it('should allow retry for PROCESSING order', async () => {

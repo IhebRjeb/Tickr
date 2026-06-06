@@ -118,7 +118,7 @@ export class RequestRefundHandler {
 
     // 9. Publish events
     const events = order.pullDomainEvents();
-    await this.eventPublisher.publishAll(events);
+    await this.eventPublisher.publishMany(events);
 
     this.logger.log(`Refund ${refund.id} processed for order ${order.id}`);
 
