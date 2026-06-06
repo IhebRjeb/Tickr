@@ -7,6 +7,7 @@
 import { Logger } from '@nestjs/common';
 
 import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { OrderItemEntity } from '@modules/payments/domain/entities/order-item.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
 import { CreateOrderHandler } from '@modules/payments/application/commands/create-order/create-order.handler';
@@ -50,12 +51,12 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 
   async findByUserId(userId: string, _page: number, _limit: number) {
     const matching = this.orders.filter((o) => o.userId === userId);
-    return { orders: matching, total: matching.length };
+    return { data: matching, total: matching.length };
   }
 
   async findByEventId(eventId: string, _page: number, _limit: number) {
     const matching = this.orders.filter((o) => o.eventId === eventId);
-    return { orders: matching, total: matching.length };
+    return { data: matching, total: matching.length };
   }
 
   async findExpired(): Promise<OrderEntity[]> {
@@ -65,8 +66,8 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
     );
   }
 
-  async findByGatewayRef(ref: string): Promise<OrderEntity | null> {
-    return this.orders.find((o) => o.gatewayPaymentRef === ref) || null;
+  async countByUserIdSince(_userId: string, _since: Date): Promise<number> {
+    return 0;
   }
 
   getAll(): OrderEntity[] {
@@ -184,7 +185,7 @@ describe('Payments Module - Integration Tests', () => {
     mockTicketReservation = createMockTicketReservation();
     mockProvider = createMockPaymentProvider();
     mockProviderFactory = createMockProviderFactory(mockProvider);
-    mockEventPublisher = { publish: jest.fn(), publishMany: jest.fn(), publishMany: jest.fn() };
+    mockEventPublisher = { publish: jest.fn(), publishMany: jest.fn() };
     mockPaymentRepository = { save: jest.fn(), findByOrderId: jest.fn().mockResolvedValue([]), findById: jest.fn(), countByOrderId: jest.fn().mockResolvedValue(0) } as any;
     mockRefundRepository = { save: jest.fn(), findByOrderId: jest.fn().mockResolvedValue([]) } as any;
     mockConfigService = {
@@ -280,7 +281,7 @@ describe('Payments Module - Integration Tests', () => {
         id: 'order-paid-1',
         userId: TEST_USER_ID,
         eventId: TEST_EVENT_ID,
-        items: [{ id: 'item-1', ticketTypeId: 'tt-1', ticketTypeName: 'Standard', quantity: 1, unitPrice: 50, lineTotal: 50 }],
+        items: [OrderItemEntity.reconstitute({ id: 'item-1', ticketTypeId: 'tt-1', ticketTypeName: 'Standard', priceAmount: 50, priceCurrency: 'TND', quantity: 1, createdAt: new Date() })],
         status: OrderStatus.PAID,
         subtotalAmount: 50,
         platformFeeAmount: 2,
@@ -331,7 +332,7 @@ describe('Payments Module - Integration Tests', () => {
         id: 'order-expired-1',
         userId: TEST_USER_ID,
         eventId: TEST_EVENT_ID,
-        items: [{ id: 'item-1', ticketTypeId: 'tt-1', ticketTypeName: 'Standard', quantity: 1, unitPrice: 50, lineTotal: 50 }],
+        items: [OrderItemEntity.reconstitute({ id: 'item-1', ticketTypeId: 'tt-1', ticketTypeName: 'Standard', priceAmount: 50, priceCurrency: 'TND', quantity: 1, createdAt: new Date() })],
         status: OrderStatus.PENDING,
         subtotalAmount: 50,
         platformFeeAmount: 2,

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { CacheService } from '@shared/infrastructure/cache/cache.service';
 
-import { FraudDetectionPort } from '../../../application/ports/fraud-detection.port';
+import { FraudDetectionPort } from '../../application/ports/fraud-detection.port';
 
 // ============================================
 // Fraud Detection Service (Infrastructure)

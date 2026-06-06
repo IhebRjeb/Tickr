@@ -1,8 +1,9 @@
 
 import {
   EVENT_REPOSITORY,
+  TICKET_TYPE_REPOSITORY,
 } from '@modules/events/application/ports/event.repository.port';
-import type { EventRepositoryPort } from '@modules/events/application/ports/event.repository.port';
+import type { EventRepositoryPort, TicketTypeRepositoryPort } from '@modules/events/application/ports/event.repository.port';
 import { Injectable, Inject, Logger } from '@nestjs/common';
 
 import type {
@@ -24,6 +25,8 @@ export class PaymentEventQueryAdapter implements PaymentEventQueryPort {
   constructor(
     @Inject(EVENT_REPOSITORY)
     private readonly eventRepository: EventRepositoryPort,
+    @Inject(TICKET_TYPE_REPOSITORY)
+    private readonly ticketTypeRepository: TicketTypeRepositoryPort,
   ) {}
 
   async getEventById(eventId: string): Promise<PaymentEventInfo | null> {
@@ -46,12 +49,7 @@ export class PaymentEventQueryAdapter implements PaymentEventQueryPort {
   async getTicketType(ticketTypeId: string): Promise<PaymentTicketTypeInfo | null> {
     this.logger.debug(`Querying ticket type for payment: ${ticketTypeId}`);
 
-    const event = await this.eventRepository.findByTicketTypeId(ticketTypeId);
-    if (!event) {
-      return null;
-    }
-
-    const ticketType = event.ticketTypes.find((tt) => tt.id === ticketTypeId);
+    const ticketType = await this.ticketTypeRepository.findById(ticketTypeId);
     if (!ticketType) {
       return null;
     }
@@ -59,9 +57,9 @@ export class PaymentEventQueryAdapter implements PaymentEventQueryPort {
     return {
       id: ticketType.id,
       name: ticketType.name,
-      price: ticketType.price,
-      currency: ticketType.currency,
-      available: ticketType.availableQuantity,
+      price: ticketType.price.amount,
+      currency: ticketType.price.currency,
+      available: ticketType.getAvailableQuantity(),
     };
   }
 }

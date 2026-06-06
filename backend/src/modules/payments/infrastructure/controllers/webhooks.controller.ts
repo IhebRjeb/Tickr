@@ -5,7 +5,6 @@ import {
   Query,
   Body,
   Headers,
-  RawBodyRequest,
   Req,
   HttpCode,
   HttpStatus,
@@ -14,7 +13,6 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
-import type { Request } from 'express';
 
 import { ConfirmPaymentCommand } from '../../application/commands/confirm-payment/confirm-payment.command';
 import { ConfirmPaymentHandler } from '../../application/commands/confirm-payment/confirm-payment.handler';
@@ -41,7 +39,7 @@ export class WebhooksController {
   @ApiExcludeEndpoint()
   async handleStripeWebhook(
     @Headers('stripe-signature') signature: string,
-    @Req() req: RawBodyRequest<Request>,
+    @Req() req: { rawBody?: Buffer },
   ) {
     const provider = this.providerFactory.getProvider(PaymentMethod.STRIPE);
     const rawBody = req.rawBody;

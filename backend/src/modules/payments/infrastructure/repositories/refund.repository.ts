@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { RefundRepositoryPort } from '../../../application/ports/refund.repository.port';
-import { RefundEntity } from '../../../domain/entities/refund.entity';
+import { RefundRepositoryPort } from '../../application/ports/refund.repository.port';
+import { RefundEntity } from '../../domain/entities/refund.entity';
 import { RefundOrmEntity } from '../persistence/entities/refund.orm-entity';
 import { RefundMapper } from '../persistence/mappers/refund.mapper';
 

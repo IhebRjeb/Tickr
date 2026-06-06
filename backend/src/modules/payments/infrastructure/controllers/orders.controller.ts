@@ -146,8 +146,6 @@ export class OrdersController {
           throw new NotFoundException(error.message);
         case 'ACCESS_DENIED':
           throw new ForbiddenException(error.message);
-        default:
-          throw new BadRequestException(error.message);
       }
     }
 

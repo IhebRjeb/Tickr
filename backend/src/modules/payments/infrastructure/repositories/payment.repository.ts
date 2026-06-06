@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { PaymentRepositoryPort } from '../../../application/ports/payment.repository.port';
-import { PaymentEntity } from '../../../domain/entities/payment.entity';
+import { PaymentRepositoryPort } from '../../application/ports/payment.repository.port';
+import { PaymentEntity } from '../../domain/entities/payment.entity';
 import { PaymentOrmEntity } from '../persistence/entities/payment.orm-entity';
 import { PaymentMapper } from '../persistence/mappers/payment.mapper';
 

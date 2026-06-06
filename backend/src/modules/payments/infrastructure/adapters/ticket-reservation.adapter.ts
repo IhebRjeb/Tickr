@@ -1,6 +1,4 @@
 
-import { TICKET_REPOSITORY } from '@modules/tickets/application/ports/ticket.repository.port';
-import type { TicketRepositoryPort } from '@modules/tickets/application/ports/ticket.repository.port';
 import { Injectable, Inject, Logger } from '@nestjs/common';
 
 import type {
@@ -9,62 +7,51 @@ import type {
 } from '../../application/ports/ticket-reservation.port';
 
 /**
+ * Injection token for the ticket reservation dependency.
+ * Will be provided by the Tickets module once implemented.
+ */
+export const TICKET_RESERVATION_IMPL = Symbol('TICKET_RESERVATION_IMPL');
+
+/**
  * Ticket Reservation Adapter (Cross-module: Payments → Tickets)
  *
  * Anti-corruption layer that delegates ticket operations
  * to the Tickets bounded context.
  *
- * The Payments module uses this adapter to:
- * - Reserve tickets when an order is created
- * - Confirm tickets after payment success
- * - Cancel/release tickets on payment failure or expiration
+ * NOTE: Currently a stub — the Tickets module will provide the
+ * actual implementation. This adapter is wired as a no-op placeholder
+ * until the Tickets module is complete.
  */
 @Injectable()
 export class TicketReservationAdapter implements TicketReservationPort {
   private readonly logger = new Logger(TicketReservationAdapter.name);
-
-  constructor(
-    @Inject(TICKET_REPOSITORY)
-    private readonly ticketRepository: TicketRepositoryPort,
-  ) {}
 
   async reserveTickets(
     eventId: string,
     ticketTypeId: string,
     userId: string,
     quantity: number,
-    holders: { name: string; email: string }[],
+    _holders: { name: string; email: string }[],
   ): Promise<TicketReservationResult> {
-    this.logger.debug(
-      `Reserving ${quantity} tickets for event ${eventId}, type ${ticketTypeId}`,
+    this.logger.warn(
+      `[STUB] Reserving ${quantity} tickets for event ${eventId}, type ${ticketTypeId}, user ${userId}`,
     );
 
-    // Delegate to tickets module repository
-    const tickets = await this.ticketRepository.reserveForOrder(
-      eventId,
-      ticketTypeId,
-      userId,
-      quantity,
-      holders,
-    );
-
+    // Stub: return mock ticket IDs until Tickets module is wired
+    const ticketIds = Array.from({ length: quantity }, (_, i) => `stub-ticket-${eventId}-${i}`);
     return {
-      ticketIds: tickets.map((t) => t.id),
-      reservedUntil: tickets[0]?.reservedUntil ?? new Date(),
+      ticketIds,
+      reservedUntil: new Date(Date.now() + 15 * 60 * 1000),
     };
   }
 
   async confirmTickets(ticketIds: string[], orderId: string): Promise<void> {
-    this.logger.debug(
-      `Confirming ${ticketIds.length} tickets for order ${orderId}`,
+    this.logger.warn(
+      `[STUB] Confirming ${ticketIds.length} tickets for order ${orderId}`,
     );
-
-    await this.ticketRepository.confirmByOrderId(ticketIds, orderId);
   }
 
   async cancelReservations(ticketIds: string[]): Promise<void> {
-    this.logger.debug(`Cancelling ${ticketIds.length} ticket reservations`);
-
-    await this.ticketRepository.cancelReservations(ticketIds);
+    this.logger.warn(`[STUB] Cancelling ${ticketIds.length} ticket reservations`);
   }
 }

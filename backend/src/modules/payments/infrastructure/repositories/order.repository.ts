@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 
-import { OrderRepositoryPort } from '../../../application/ports/order.repository.port';
-import { OrderEntity } from '../../../domain/entities/order.entity';
-import { OrderStatus } from '../../../domain/value-objects/order-status.vo';
+import { OrderRepositoryPort } from '../../application/ports/order.repository.port';
+import { OrderEntity } from '../../domain/entities/order.entity';
+import { OrderStatus } from '../../domain/value-objects/order-status.vo';
 import { OrderOrmEntity } from '../persistence/entities/order.orm-entity';
 import { OrderMapper } from '../persistence/mappers/order.mapper';
 
