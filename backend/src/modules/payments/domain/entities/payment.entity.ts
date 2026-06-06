@@ -8,13 +8,13 @@ import { PaymentStatus } from '../value-objects/payment-status.vo';
 // Interfaces
 // ============================================
 
-export interface CreatePaymentProps {
+export type CreatePaymentProps = {
   orderId: string;
   amount: Money;
   provider: PaymentMethod;
-}
+};
 
-export interface PaymentProps {
+export type PaymentProps = {
   id: string;
   orderId: string;
   amountValue: number;
@@ -27,7 +27,7 @@ export interface PaymentProps {
   errorMessage: string | null;
   attemptNumber: number;
   createdAt: Date;
-}
+};
 
 // ============================================
 // Payment Entity

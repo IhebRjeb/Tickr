@@ -6,21 +6,11 @@
  */
 export const PAYMENT_EVENT_QUERY_PORT = Symbol('PAYMENT_EVENT_QUERY_PORT');
 
-export interface PaymentEventInfo {
-  readonly id: string;
-  readonly title: string;
-  readonly status: string;
-  readonly startDate: Date;
-  readonly organizerId: string;
-}
+// Re-export types for convenience
+export type { PaymentEventInfo, PaymentTicketTypeInfo } from '../types/event-query.types';
 
-export interface PaymentTicketTypeInfo {
-  readonly id: string;
-  readonly name: string;
-  readonly price: number;
-  readonly currency: string;
-  readonly available: number;
-}
+import type { PaymentEventInfo } from '../types/event-query.types';
+import type { PaymentTicketTypeInfo } from '../types/event-query.types';
 
 export interface PaymentEventQueryPort {
   getEventById(eventId: string): Promise<PaymentEventInfo | null>;

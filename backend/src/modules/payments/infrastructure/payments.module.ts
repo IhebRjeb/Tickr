@@ -26,15 +26,15 @@ import { GetOrdersByUserHandler } from '../application/queries/get-orders-by-use
 import { PaymentEventQueryAdapter } from './adapters/event-query.adapter';
 import { KonnectAdapter } from './adapters/konnect.adapter';
 import { PaymeeAdapter } from './adapters/paymee.adapter';
-import { PaymentProviderFactory } from './adapters/payment-provider.factory';
+import { PaymentProviderFactoryAdapter } from './adapters/payment-provider-factory.adapter';
 import { StripeAdapter } from './adapters/stripe.adapter';
 import { TicketReservationAdapter } from './adapters/ticket-reservation.adapter';
 import { OrdersController } from './controllers/orders.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
-import { OrderCreatedInfraHandler } from './event-handlers/order-created-infra.handler';
-import { OrderFailedInfraHandler } from './event-handlers/order-failed-infra.handler';
-import { OrderPaidInfraHandler } from './event-handlers/order-paid-infra.handler';
-import { OrderRefundedInfraHandler } from './event-handlers/order-refunded-infra.handler';
+import { OrderCreatedInfraHandler } from './event-handlers/order-created-infra.listener';
+import { OrderFailedInfraHandler } from './event-handlers/order-failed-infra.listener';
+import { OrderPaidInfraHandler } from './event-handlers/order-paid-infra.listener';
+import { OrderRefundedInfraHandler } from './event-handlers/order-refunded-infra.listener';
 import { OrderItemOrmEntity } from './persistence/entities/order-item.orm-entity';
 import { OrderOrmEntity } from './persistence/entities/order.orm-entity';
 import { PaymentOrmEntity } from './persistence/entities/payment.orm-entity';
@@ -128,7 +128,7 @@ const fraudDetectionProvider: Provider = {
 
 const paymentProviderFactoryProvider: Provider = {
   provide: PAYMENT_PROVIDER_FACTORY,
-  useClass: PaymentProviderFactory,
+  useClass: PaymentProviderFactoryAdapter,
 };
 
 /**

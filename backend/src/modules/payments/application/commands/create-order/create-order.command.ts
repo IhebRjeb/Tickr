@@ -4,11 +4,11 @@ import { BaseCommand } from '@shared/application/interfaces/command.interface';
 // Types
 // ============================================
 
-export interface OrderItemInput {
+export type OrderItemInput = {
   readonly ticketTypeId: string;
   readonly quantity: number;
   readonly holders: { name: string; email: string }[];
-}
+};
 
 export type CreateOrderError =
   | { type: 'VALIDATION_ERROR'; message: string }
@@ -20,14 +20,14 @@ export type CreateOrderError =
   | { type: 'TICKET_LIMIT_EXCEEDED'; message: string }
   | { type: 'PERSISTENCE_ERROR'; message: string };
 
-export interface CreateOrderResult {
+export type CreateOrderResult = {
   readonly orderId: string;
   readonly subtotal: number;
   readonly platformFee: number;
   readonly total: number;
   readonly currency: string;
   readonly expiresAt: Date;
-}
+};
 
 // ============================================
 // Command

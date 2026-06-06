@@ -1,11 +1,11 @@
-import { PaymentProviderFactory } from '@modules/payments/infrastructure/adapters/payment-provider.factory';
+import { PaymentProviderFactoryAdapter } from '@modules/payments/infrastructure/adapters/payment-provider-factory.adapter';
 import { StripeAdapter } from '@modules/payments/infrastructure/adapters/stripe.adapter';
 import { KonnectAdapter } from '@modules/payments/infrastructure/adapters/konnect.adapter';
 import { PaymeeAdapter } from '@modules/payments/infrastructure/adapters/paymee.adapter';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
 
-describe('PaymentProviderFactory', () => {
-  let factory: PaymentProviderFactory;
+describe('PaymentProviderFactoryAdapter', () => {
+  let factory: PaymentProviderFactoryAdapter;
   let mockStripeAdapter: jest.Mocked<StripeAdapter>;
   let mockKonnectAdapter: jest.Mocked<KonnectAdapter>;
   let mockPaymeeAdapter: jest.Mocked<PaymeeAdapter>;
@@ -15,7 +15,7 @@ describe('PaymentProviderFactory', () => {
     mockKonnectAdapter = {} as any;
     mockPaymeeAdapter = {} as any;
 
-    factory = new PaymentProviderFactory(
+    factory = new PaymentProviderFactoryAdapter(
       mockStripeAdapter,
       mockKonnectAdapter,
       mockPaymeeAdapter,

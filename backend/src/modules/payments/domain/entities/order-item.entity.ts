@@ -4,17 +4,17 @@ import { Money } from '@shared/domain/value-objects/money.vo';
 /**
  * Props for creating a new OrderItem
  */
-export interface CreateOrderItemProps {
+export type CreateOrderItemProps = {
   ticketTypeId: string;
   ticketTypeName: string;
   price: Money;
   quantity: number;
-}
+};
 
 /**
  * Props for reconstituting an OrderItem from persistence
  */
-export interface OrderItemProps {
+export type OrderItemProps = {
   id: string;
   ticketTypeId: string;
   ticketTypeName: string;
@@ -22,7 +22,7 @@ export interface OrderItemProps {
   priceCurrency: string;
   quantity: number;
   createdAt: Date;
-}
+};
 
 /**
  * Order Item (Sub-entity)

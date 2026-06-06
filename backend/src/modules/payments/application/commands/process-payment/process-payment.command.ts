@@ -10,12 +10,12 @@ export type ProcessPaymentError =
   | { type: 'GATEWAY_ERROR'; message: string }
   | { type: 'PERSISTENCE_ERROR'; message: string };
 
-export interface ProcessPaymentResult {
+export type ProcessPaymentResult = {
   readonly paymentUrl?: string;
   readonly clientSecret?: string;
   readonly orderId: string;
   readonly gatewayRef: string;
-}
+};
 
 export class ProcessPaymentCommand extends BaseCommand {
   constructor(

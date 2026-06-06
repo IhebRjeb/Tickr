@@ -7,13 +7,13 @@ import { RefundStatus } from '../value-objects/refund-status.vo';
 // Interfaces
 // ============================================
 
-export interface CreateRefundProps {
+export type CreateRefundProps = {
   orderId: string;
   amount: Money;
   reason: string;
-}
+};
 
-export interface RefundProps {
+export type RefundProps = {
   id: string;
   orderId: string;
   amountValue: number;
@@ -23,7 +23,7 @@ export interface RefundProps {
   gatewayRefundId: string | null;
   processedAt: Date | null;
   createdAt: Date;
-}
+};
 
 // ============================================
 // Refund Entity

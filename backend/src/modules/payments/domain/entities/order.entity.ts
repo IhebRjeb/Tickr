@@ -22,7 +22,7 @@ import { PaymentMethod } from '../value-objects/payment-method.vo';
 // Internal Interfaces
 // ============================================
 
-export interface CreateOrderProps {
+export type CreateOrderProps = {
   userId: string;
   eventId: string;
   items: CreateOrderItemProps[];
@@ -30,9 +30,9 @@ export interface CreateOrderProps {
   commissionRate: number;
   expirationMinutes: number;
   metadata?: Record<string, unknown>;
-}
+};
 
-export interface OrderProps {
+export type OrderProps = {
   id: string;
   userId: string;
   eventId: string;
@@ -55,7 +55,7 @@ export interface OrderProps {
   metadata: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
 // ============================================
 // Order Aggregate Root

@@ -17,8 +17,8 @@ import { StripeAdapter } from './stripe.adapter';
  * Implements the Factory pattern for gateway selection.
  */
 @Injectable()
-export class PaymentProviderFactory implements PaymentProviderFactoryPort {
-  private readonly logger = new Logger(PaymentProviderFactory.name);
+export class PaymentProviderFactoryAdapter implements PaymentProviderFactoryPort {
+  private readonly logger = new Logger(PaymentProviderFactoryAdapter.name);
   private readonly providers: Map<PaymentMethod, PaymentProviderPort>;
 
   constructor(

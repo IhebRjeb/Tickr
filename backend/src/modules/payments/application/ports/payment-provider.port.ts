@@ -3,40 +3,16 @@ import { Money } from '@shared/domain/value-objects/money.vo';
 import { OrderEntity } from '../../domain/entities/order.entity';
 import { PaymentMethod } from '../../domain/value-objects/payment-method.vo';
 
+import type { PaymentIntent, PaymentResult, RefundResult } from '../types/payment-provider.types';
+
 // ============================================
 // Payment Provider Port (Gateway Abstraction)
 // ============================================
 
 export const PAYMENT_PROVIDER_FACTORY = Symbol('PAYMENT_PROVIDER_FACTORY');
 
-/**
- * Result of initiating a payment with a gateway
- */
-export interface PaymentIntent {
-  id: string;
-  paymentUrl?: string;
-  clientSecret?: string;
-  status: string;
-}
-
-/**
- * Result of confirming a payment
- */
-export interface PaymentResult {
-  success: boolean;
-  transactionId: string;
-  amount: number;
-  currency: string;
-}
-
-/**
- * Result of a refund operation
- */
-export interface RefundResult {
-  success: boolean;
-  refundId?: string;
-  amount: number;
-}
+// Re-export types for convenience
+export type { PaymentIntent, PaymentResult, RefundResult } from '../types/payment-provider.types';
 
 /**
  * Payment Provider Interface

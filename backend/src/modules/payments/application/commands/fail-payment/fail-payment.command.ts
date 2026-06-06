@@ -5,10 +5,10 @@ export type FailPaymentError =
   | { type: 'INVALID_STATUS'; message: string }
   | { type: 'PERSISTENCE_ERROR'; message: string };
 
-export interface FailPaymentResult {
+export type FailPaymentResult = {
   readonly canRetry: boolean;
   readonly attemptNumber: number;
-}
+};
 
 export class FailPaymentCommand extends BaseCommand {
   constructor(

@@ -7,10 +7,10 @@ export type RequestRefundError =
   | { type: 'GATEWAY_ERROR'; message: string }
   | { type: 'PERSISTENCE_ERROR'; message: string };
 
-export interface RequestRefundResult {
+export type RequestRefundResult = {
   readonly refundId: string;
   readonly status: string;
-}
+};
 
 export class RequestRefundCommand extends BaseCommand {
   constructor(

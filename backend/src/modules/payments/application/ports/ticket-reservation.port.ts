@@ -6,10 +6,10 @@
  */
 export const TICKET_RESERVATION_PORT = Symbol('TICKET_RESERVATION_PORT');
 
-export interface TicketReservationResult {
-  ticketIds: string[];
-  reservedUntil: Date;
-}
+// Re-export types for convenience
+export type { TicketReservationResult } from '../types/ticket-reservation.types';
+
+import type { TicketReservationResult } from '../types/ticket-reservation.types';
 
 export interface TicketReservationPort {
   /**
