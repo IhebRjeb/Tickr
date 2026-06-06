@@ -1,10 +1,14 @@
 // Entities
 export * from './entities/order.entity';
 export * from './entities/order-item.entity';
+export * from './entities/payment.entity';
+export * from './entities/refund.entity';
 
 // Value Objects
 export * from './value-objects/order-status.vo';
 export * from './value-objects/payment-method.vo';
+export * from './value-objects/payment-status.vo';
+export * from './value-objects/refund-status.vo';
 
 // Events
 export * from './events/order-created.event';
