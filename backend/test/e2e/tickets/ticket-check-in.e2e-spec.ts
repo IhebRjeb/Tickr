@@ -27,9 +27,9 @@ import type { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
 import { JwtAuthGuard } from '@shared/infrastructure/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@shared/infrastructure/common/guards/roles.guard';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 import request from 'supertest';
 
 import {
@@ -71,7 +71,7 @@ describe('Ticket Check-In E2E', () => {
         { provide: CHECK_IN_REPOSITORY, useValue: checkInRepository },
         { provide: EVENT_QUERY_PORT, useValue: eventQueryAdapter },
         { provide: USER_QUERY_PORT, useValue: userQueryAdapter },
-        { provide: DomainEventPublisher, useValue: eventPublisher },
+        { provide: DOMAIN_EVENT_PUBLISHER, useValue: eventPublisher },
         { provide: TicketS3StorageService, useValue: new MockTicketS3StorageService() },
         JwtAuthGuard,
         RolesGuard,

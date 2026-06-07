@@ -28,6 +28,16 @@ export default registerAs('aws', () => ({
   cloudFront: {
     url: process.env.AWS_CLOUDFRONT_URL || undefined, // e.g., https://d1234567890.cloudfront.net
   },
+  ses: {
+    fromEmail: process.env.SES_FROM_EMAIL || 'noreply@tickr.local',
+    region: process.env.SES_REGION || process.env.AWS_REGION || 'eu-west-1',
+    configurationSet:
+      process.env.SES_CONFIGURATION_SET || 'tickr-notifications',
+  },
+  sns: {
+    region: process.env.SNS_REGION || process.env.AWS_REGION || 'eu-west-1',
+    topicArn: process.env.SNS_TOPIC_ARN || '',
+  },
 }));
 
 /**
@@ -46,5 +56,14 @@ export interface AwsConfig {
   };
   cloudFront: {
     url?: string;
+  };
+  ses: {
+    fromEmail: string;
+    region: string;
+    configurationSet: string;
+  };
+  sns: {
+    region: string;
+    topicArn: string;
   };
 }

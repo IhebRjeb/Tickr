@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import { DOMAIN_EVENT_PUBLISHER } from '@shared/application/interfaces/domain-event-publisher.port';
+import type { DomainEventPublisherPort } from '@shared/application/interfaces/domain-event-publisher.port';
 import { Result } from '@shared/domain/result';
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { SalesPeriodVO } from '../../../domain/value-objects/sales-period.vo';
 import { TicketPriceVO } from '../../../domain/value-objects/ticket-price.vo';
@@ -46,7 +47,7 @@ export class UpdateTicketTypeHandler {
     private readonly eventRepository: EventRepositoryPort,
     @Inject(USER_VALIDATION_SERVICE)
     private readonly userValidationService: UserValidationServicePort,
-    private readonly eventPublisher: DomainEventPublisher,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly eventPublisher: DomainEventPublisherPort,
   ) {}
 
   /**

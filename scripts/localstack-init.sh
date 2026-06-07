@@ -32,9 +32,17 @@ echo "📧 Setting up SES..."
 awslocal ses verify-email-identity --email-address noreply@tickr.local
 awslocal ses verify-email-identity --email-address support@tickr.local
 
+# Create SES configuration set for notification tracking
+echo "📧 Creating SES configuration set..."
+awslocal sesv2 create-configuration-set --configuration-set-name tickr-notifications || echo "Configuration set already exists"
+
 # Create SNS topic for notifications
 echo "📢 Creating SNS topic..."
 awslocal sns create-topic --name tickr-notifications || echo "Topic already exists"
+
+# Create SNS SMS sandbox phone numbers for development
+echo "📱 Setting up SNS SMS sandbox..."
+awslocal sns set-sms-attributes --attributes DefaultSMSType=Transactional || echo "SMS attributes set"
 
 # Create Secrets Manager secrets
 echo "🔐 Creating secrets..."
