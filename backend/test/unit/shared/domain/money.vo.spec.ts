@@ -14,9 +14,15 @@ describe('Money Value Object', () => {
       expect(money.currency).toBe('TND');
     });
 
-    it('should round to 2 decimals', () => {
-      const money = Money.create(100.999, 'TND');
-      expect(money.amount).toBe(101);
+    it('should round to currency decimal places (TND = 3, USD = 2)', () => {
+      const tnd = Money.create(100.9999, 'TND');
+      expect(tnd.amount).toBe(101); // TND rounds to 3 decimals → 101.000
+
+      const usd = Money.create(100.999, 'USD');
+      expect(usd.amount).toBe(101); // USD rounds to 2 decimals → 101.00
+
+      const tndPrecise = Money.create(100.999, 'TND');
+      expect(tndPrecise.amount).toBe(100.999); // TND keeps 3 decimals
     });
 
     it('should throw on invalid amount', () => {

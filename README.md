@@ -48,8 +48,8 @@ Tickr/
 │   │   ├── modules/
 │   │   │   ├── events/           # Module Événements ✅
 │   │   │   ├── users/            # Module Utilisateurs ✅
-│   │   │   ├── tickets/          # Module Billets (planned)
-│   │   │   ├── payments/         # Module Paiements (planned)
+│   │   │   ├── tickets/          # Module Billets ✅
+│   │   │   ├── payments/         # Module Paiements ✅
 │   │   │   ├── notifications/    # Module Notifications (planned)
 │   │   │   └── analytics/        # Module Analytics (planned)
 │   │   ├── shared/               # Code partagé
