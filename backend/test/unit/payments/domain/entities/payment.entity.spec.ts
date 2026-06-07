@@ -133,6 +133,8 @@ describe('PaymentEntity', () => {
         status: PaymentStatus.SUCCESS,
         gatewayResponse: { pi: 'pi_abc' },
         gatewayPaymentRef: 'pi_abc',
+        paymentUrl: null,
+        clientSecret: null,
         errorCode: null,
         errorMessage: null,
         attemptNumber: 1,

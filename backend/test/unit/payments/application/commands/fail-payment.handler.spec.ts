@@ -60,6 +60,8 @@ describe('FailPaymentHandler', () => {
       status,
       gatewayResponse: null,
       gatewayPaymentRef: 'pi_123',
+      paymentUrl: null,
+      clientSecret: null,
       errorCode: null,
       errorMessage: null,
       attemptNumber: 1,
