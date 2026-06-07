@@ -108,6 +108,9 @@ export class OrderOrmEntity {
   @Column({ type: 'jsonb', nullable: true })
   metadata!: Record<string, unknown> | null;
 
+  @Column({ name: 'status_history', type: 'jsonb', default: '[]' })
+  statusHistory!: Array<{ status: string; timestamp: string; reason?: string }>;
+
   // ============================================
   // Timestamps
   // ============================================

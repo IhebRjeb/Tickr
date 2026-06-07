@@ -79,30 +79,69 @@ export class ProcessPaymentHandler {
       });
     }
 
-    // 6. Get payment provider
+    // 6. Check for existing pending payment (idempotent retry)
+    const existingPayments = await this.paymentRepository.findByOrderId(command.orderId);
+    const pendingPayment = existingPayments.find(
+      (p) => p.isPending() && p.gatewayPaymentRef,
+    );
+    if (pendingPayment) {
+      // Return existing payment intent — idempotent retry
+      this.logger.debug(
+        `Returning existing pending payment for order ${command.orderId}` +
+        (command.idempotencyKey ? ` (idempotencyKey: ${command.idempotencyKey})` : ''),
+      );
+      return Result.ok({
+        paymentUrl: pendingPayment.paymentUrl || undefined,
+        clientSecret: pendingPayment.clientSecret || undefined,
+        orderId: order.id,
+        gatewayRef: pendingPayment.gatewayPaymentRef!,
+      });
+    }
+
+    // 7. Create payment record BEFORE calling gateway (intent recording)
+    const payment = PaymentEntity.create({
+      orderId: order.id,
+      amount: order.total,
+      provider: command.paymentMethod,
+    });
+
+    try {
+      await this.paymentRepository.save(payment);
+    } catch (error) {
+      this.logger.error(`Failed to record payment intent: ${error}`);
+      return Result.fail({
+        type: 'PERSISTENCE_ERROR',
+        message: 'Failed to process payment. Please try again.',
+      });
+    }
+
+    // 8. Get payment provider and call gateway
     const provider = this.providerFactory.getProvider(command.paymentMethod);
 
-    // 7. Create payment intent with gateway
     let paymentIntent;
     try {
       paymentIntent = await provider.createPaymentIntent(order);
     } catch (error) {
       this.logger.error(`Gateway error: ${error}`);
+      // Mark the payment record as failed (gateway unreachable)
+      payment.markAsFailure('GATEWAY_ERROR', 'Payment gateway unreachable');
+      await this.paymentRepository.save(payment);
       return Result.fail({
         type: 'GATEWAY_ERROR',
         message: 'Payment gateway error. Please try again.',
       });
     }
 
-    // 8. Create payment record
-    const payment = PaymentEntity.create({
-      orderId: order.id,
-      amount: order.total,
-      provider: command.paymentMethod,
-    });
+    // 9. Update payment record with gateway reference
     payment.setGatewayPaymentRef(paymentIntent.id);
+    if (paymentIntent.paymentUrl) {
+      payment.setPaymentUrl(paymentIntent.paymentUrl);
+    }
+    if (paymentIntent.clientSecret) {
+      payment.setClientSecret(paymentIntent.clientSecret);
+    }
 
-    // 9. Transition order to PROCESSING (if not already)
+    // 10. Transition order to PROCESSING (if not already)
     if (order.isPending()) {
       const transitionResult = order.markAsProcessing(command.paymentMethod, paymentIntent.id);
       if (transitionResult.isFailure) {
@@ -113,7 +152,7 @@ export class ProcessPaymentHandler {
       }
     }
 
-    // 10. Persist
+    // 11. Persist updated payment + order state
     try {
       await this.paymentRepository.save(payment);
       await this.orderRepository.save(order);
@@ -125,7 +164,7 @@ export class ProcessPaymentHandler {
       });
     }
 
-    // 11. Publish events
+    // 12. Publish events
     const events = order.pullDomainEvents();
     await this.eventPublisher.publishMany(events);
 

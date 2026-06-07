@@ -19,6 +19,7 @@ import { PAYMENT_PROVIDER_FACTORY } from '../application/ports/payment-provider.
 import { PAYMENT_REPOSITORY } from '../application/ports/payment.repository.port';
 import { REFUND_REPOSITORY } from '../application/ports/refund.repository.port';
 import { TICKET_RESERVATION_PORT } from '../application/ports/ticket-reservation.port';
+import { WEBHOOK_EVENT_STORE } from '../application/ports/webhook-event-store.port';
 import { GetOrderByIdHandler } from '../application/queries/get-order-by-id/get-order-by-id.handler';
 import { GetOrdersByEventHandler } from '../application/queries/get-orders-by-event/get-orders-by-event.handler';
 import { GetOrdersByUserHandler } from '../application/queries/get-orders-by-user/get-orders-by-user.handler';
@@ -47,6 +48,7 @@ import { PaymentTypeOrmRepository } from './repositories/payment.repository';
 import { RefundTypeOrmRepository } from './repositories/refund.repository';
 import { FraudDetectionService } from './services/fraud-detection.service';
 import { OrderExpirationService } from './services/order-expiration.service';
+import { InMemoryWebhookEventStore } from './services/webhook-event-store.service';
 
 // ============================================
 // Command Handlers
@@ -131,6 +133,11 @@ const paymentProviderFactoryProvider: Provider = {
   useClass: PaymentProviderFactoryAdapter,
 };
 
+const webhookEventStoreProvider: Provider = {
+  provide: WEBHOOK_EVENT_STORE,
+  useClass: InMemoryWebhookEventStore,
+};
+
 /**
  * Payments Module
  *
@@ -190,6 +197,7 @@ const paymentProviderFactoryProvider: Provider = {
 
     // Services
     fraudDetectionProvider,
+    webhookEventStoreProvider,
     OrderExpirationService,
 
     // Handlers

@@ -23,6 +23,8 @@ export type PaymentProps = {
   status: PaymentStatus;
   gatewayResponse: Record<string, unknown> | null;
   gatewayPaymentRef: string | null;
+  paymentUrl: string | null;
+  clientSecret: string | null;
   errorCode: string | null;
   errorMessage: string | null;
   attemptNumber: number;
@@ -55,6 +57,8 @@ export class PaymentEntity {
   private _status: PaymentStatus;
   private _gatewayResponse: Record<string, unknown> | null;
   private _gatewayPaymentRef: string | null;
+  private _paymentUrl: string | null;
+  private _clientSecret: string | null;
   private _errorCode: string | null;
   private _errorMessage: string | null;
   private _attemptNumber: number;
@@ -69,6 +73,8 @@ export class PaymentEntity {
     this._status = props.status;
     this._gatewayResponse = props.gatewayResponse;
     this._gatewayPaymentRef = props.gatewayPaymentRef;
+    this._paymentUrl = props.paymentUrl;
+    this._clientSecret = props.clientSecret;
     this._errorCode = props.errorCode;
     this._errorMessage = props.errorMessage;
     this._attemptNumber = props.attemptNumber;
@@ -89,6 +95,8 @@ export class PaymentEntity {
       status: PaymentStatus.PENDING,
       gatewayResponse: null,
       gatewayPaymentRef: null,
+      paymentUrl: null,
+      clientSecret: null,
       errorCode: null,
       errorMessage: null,
       attemptNumber: 1,
@@ -138,6 +146,14 @@ export class PaymentEntity {
 
   get gatewayPaymentRef(): string | null {
     return this._gatewayPaymentRef;
+  }
+
+  get paymentUrl(): string | null {
+    return this._paymentUrl;
+  }
+
+  get clientSecret(): string | null {
+    return this._clientSecret;
   }
 
   get errorCode(): string | null {
@@ -199,6 +215,20 @@ export class PaymentEntity {
 
   setGatewayPaymentRef(ref: string): void {
     this._gatewayPaymentRef = ref;
+  }
+
+  setPaymentUrl(url: string): void {
+    this._paymentUrl = url;
+  }
+
+  setClientSecret(secret: string): void {
+    this._clientSecret = secret;
+  }
+
+  markAsFailure(errorCode: string, errorMessage: string): void {
+    this._status = PaymentStatus.FAILED;
+    this._errorCode = errorCode;
+    this._errorMessage = errorMessage;
   }
 
   incrementAttempt(): void {

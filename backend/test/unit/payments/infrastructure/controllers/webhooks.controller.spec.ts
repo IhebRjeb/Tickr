@@ -7,15 +7,18 @@ import { WebhooksController } from '@modules/payments/infrastructure/controllers
 import { ConfirmPaymentHandler } from '@modules/payments/application/commands/confirm-payment/confirm-payment.handler';
 import { FailPaymentHandler } from '@modules/payments/application/commands/fail-payment/fail-payment.handler';
 import { PAYMENT_PROVIDER_FACTORY } from '@modules/payments/application/ports/payment-provider.port';
+import { WEBHOOK_EVENT_STORE } from '@modules/payments/application/ports/webhook-event-store.port';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
 
 import type { PaymentProviderFactoryPort, PaymentProviderPort } from '@modules/payments/application/ports/payment-provider.port';
+import type { WebhookEventStorePort } from '@modules/payments/application/ports/webhook-event-store.port';
 
 describe('WebhooksController', () => {
   let controller: WebhooksController;
   let mockConfirmPaymentHandler: jest.Mocked<ConfirmPaymentHandler>;
   let mockFailPaymentHandler: jest.Mocked<FailPaymentHandler>;
   let mockProviderFactory: jest.Mocked<PaymentProviderFactoryPort>;
+  let mockWebhookEventStore: jest.Mocked<WebhookEventStorePort>;
   let mockStripeProvider: jest.Mocked<PaymentProviderPort>;
   let mockKonnectProvider: jest.Mocked<PaymentProviderPort>;
   let mockPaymeeProvider: jest.Mocked<PaymentProviderPort>;
@@ -23,6 +26,11 @@ describe('WebhooksController', () => {
   beforeEach(async () => {
     mockConfirmPaymentHandler = { execute: jest.fn() } as any;
     mockFailPaymentHandler = { execute: jest.fn() } as any;
+
+    mockWebhookEventStore = {
+      tryMarkAsProcessed: jest.fn().mockResolvedValue(true),
+      isProcessed: jest.fn().mockResolvedValue(false),
+    };
 
     mockStripeProvider = {
       verifyWebhook: jest.fn(),
@@ -65,6 +73,7 @@ describe('WebhooksController', () => {
         { provide: ConfirmPaymentHandler, useValue: mockConfirmPaymentHandler },
         { provide: FailPaymentHandler, useValue: mockFailPaymentHandler },
         { provide: PAYMENT_PROVIDER_FACTORY, useValue: mockProviderFactory },
+        { provide: WEBHOOK_EVENT_STORE, useValue: mockWebhookEventStore },
       ],
     }).compile();
 
@@ -78,6 +87,7 @@ describe('WebhooksController', () => {
 
     it('should confirm payment on payment_intent.succeeded', async () => {
       const event = {
+        id: 'evt_stripe_123',
         type: 'payment_intent.succeeded',
         data: { object: { id: 'pi_123', metadata: { orderId: 'order-123' }, status: 'succeeded' } },
       };
@@ -93,6 +103,7 @@ describe('WebhooksController', () => {
 
     it('should fail payment on payment_intent.payment_failed', async () => {
       const event = {
+        id: 'evt_stripe_456',
         type: 'payment_intent.payment_failed',
         data: { object: { id: 'pi_123', metadata: { orderId: 'order-123' }, status: 'failed' } },
       };
@@ -125,6 +136,7 @@ describe('WebhooksController', () => {
 
     it('should return received:true when orderId missing in metadata', async () => {
       const event = {
+        id: 'evt_stripe_789',
         type: 'payment_intent.succeeded',
         data: { object: { id: 'pi_123', metadata: {}, status: 'succeeded' } },
       };

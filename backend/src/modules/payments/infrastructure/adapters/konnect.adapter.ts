@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Money } from '@shared/domain/value-objects/money.vo';
@@ -149,6 +151,18 @@ export class KonnectAdapter implements PaymentProviderPort {
 
   verifyWebhook(signature: string, _body: unknown): boolean {
     // Konnect uses a simple token-based verification
-    return signature === this.webhookSecret;
+    // Use timing-safe comparison to prevent timing attacks
+    if (!signature || !this.webhookSecret) {
+      return false;
+    }
+
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(this.webhookSecret),
+      );
+    } catch {
+      return false;
+    }
   }
 }

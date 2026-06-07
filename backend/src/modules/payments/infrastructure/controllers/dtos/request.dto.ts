@@ -88,6 +88,14 @@ export class ProcessPaymentRequestDto {
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.KONNECT })
   @IsEnum(PaymentMethod)
   readonly paymentMethod!: PaymentMethod;
+
+  @ApiPropertyOptional({
+    description: 'Client-generated UUID for idempotent payment requests. Prevents duplicate charges on retry.',
+    example: '550e8400-e29b-41d4-a716-446655440099',
+  })
+  @IsOptional()
+  @IsUUID()
+  readonly idempotencyKey?: string;
 }
 
 // ============================================

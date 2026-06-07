@@ -40,7 +40,7 @@ export class CreateOrderHandler {
     private readonly eventPublisher: DomainEventPublisher,
     private readonly configService: ConfigService,
   ) {
-    this.commissionRate = this.configService.get<number>('PLATFORM_COMMISSION_RATE', 0.04);
+    this.commissionRate = this.configService.get<number>('PLATFORM_COMMISSION_RATE', 0.06);
     this.expirationMinutes = this.configService.get<number>('ORDER_EXPIRATION_MINUTES', 15);
   }
 

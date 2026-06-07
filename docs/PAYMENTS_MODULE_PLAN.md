@@ -1,6 +1,6 @@
 # Payments Module — Implementation Plan
 
-> **Tickr Platform** · Created: June 2026
+> **Tickr Platform** · Created: June 2026 · **Status: ✅ IMPLEMENTED (June 7, 2026)**
 > Module: `src/modules/payments/`
 > Architecture: Hexagonal (Domain → Application → Infrastructure)
 
@@ -10,9 +10,19 @@
 
 The Payments module handles orders, multi-gateway payment processing (Stripe, Konnect, Paymee), refunds, and platform commission calculation. This is the highest-complexity module in the system.
 
-**Estimated sub-issues: 18**
-**Estimated files: ~130-150**
+**Status: ✅ FULLY IMPLEMENTED + HARDENED**
+**Source files: 81** | **Test files: 29** | **Tests passing: 257+**
 **Dependencies**: Users, Events, Tickets modules (all implemented)
+
+### Payment Safety Hardening (June 7, 2026)
+
+| Pattern | Status |
+|---------|--------|
+| Idempotency keys (client UUID on payment requests) | ✅ Implemented |
+| Intent-first recording (DB write before gateway call) | ✅ Implemented |
+| Webhook deduplication (in-memory event store, 24h TTL) | ✅ Implemented |
+| Timing-safe webhook signature verification (all gateways) | ✅ Implemented |
+| Immutable order status history (append-only JSONB ledger) | ✅ Implemented |
 
 ---
 

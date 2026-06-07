@@ -22,6 +22,7 @@ export class ProcessPaymentCommand extends BaseCommand {
     public readonly orderId: string,
     public readonly userId: string,
     public readonly paymentMethod: PaymentMethod,
+    public readonly idempotencyKey?: string,
   ) {
     super();
     Object.freeze(this);

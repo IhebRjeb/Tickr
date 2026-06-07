@@ -44,6 +44,12 @@ export class PaymentOrmEntity {
   @Column({ name: 'gateway_payment_ref', type: 'varchar', length: 255, nullable: true })
   gatewayPaymentRef!: string | null;
 
+  @Column({ name: 'payment_url', type: 'text', nullable: true })
+  paymentUrl!: string | null;
+
+  @Column({ name: 'client_secret', type: 'varchar', length: 255, nullable: true })
+  clientSecret!: string | null;
+
   @Column({ name: 'error_code', type: 'varchar', length: 100, nullable: true })
   errorCode!: string | null;
 

@@ -23,6 +23,8 @@ export class PaymentMapper {
     entity.status = domain.status;
     entity.gatewayResponse = domain.gatewayResponse;
     entity.gatewayPaymentRef = domain.gatewayPaymentRef;
+    entity.paymentUrl = domain.paymentUrl;
+    entity.clientSecret = domain.clientSecret;
     entity.errorCode = domain.errorCode;
     entity.errorMessage = domain.errorMessage;
     entity.attemptNumber = domain.attemptNumber;
@@ -41,6 +43,8 @@ export class PaymentMapper {
       status: raw.status as PaymentStatus,
       gatewayResponse: raw.gatewayResponse,
       gatewayPaymentRef: raw.gatewayPaymentRef,
+      paymentUrl: raw.paymentUrl,
+      clientSecret: raw.clientSecret,
       errorCode: raw.errorCode,
       errorMessage: raw.errorMessage,
       attemptNumber: raw.attemptNumber,

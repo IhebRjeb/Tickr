@@ -167,6 +167,7 @@ export class OrdersController {
       orderId,
       user.userId,
       dto.paymentMethod,
+      dto.idempotencyKey,
     );
 
     const result = await this.processPaymentHandler.execute(command);

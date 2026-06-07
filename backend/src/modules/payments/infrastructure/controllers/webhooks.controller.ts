@@ -20,6 +20,8 @@ import { FailPaymentCommand } from '../../application/commands/fail-payment/fail
 import { FailPaymentHandler } from '../../application/commands/fail-payment/fail-payment.handler';
 import { PAYMENT_PROVIDER_FACTORY } from '../../application/ports/payment-provider.port';
 import type { PaymentProviderFactoryPort } from '../../application/ports/payment-provider.port';
+import { WEBHOOK_EVENT_STORE } from '../../application/ports/webhook-event-store.port';
+import type { WebhookEventStorePort } from '../../application/ports/webhook-event-store.port';
 import { PaymentMethod } from '../../domain/value-objects/payment-method.vo';
 
 @ApiTags('Payment Webhooks')
@@ -32,6 +34,8 @@ export class WebhooksController {
     private readonly failPaymentHandler: FailPaymentHandler,
     @Inject(PAYMENT_PROVIDER_FACTORY)
     private readonly providerFactory: PaymentProviderFactoryPort,
+    @Inject(WEBHOOK_EVENT_STORE)
+    private readonly webhookEventStore: WebhookEventStorePort,
   ) {}
 
   @Post('stripe')
@@ -55,9 +59,17 @@ export class WebhooksController {
     }
 
     const event = JSON.parse(rawBody.toString()) as {
+      id: string;
       type: string;
       data: { object: { id: string; metadata?: { orderId?: string }; status: string } };
     };
+
+    // Deduplicate: Stripe may retry failed webhook deliveries
+    const isNew = await this.webhookEventStore.tryMarkAsProcessed(event.id, 'stripe');
+    if (!isNew) {
+      this.logger.warn(`Duplicate Stripe webhook event: ${event.id}`);
+      return { received: true };
+    }
 
     const paymentIntent = event.data.object;
     const orderId = paymentIntent.metadata?.orderId;
@@ -92,6 +104,13 @@ export class WebhooksController {
   ) {
     if (!paymentRef) {
       throw new BadRequestException('Missing payment_ref');
+    }
+
+    // Deduplicate: use payment_ref as event ID for Konnect
+    const isNew = await this.webhookEventStore.tryMarkAsProcessed(paymentRef, 'konnect');
+    if (!isNew) {
+      this.logger.warn(`Duplicate Konnect webhook event: ${paymentRef}`);
+      return { received: true };
     }
 
     this.logger.debug(`Konnect webhook received: ${paymentRef}`);
@@ -139,6 +158,13 @@ export class WebhooksController {
     if (!isValid) {
       this.logger.warn('Invalid Paymee webhook checksum');
       throw new BadRequestException('Invalid webhook checksum');
+    }
+
+    // Deduplicate: use token as event ID for Paymee
+    const isNew = await this.webhookEventStore.tryMarkAsProcessed(body.token, 'paymee');
+    if (!isNew) {
+      this.logger.warn(`Duplicate Paymee webhook event: ${body.token}`);
+      return { received: true };
     }
 
     this.logger.debug(`Paymee webhook: token=${body.token}, status=${body.payment_status}`);

@@ -42,6 +42,11 @@ export class OrderMapper {
     entity.refundReason = domain.refundReason;
     entity.expiresAt = domain.expiresAt;
     entity.metadata = domain.metadata;
+    entity.statusHistory = domain.statusHistory.map((entry) => ({
+      status: entry.status,
+      timestamp: entry.timestamp.toISOString(),
+      reason: entry.reason,
+    }));
     entity.createdAt = domain.createdAt;
     entity.updatedAt = domain.updatedAt;
 
@@ -80,6 +85,11 @@ export class OrderMapper {
       refundReason: raw.refundReason,
       expiresAt: raw.expiresAt,
       metadata: raw.metadata,
+      statusHistory: (raw.statusHistory || []).map((entry) => ({
+        status: entry.status as OrderStatus,
+        timestamp: new Date(entry.timestamp),
+        reason: entry.reason,
+      })),
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
@@ -110,6 +120,11 @@ export class OrderMapper {
     target.refundedAt = source.refundedAt;
     target.refundReason = source.refundReason;
     target.metadata = source.metadata;
+    target.statusHistory = source.statusHistory.map((entry) => ({
+      status: entry.status,
+      timestamp: entry.timestamp.toISOString(),
+      reason: entry.reason,
+    }));
     target.updatedAt = source.updatedAt;
 
     // Update items

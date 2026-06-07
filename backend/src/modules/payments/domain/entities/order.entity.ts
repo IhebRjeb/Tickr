@@ -22,6 +22,12 @@ import { PaymentMethod } from '../value-objects/payment-method.vo';
 // Internal Interfaces
 // ============================================
 
+export type OrderStatusHistoryEntry = {
+  readonly status: OrderStatus;
+  readonly timestamp: Date;
+  readonly reason?: string;
+};
+
 export type CreateOrderProps = {
   userId: string;
   eventId: string;
@@ -53,6 +59,7 @@ export type OrderProps = {
   refundReason: string | null;
   expiresAt: Date;
   metadata: Record<string, unknown> | null;
+  statusHistory?: OrderStatusHistoryEntry[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -113,6 +120,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
   private _refundReason: string | null;
   private _expiresAt: Date;
   private _metadata: Record<string, unknown> | null;
+  private _statusHistory: OrderStatusHistoryEntry[];
 
   // ============================================
   // Constructor (Private)
@@ -139,6 +147,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     this._refundReason = props.refundReason;
     this._expiresAt = props.expiresAt;
     this._metadata = props.metadata;
+    this._statusHistory = props.statusHistory || [{ status: props.status, timestamp: props.createdAt }];
     this._updatedAt = props.updatedAt;
   }
 
@@ -211,6 +220,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
       refundReason: null,
       expiresAt,
       metadata: props.metadata || null,
+      statusHistory: [{ status: OrderStatus.PENDING, timestamp: now }],
       createdAt: now,
       updatedAt: now,
     });
@@ -318,6 +328,10 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     return this._metadata;
   }
 
+  get statusHistory(): readonly OrderStatusHistoryEntry[] {
+    return [...this._statusHistory];
+  }
+
   get subtotal(): Money {
     return Money.create(this._subtotalAmount, this._currency);
   }
@@ -371,6 +385,17 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
   // ============================================
 
   /**
+   * Record a status transition in the immutable history
+   */
+  private recordTransition(status: OrderStatus, reason?: string): void {
+    this._statusHistory.push({
+      status,
+      timestamp: new Date(),
+      reason,
+    });
+  }
+
+  /**
    * Transition order to PROCESSING when payment is initiated
    */
   markAsProcessing(
@@ -390,6 +415,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     this._status = OrderStatus.PROCESSING;
     this._paymentMethod = paymentMethod;
     this._gatewayPaymentRef = gatewayRef;
+    this.recordTransition(OrderStatus.PROCESSING);
     this.touch();
 
     this.addDomainEvent(
@@ -416,6 +442,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     this._transactionId = transactionId;
     this._paymentIntentId = paymentIntentId || this._paymentIntentId;
     this._paidAt = new Date();
+    this.recordTransition(OrderStatus.PAID);
     this.touch();
 
     this.addDomainEvent(
@@ -444,6 +471,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     }
 
     this._status = OrderStatus.FAILED;
+    this.recordTransition(OrderStatus.FAILED, reason);
     this.touch();
 
     this.addDomainEvent(
@@ -464,6 +492,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     }
 
     this._status = OrderStatus.CANCELLED;
+    this.recordTransition(OrderStatus.CANCELLED, reason);
     this.touch();
 
     this.addDomainEvent(
@@ -488,6 +517,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     }
 
     this._status = OrderStatus.CANCELLED;
+    this.recordTransition(OrderStatus.CANCELLED, 'Order expired');
     this.touch();
 
     this.addDomainEvent(
@@ -510,6 +540,7 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
     this._status = OrderStatus.REFUNDED;
     this._refundedAt = new Date();
     this._refundReason = reason;
+    this.recordTransition(OrderStatus.REFUNDED, reason);
     this.touch();
 
     this.addDomainEvent(
