@@ -1,8 +1,8 @@
-import { Money } from '@shared/domain/value-objects/money.vo';
 
 import { PaymentEntity } from '@modules/payments/domain/entities/payment.entity';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
 import { PaymentStatus } from '@modules/payments/domain/value-objects/payment-status.vo';
+import { Money } from '@shared/domain/value-objects/money.vo';
 
 describe('PaymentEntity', () => {
   const validOrderId = '550e8400-e29b-41d4-a716-446655440000';

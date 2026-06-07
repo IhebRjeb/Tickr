@@ -1,11 +1,10 @@
-import { OrderMapper } from '@modules/payments/infrastructure/persistence/mappers/order.mapper';
-import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
 import { OrderItemEntity } from '@modules/payments/domain/entities/order-item.entity';
-import { OrderOrmEntity } from '@modules/payments/infrastructure/persistence/entities/order.orm-entity';
-import { OrderItemOrmEntity } from '@modules/payments/infrastructure/persistence/entities/order-item.orm-entity';
+import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
-import { Money } from '@shared/domain/value-objects/money.vo';
+import { OrderItemOrmEntity } from '@modules/payments/infrastructure/persistence/entities/order-item.orm-entity';
+import { OrderOrmEntity } from '@modules/payments/infrastructure/persistence/entities/order.orm-entity';
+import { OrderMapper } from '@modules/payments/infrastructure/persistence/mappers/order.mapper';
 
 describe('OrderMapper', () => {
   let mapper: OrderMapper;
@@ -190,7 +189,6 @@ describe('OrderMapper', () => {
   describe('updatePersistence', () => {
     it('should update ORM entity from domain without changing id/userId', () => {
       const target = createOrmOrder();
-      const source = createDomainOrder();
 
       // Modify source (simulate domain changes)
       const modifiedSource = OrderEntity.reconstitute({

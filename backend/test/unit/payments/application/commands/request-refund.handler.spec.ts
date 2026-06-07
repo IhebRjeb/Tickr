@@ -1,15 +1,14 @@
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { RequestRefundCommand } from '@modules/payments/application/commands/request-refund/request-refund.command';
 import { RequestRefundHandler } from '@modules/payments/application/commands/request-refund/request-refund.handler';
-import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
-import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
-import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-
 import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
-import type { RefundRepositoryPort } from '@modules/payments/application/ports/refund.repository.port';
 import type { PaymentProviderFactoryPort, PaymentProviderPort } from '@modules/payments/application/ports/payment-provider.port';
+import type { RefundRepositoryPort } from '@modules/payments/application/ports/refund.repository.port';
 import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
+import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('RequestRefundHandler', () => {
   let handler: RequestRefundHandler;

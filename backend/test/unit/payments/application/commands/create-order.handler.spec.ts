@@ -1,14 +1,13 @@
-import { ConfigService } from '@nestjs/config';
 
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { CreateOrderCommand } from '@modules/payments/application/commands/create-order/create-order.command';
 import { CreateOrderHandler } from '@modules/payments/application/commands/create-order/create-order.handler';
-
-import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 import type { PaymentEventQueryPort } from '@modules/payments/application/ports/event-query.port';
 import type { FraudDetectionPort } from '@modules/payments/application/ports/fraud-detection.port';
+import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
+import { ConfigService } from '@nestjs/config';
+import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('CreateOrderHandler', () => {
   let handler: CreateOrderHandler;

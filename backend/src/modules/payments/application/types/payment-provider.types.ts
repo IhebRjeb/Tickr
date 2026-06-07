@@ -4,10 +4,6 @@
  * DTOs and result types used by payment provider ports.
  */
 
-import { Money } from '@shared/domain/value-objects/money.vo';
-
-import { OrderEntity } from '../../domain/entities/order.entity';
-
 /**
  * Result of initiating a payment with a gateway
  */

@@ -1,19 +1,17 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import { Result } from '@shared/domain/result';
 import { Money } from '@shared/domain/value-objects/money.vo';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { OrderEntity } from '../../../domain/entities/order.entity';
-import { ORDER_REPOSITORY } from '../../ports/order.repository.port';
 import { PAYMENT_EVENT_QUERY_PORT } from '../../ports/event-query.port';
-import { FRAUD_DETECTION_PORT } from '../../ports/fraud-detection.port';
-import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
-
-import type { OrderRepositoryPort } from '../../ports/order.repository.port';
 import type { PaymentEventQueryPort } from '../../ports/event-query.port';
+import { FRAUD_DETECTION_PORT } from '../../ports/fraud-detection.port';
 import type { FraudDetectionPort } from '../../ports/fraud-detection.port';
+import type { OrderRepositoryPort } from '../../ports/order.repository.port';
+import { ORDER_REPOSITORY } from '../../ports/order.repository.port';
+import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
 import type { TicketReservationPort } from '../../ports/ticket-reservation.port';
 
 import {

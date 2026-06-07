@@ -1,18 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
 import { Result } from '@shared/domain/result';
 import { Money } from '@shared/domain/value-objects/money.vo';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { RefundEntity } from '../../../domain/entities/refund.entity';
 import { ORDER_REPOSITORY } from '../../ports/order.repository.port';
-import { REFUND_REPOSITORY } from '../../ports/refund.repository.port';
-import { PAYMENT_PROVIDER_FACTORY } from '../../ports/payment-provider.port';
-import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
-
 import type { OrderRepositoryPort } from '../../ports/order.repository.port';
-import type { RefundRepositoryPort } from '../../ports/refund.repository.port';
+import { PAYMENT_PROVIDER_FACTORY } from '../../ports/payment-provider.port';
 import type { PaymentProviderFactoryPort } from '../../ports/payment-provider.port';
+import { REFUND_REPOSITORY } from '../../ports/refund.repository.port';
+import type { RefundRepositoryPort } from '../../ports/refund.repository.port';
+import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
 import type { TicketReservationPort } from '../../ports/ticket-reservation.port';
 
 import { RequestRefundCommand, RequestRefundError, RequestRefundResult } from './request-refund.command';

@@ -1,5 +1,4 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-
 import { Result } from '@shared/domain/result';
 
 import type { OrderEntity } from '../../../domain/entities/order.entity';

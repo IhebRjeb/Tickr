@@ -1,9 +1,8 @@
-import { PaymentMapper } from '@modules/payments/infrastructure/persistence/mappers/payment.mapper';
 import { PaymentEntity } from '@modules/payments/domain/entities/payment.entity';
-import { PaymentOrmEntity } from '@modules/payments/infrastructure/persistence/entities/payment.orm-entity';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
 import { PaymentStatus } from '@modules/payments/domain/value-objects/payment-status.vo';
-import { Money } from '@shared/domain/value-objects/money.vo';
+import { PaymentOrmEntity } from '@modules/payments/infrastructure/persistence/entities/payment.orm-entity';
+import { PaymentMapper } from '@modules/payments/infrastructure/persistence/mappers/payment.mapper';
 
 describe('PaymentMapper', () => {
   let mapper: PaymentMapper;

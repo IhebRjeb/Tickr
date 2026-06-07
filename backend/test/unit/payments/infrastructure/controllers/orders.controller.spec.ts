@@ -1,19 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
 
-import { Result } from '@shared/domain/result';
 
-import { OrdersController } from '@modules/payments/infrastructure/controllers/orders.controller';
 import { CreateOrderHandler } from '@modules/payments/application/commands/create-order/create-order.handler';
 import { ProcessPaymentHandler } from '@modules/payments/application/commands/process-payment/process-payment.handler';
 import { RequestRefundHandler } from '@modules/payments/application/commands/request-refund/request-refund.handler';
 import { GetOrderByIdHandler } from '@modules/payments/application/queries/get-order-by-id/get-order-by-id.handler';
 import { GetOrdersByUserHandler } from '@modules/payments/application/queries/get-orders-by-user/get-orders-by-user.handler';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { OrdersController } from '@modules/payments/infrastructure/controllers/orders.controller';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Result } from '@shared/domain/result';
 
 describe('OrdersController', () => {
   let controller: OrdersController;

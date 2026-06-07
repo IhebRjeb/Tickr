@@ -10,13 +10,13 @@ import { OrderFailedEvent } from '../events/order-failed.event';
 import { OrderPaidEvent } from '../events/order-paid.event';
 import { OrderProcessingEvent } from '../events/order-processing.event';
 import { OrderRefundedEvent } from '../events/order-refunded.event';
-import { InvalidOrderException } from '../exceptions/invalid-order.exception';
 import { InvalidOrderStatusException } from '../exceptions/invalid-order-status.exception';
-import { MaxItemsExceededException } from '../exceptions/max-items-exceeded.exception';
+import { InvalidOrderException } from '../exceptions/invalid-order.exception';
 import { OrderExpiredException } from '../exceptions/order-expired.exception';
-import { OrderItemEntity, CreateOrderItemProps } from './order-item.entity';
 import { isValidOrderTransition, OrderStatus } from '../value-objects/order-status.vo';
 import { PaymentMethod } from '../value-objects/payment-method.vo';
+
+import { OrderItemEntity, CreateOrderItemProps } from './order-item.entity';
 
 // ============================================
 // Internal Interfaces

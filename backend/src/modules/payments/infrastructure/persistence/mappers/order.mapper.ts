@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { OrderEntity } from '../../../domain/entities/order.entity';
 import { OrderItemEntity } from '../../../domain/entities/order-item.entity';
+import { OrderEntity } from '../../../domain/entities/order.entity';
 import { OrderStatus } from '../../../domain/value-objects/order-status.vo';
 import { PaymentMethod } from '../../../domain/value-objects/payment-method.vo';
-import { OrderOrmEntity } from '../entities/order.orm-entity';
 import { OrderItemOrmEntity } from '../entities/order-item.orm-entity';
+import { OrderOrmEntity } from '../entities/order.orm-entity';
 
 /**
  * Order Mapper

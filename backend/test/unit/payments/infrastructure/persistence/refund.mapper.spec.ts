@@ -1,8 +1,7 @@
-import { RefundMapper } from '@modules/payments/infrastructure/persistence/mappers/refund.mapper';
 import { RefundEntity } from '@modules/payments/domain/entities/refund.entity';
-import { RefundOrmEntity } from '@modules/payments/infrastructure/persistence/entities/refund.orm-entity';
 import { RefundStatus } from '@modules/payments/domain/value-objects/refund-status.vo';
-import { Money } from '@shared/domain/value-objects/money.vo';
+import { RefundOrmEntity } from '@modules/payments/infrastructure/persistence/entities/refund.orm-entity';
+import { RefundMapper } from '@modules/payments/infrastructure/persistence/mappers/refund.mapper';
 
 describe('RefundMapper', () => {
   let mapper: RefundMapper;

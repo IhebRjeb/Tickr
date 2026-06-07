@@ -1,9 +1,8 @@
-import { Money } from '@shared/domain/value-objects/money.vo';
 
 import { OrderEntity, CreateOrderProps } from '@modules/payments/domain/entities/order.entity';
-import { OrderItemEntity } from '@modules/payments/domain/entities/order-item.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
 import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { Money } from '@shared/domain/value-objects/money.vo';
 
 // ============================================
 // Test Helpers

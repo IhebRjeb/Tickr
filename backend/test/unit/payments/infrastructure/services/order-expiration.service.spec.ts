@@ -1,7 +1,7 @@
+import { ExpireOrdersHandler } from '@modules/payments/application/commands/expire-orders/expire-orders.handler';
+import { OrderExpirationService } from '@modules/payments/infrastructure/services/order-expiration.service';
 import { ConfigService } from '@nestjs/config';
 
-import { OrderExpirationService } from '@modules/payments/infrastructure/services/order-expiration.service';
-import { ExpireOrdersHandler } from '@modules/payments/application/commands/expire-orders/expire-orders.handler';
 
 describe('OrderExpirationService', () => {
   let service: OrderExpirationService;

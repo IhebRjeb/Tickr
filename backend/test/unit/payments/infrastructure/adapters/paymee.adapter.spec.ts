@@ -1,10 +1,11 @@
-import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 
-import { Money } from '@shared/domain/value-objects/money.vo';
-
-import { PaymeeAdapter } from '@modules/payments/infrastructure/adapters/paymee.adapter';
 import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { PaymeeAdapter } from '@modules/payments/infrastructure/adapters/paymee.adapter';
+import { ConfigService } from '@nestjs/config';
+import { Money } from '@shared/domain/value-objects/money.vo';
+
 
 // Mock global fetch
 const mockFetch = jest.fn();
@@ -175,7 +176,6 @@ describe('PaymeeAdapter', () => {
 
   describe('verifyWebhook', () => {
     it('should verify valid check_sum (md5)', () => {
-      const crypto = require('crypto');
       const token = 'dfe54df34b54df3a854f3a53fc85a';
       const paymentStatus = true;
       const statusBit = '1';

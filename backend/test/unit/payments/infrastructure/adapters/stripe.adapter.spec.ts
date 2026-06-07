@@ -1,10 +1,9 @@
-import { ConfigService } from '@nestjs/config';
-
-import { Money } from '@shared/domain/value-objects/money.vo';
-
-import { StripeAdapter } from '@modules/payments/infrastructure/adapters/stripe.adapter';
 import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { StripeAdapter } from '@modules/payments/infrastructure/adapters/stripe.adapter';
+import { ConfigService } from '@nestjs/config';
+import { Money } from '@shared/domain/value-objects/money.vo';
+
 
 // Mock Stripe SDK
 const mockPaymentIntentsCreate = jest.fn();

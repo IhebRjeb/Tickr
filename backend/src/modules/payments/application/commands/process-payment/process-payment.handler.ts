@@ -1,16 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
 import { Result } from '@shared/domain/result';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { PaymentEntity } from '../../../domain/entities/payment.entity';
 import { ORDER_REPOSITORY } from '../../ports/order.repository.port';
-import { PAYMENT_REPOSITORY } from '../../ports/payment.repository.port';
-import { PAYMENT_PROVIDER_FACTORY } from '../../ports/payment-provider.port';
-
 import type { OrderRepositoryPort } from '../../ports/order.repository.port';
-import type { PaymentRepositoryPort } from '../../ports/payment.repository.port';
+import { PAYMENT_PROVIDER_FACTORY } from '../../ports/payment-provider.port';
 import type { PaymentProviderFactoryPort } from '../../ports/payment-provider.port';
+import { PAYMENT_REPOSITORY } from '../../ports/payment.repository.port';
+import type { PaymentRepositoryPort } from '../../ports/payment.repository.port';
 
 import {
   ProcessPaymentCommand,

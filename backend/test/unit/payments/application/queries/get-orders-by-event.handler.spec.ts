@@ -1,9 +1,8 @@
-import { GetOrdersByEventQuery } from '@modules/payments/application/queries/get-orders-by-event/get-orders-by-event.query';
+import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 import { GetOrdersByEventHandler } from '@modules/payments/application/queries/get-orders-by-event/get-orders-by-event.handler';
+import { GetOrdersByEventQuery } from '@modules/payments/application/queries/get-orders-by-event/get-orders-by-event.query';
 import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-
-import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 
 describe('GetOrdersByEventHandler', () => {
   let handler: GetOrdersByEventHandler;

@@ -1,7 +1,7 @@
-import { Money } from '@shared/domain/value-objects/money.vo';
 
 import { RefundEntity } from '@modules/payments/domain/entities/refund.entity';
 import { RefundStatus } from '@modules/payments/domain/value-objects/refund-status.vo';
+import { Money } from '@shared/domain/value-objects/money.vo';
 
 describe('RefundEntity', () => {
   const validOrderId = '550e8400-e29b-41d4-a716-446655440000';

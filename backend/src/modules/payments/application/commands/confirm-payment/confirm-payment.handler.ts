@@ -1,14 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
 import { Result } from '@shared/domain/result';
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { ORDER_REPOSITORY } from '../../ports/order.repository.port';
-import { PAYMENT_REPOSITORY } from '../../ports/payment.repository.port';
-import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
-
 import type { OrderRepositoryPort } from '../../ports/order.repository.port';
+import { PAYMENT_REPOSITORY } from '../../ports/payment.repository.port';
 import type { PaymentRepositoryPort } from '../../ports/payment.repository.port';
+import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
 import type { TicketReservationPort } from '../../ports/ticket-reservation.port';
 
 import { ConfirmPaymentCommand, ConfirmPaymentError } from './confirm-payment.command';

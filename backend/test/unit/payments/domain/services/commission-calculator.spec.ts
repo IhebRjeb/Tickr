@@ -1,6 +1,6 @@
+import { CommissionCalculator } from '@modules/payments/domain/services/commission-calculator.service';
 import { Money } from '@shared/domain/value-objects/money.vo';
 
-import { CommissionCalculator } from '@modules/payments/domain/services/commission-calculator.service';
 
 describe('CommissionCalculator', () => {
   describe('constructor', () => {

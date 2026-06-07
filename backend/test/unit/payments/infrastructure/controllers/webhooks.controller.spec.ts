@@ -1,17 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 
-import { Result } from '@shared/domain/result';
 
-import { WebhooksController } from '@modules/payments/infrastructure/controllers/webhooks.controller';
 import { ConfirmPaymentHandler } from '@modules/payments/application/commands/confirm-payment/confirm-payment.handler';
 import { FailPaymentHandler } from '@modules/payments/application/commands/fail-payment/fail-payment.handler';
 import { PAYMENT_PROVIDER_FACTORY } from '@modules/payments/application/ports/payment-provider.port';
-import { WEBHOOK_EVENT_STORE } from '@modules/payments/application/ports/webhook-event-store.port';
-import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
-
 import type { PaymentProviderFactoryPort, PaymentProviderPort } from '@modules/payments/application/ports/payment-provider.port';
+import { WEBHOOK_EVENT_STORE } from '@modules/payments/application/ports/webhook-event-store.port';
 import type { WebhookEventStorePort } from '@modules/payments/application/ports/webhook-event-store.port';
+import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { WebhooksController } from '@modules/payments/infrastructure/controllers/webhooks.controller';
+import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Result } from '@shared/domain/result';
 
 describe('WebhooksController', () => {
   let controller: WebhooksController;

@@ -1,11 +1,10 @@
-import { OrderPaidAppHandler } from '@modules/payments/application/event-handlers/order-paid-app.handler';
 import { OrderFailedAppHandler } from '@modules/payments/application/event-handlers/order-failed-app.handler';
-import { OrderPaidEvent } from '@modules/payments/domain/events/order-paid.event';
-import { OrderFailedEvent } from '@modules/payments/domain/events/order-failed.event';
-
-import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
+import { OrderPaidAppHandler } from '@modules/payments/application/event-handlers/order-paid-app.handler';
 import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
+import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
 import type { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { OrderFailedEvent } from '@modules/payments/domain/events/order-failed.event';
+import { OrderPaidEvent } from '@modules/payments/domain/events/order-paid.event';
 
 describe('OrderPaidAppHandler', () => {
   let handler: OrderPaidAppHandler;

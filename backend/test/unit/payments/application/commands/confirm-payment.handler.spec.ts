@@ -1,16 +1,15 @@
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { ConfirmPaymentCommand } from '@modules/payments/application/commands/confirm-payment/confirm-payment.command';
 import { ConfirmPaymentHandler } from '@modules/payments/application/commands/confirm-payment/confirm-payment.handler';
-import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
-import { PaymentEntity } from '@modules/payments/domain/entities/payment.entity';
-import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
-import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-import { PaymentStatus } from '@modules/payments/domain/value-objects/payment-status.vo';
-
 import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment.repository.port';
 import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
+import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { PaymentEntity } from '@modules/payments/domain/entities/payment.entity';
+import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { PaymentStatus } from '@modules/payments/domain/value-objects/payment-status.vo';
+import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('ConfirmPaymentHandler', () => {
   let handler: ConfirmPaymentHandler;

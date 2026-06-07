@@ -4,29 +4,28 @@
  *              with mocked infrastructure but real domain logic.
  */
 
-import { Logger } from '@nestjs/common';
 
-import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
-import { OrderItemEntity } from '@modules/payments/domain/entities/order-item.entity';
-import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
-import { CreateOrderHandler } from '@modules/payments/application/commands/create-order/create-order.handler';
-import { CreateOrderCommand } from '@modules/payments/application/commands/create-order/create-order.command';
-import { ProcessPaymentHandler } from '@modules/payments/application/commands/process-payment/process-payment.handler';
-import { ProcessPaymentCommand } from '@modules/payments/application/commands/process-payment/process-payment.command';
-import { ConfirmPaymentHandler } from '@modules/payments/application/commands/confirm-payment/confirm-payment.handler';
 import { ConfirmPaymentCommand } from '@modules/payments/application/commands/confirm-payment/confirm-payment.command';
-import { RequestRefundHandler } from '@modules/payments/application/commands/request-refund/request-refund.handler';
-import { RequestRefundCommand } from '@modules/payments/application/commands/request-refund/request-refund.command';
+import { ConfirmPaymentHandler } from '@modules/payments/application/commands/confirm-payment/confirm-payment.handler';
+import { CreateOrderCommand } from '@modules/payments/application/commands/create-order/create-order.command';
+import { CreateOrderHandler } from '@modules/payments/application/commands/create-order/create-order.handler';
 import { ExpireOrdersHandler } from '@modules/payments/application/commands/expire-orders/expire-orders.handler';
-
+import { ProcessPaymentCommand } from '@modules/payments/application/commands/process-payment/process-payment.command';
+import { ProcessPaymentHandler } from '@modules/payments/application/commands/process-payment/process-payment.handler';
+import { RequestRefundCommand } from '@modules/payments/application/commands/request-refund/request-refund.command';
+import { RequestRefundHandler } from '@modules/payments/application/commands/request-refund/request-refund.handler';
+import type { PaymentEventQueryPort } from '@modules/payments/application/ports/event-query.port';
+import type { FraudDetectionPort } from '@modules/payments/application/ports/fraud-detection.port';
 import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
+import type { PaymentProviderFactoryPort, PaymentProviderPort } from '@modules/payments/application/ports/payment-provider.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment.repository.port';
 import type { RefundRepositoryPort } from '@modules/payments/application/ports/refund.repository.port';
-import type { FraudDetectionPort } from '@modules/payments/application/ports/fraud-detection.port';
-import type { PaymentEventQueryPort } from '@modules/payments/application/ports/event-query.port';
 import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
-import type { PaymentProviderFactoryPort, PaymentProviderPort } from '@modules/payments/application/ports/payment-provider.port';
+import { OrderItemEntity } from '@modules/payments/domain/entities/order-item.entity';
+import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { Logger } from '@nestjs/common';
 
 // ============================================
 // In-Memory Repositories

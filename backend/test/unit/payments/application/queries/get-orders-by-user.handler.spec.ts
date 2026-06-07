@@ -1,9 +1,8 @@
-import { GetOrdersByUserQuery } from '@modules/payments/application/queries/get-orders-by-user/get-orders-by-user.query';
+import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 import { GetOrdersByUserHandler } from '@modules/payments/application/queries/get-orders-by-user/get-orders-by-user.handler';
+import { GetOrdersByUserQuery } from '@modules/payments/application/queries/get-orders-by-user/get-orders-by-user.query';
 import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
 import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-
-import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 
 describe('GetOrdersByUserHandler', () => {
   let handler: GetOrdersByUserHandler;

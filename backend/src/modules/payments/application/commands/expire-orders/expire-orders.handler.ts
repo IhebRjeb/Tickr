@@ -1,11 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
 import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { ORDER_REPOSITORY } from '../../ports/order.repository.port';
-import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
-
 import type { OrderRepositoryPort } from '../../ports/order.repository.port';
+import { TICKET_RESERVATION_PORT } from '../../ports/ticket-reservation.port';
 import type { TicketReservationPort } from '../../ports/ticket-reservation.port';
 
 import { ExpireOrdersResult } from './expire-orders.command';

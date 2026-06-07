@@ -1,8 +1,7 @@
+import { FraudDetectionService } from '@modules/payments/infrastructure/services/fraud-detection.service';
 import { ConfigService } from '@nestjs/config';
-
 import { CacheService } from '@shared/infrastructure/cache/cache.service';
 
-import { FraudDetectionService } from '@modules/payments/infrastructure/services/fraud-detection.service';
 
 describe('FraudDetectionService', () => {
   let service: FraudDetectionService;

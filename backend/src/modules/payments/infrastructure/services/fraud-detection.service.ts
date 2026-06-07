@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import { CacheService } from '@shared/infrastructure/cache/cache.service';
 
 import { FraudDetectionPort } from '../../application/ports/fraud-detection.port';

@@ -1,14 +1,13 @@
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { ProcessPaymentCommand } from '@modules/payments/application/commands/process-payment/process-payment.command';
 import { ProcessPaymentHandler } from '@modules/payments/application/commands/process-payment/process-payment.handler';
-import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
-import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
-import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-
 import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment.repository.port';
 import type { PaymentProviderFactoryPort, PaymentProviderPort } from '@modules/payments/application/ports/payment-provider.port';
+import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment.repository.port';
+import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('ProcessPaymentHandler', () => {
   let handler: ProcessPaymentHandler;

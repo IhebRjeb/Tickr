@@ -1,11 +1,10 @@
-import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 import { ExpireOrdersHandler } from '@modules/payments/application/commands/expire-orders/expire-orders.handler';
-import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
-import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
-
 import type { OrderRepositoryPort } from '@modules/payments/application/ports/order.repository.port';
 import type { TicketReservationPort } from '@modules/payments/application/ports/ticket-reservation.port';
+import { OrderEntity } from '@modules/payments/domain/entities/order.entity';
+import { OrderStatus } from '@modules/payments/domain/value-objects/order-status.vo';
+import { DomainEventPublisher } from '@shared/infrastructure/events/domain-event.publisher';
 
 describe('ExpireOrdersHandler', () => {
   let handler: ExpireOrdersHandler;

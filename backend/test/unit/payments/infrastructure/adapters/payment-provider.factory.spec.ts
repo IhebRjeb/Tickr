@@ -1,8 +1,8 @@
-import { PaymentProviderFactoryAdapter } from '@modules/payments/infrastructure/adapters/payment-provider-factory.adapter';
-import { StripeAdapter } from '@modules/payments/infrastructure/adapters/stripe.adapter';
+import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
 import { KonnectAdapter } from '@modules/payments/infrastructure/adapters/konnect.adapter';
 import { PaymeeAdapter } from '@modules/payments/infrastructure/adapters/paymee.adapter';
-import { PaymentMethod } from '@modules/payments/domain/value-objects/payment-method.vo';
+import { PaymentProviderFactoryAdapter } from '@modules/payments/infrastructure/adapters/payment-provider-factory.adapter';
+import { StripeAdapter } from '@modules/payments/infrastructure/adapters/stripe.adapter';
 
 describe('PaymentProviderFactoryAdapter', () => {
   let factory: PaymentProviderFactoryAdapter;
