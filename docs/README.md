@@ -1,9 +1,9 @@
 # 📚 Documentation Tickr - Plateforme de Billetterie (Tunisie)
 
-**Version:** 1.1  
-**Date:** February 4, 2026  
+**Version:** 1.2  
+**Date:** February 2026  
 **Équipe:** Solo/Duo Developer  
-**Stack:** React + NestJS + PostgreSQL + AWS
+**Stack:** Next.js + NestJS + PostgreSQL + AWS
 
 ---
 
@@ -14,8 +14,8 @@ Documentation complète pour développer une plateforme de billetterie en ligne 
 ### Décisions Validées
 
 - **Architecture:** Monolithe Modulaire Hexagonal V1 → Migration Progressive V2/V3
-- **Commission:** 6% par billet vendu (payé par organisateur) - Configurable via environnement
-- **Paiements:** Clictopay/Edinar (Tunisie) + Stripe (international)
+- **Commission:** 6% par billet vendu (payé par organisateur) - Configurable via `PLATFORM_COMMISSION_RATE`
+- **Paiements:** Stripe (international) + Konnect & Paymee (Tunisie)
 - **MVP Timeline:** 3 mois (20-40h/semaine)
 - **Budget AWS V1:** $80-100/mois
 
@@ -27,27 +27,31 @@ Documentation complète pour développer une plateforme de billetterie en ligne 
 docs/
 ├── README.md                           # Ce fichier - Index principal
 ├── PROJECT_STATUS.md                   # 📊 Project status tracking
-├── COMMISSION_RATE_UPDATE.md           # Commission rate changes log
-├── DEVELOPMENT.md                      # Development setup guide
 │
 ├── 01-fonctionnel/                     # SPÉCIFICATIONS MÉTIER
 │   ├── 01-vue-ensemble.md              # Vision produit, acteurs, workflows
 │   ├── 02-specifications-detaillees.md # User stories, features V1/V2/V3
-│   └── 03-regles-metier.md             # Contraintes business Tunisie
+│   └── 03-regles-metier.md            # Contraintes business Tunisie
 │
 ├── 02-technique/                       # SPÉCIFICATIONS TECHNIQUES
-│   ├── 01-stack-technique.md           # React, NestJS, PostgreSQL, Redis
+│   ├── 01-stack-technique.md           # Next.js, NestJS, PostgreSQL, Redis
 │   ├── 02-api-contract.md              # REST endpoints + OpenAPI spec
 │   ├── 03-database-schema.md           # Schémas PostgreSQL + ERD
-│   └── 04-modele-economique.md         # Calculs commissions, revenus
+│   ├── 04-modele-economique.md         # Calculs commissions, revenus
+│   ├── 05-configuration-management.md  # Environment & config management
+│   ├── 06-users-api.md                 # Users module API spec
+│   ├── 07-users-security.md            # Users authentication & security
+│   ├── 08-users-database.md            # Users database schema
+│   ├── 09-users-deployment.md          # Users module deployment
+│   └── 10-commission-rate-update.md    # Commission rate change log
 │
-├── 03-architecture/                    # ARCHITECTURE SYSTÈME (14 docs)
+├── 03-architecture/                    # ARCHITECTURE SYSTÈME (17 docs)
 │   ├── 00-architecture-governance-summary.md  # Governance overview
 │   ├── 01-principes-hexagonaux.md      # Ports & Adapters, DDD
 │   ├── 02-structure-modules.md         # 6 modules (Events, Payments, etc.)
 │   ├── 03-event-driven.md              # Event Bus, Domain Events
 │   ├── 04-migration-microservices.md   # Plan migration V1→V2→V3
-│   ├── 05-fitness-functions.md         # 30 architecture tests explained
+│   ├── 05-fitness-functions.md         # 34 architecture tests explained
 │   ├── 06-architecture-quick-ref.md    # Quick commands & fixes
 │   ├── 07-tests-verification.md        # CI/CD integration verification
 │   ├── 08-ci-integration-complete.md   # Complete CI/CD summary
@@ -55,13 +59,17 @@ docs/
 │   ├── 10-development-cicd-alignment.md # Dev/CI/CD alignment guide
 │   ├── 11-database-testing-strategy.md # Database testing strategy
 │   ├── 12-events-module-architecture.md # Events module (✅ 100%)
-│   └── 13-users-module-architecture.md # Users module (✅ 95%)
+│   ├── 13-users-module-architecture.md # Users module (✅ 100%)
+│   ├── 14-tickets-module-architecture.md # Tickets module (✅ 100%)
+│   ├── 15-payments-module-architecture.md # Payments module (✅ 100%)
+│   └── 16-payments-module-plan.md      # Payments implementation plan
 │
 ├── 04-infrastructure/                  # INFRASTRUCTURE & DÉPLOIEMENT
 │   ├── 01-aws-architecture.md          # ECS, RDS, S3, EventBridge
 │   ├── 02-terraform-setup.md           # IaC configuration
 │   ├── 03-cicd-pipeline.md             # GitHub Actions
-│   └── 04-monitoring.md                # CloudWatch, X-Ray, alerting
+│   ├── 04-monitoring.md                # CloudWatch, X-Ray, alerting
+│   └── 05-local-development.md         # Local development setup guide
 │
 ├── 05-git-workflow/                    # GIT WORKFLOW & CI/CD
 │   ├── 00-summary.md                   # Git workflow overview
@@ -69,11 +77,19 @@ docs/
 │   ├── 02-errors-and-fixes.md          # Common issues & solutions
 │   └── 03-architecture-tests-in-cicd.md # Architecture tests in pipeline
 │
-└── 06-testing/                         # TESTING GUIDES
-    ├── README.md                       # Testing overview & quick reference
-    ├── 01-frontend-testing-architecture.md # Frontend test separation
-    ├── 02-frontend-testing-guide.md    # Vitest & Playwright guide
-    └── 03-backend-testing-guide.md     # Jest, Integration & E2E tests
+├── 06-testing/                         # TESTING GUIDES
+│   ├── README.md                       # Testing overview & quick reference
+│   ├── 01-frontend-testing-architecture.md # Frontend test separation
+│   ├── 02-frontend-testing-guide.md    # Vitest & Playwright guide
+│   └── 03-backend-testing-guide.md     # Jest, Integration & E2E tests
+│
+├── 07-copilot-agents/                  # AI AGENT CONFIGURATION
+│   ├── README.md                       # Agent system overview
+│   ├── COPILOT-AGENTS-QUICK-REF.md     # Quick reference for agents
+│   └── TECH-LEAD-AGENT-GUIDE.md        # Tech lead agent guide
+│
+└── collections/                        # API COLLECTIONS
+    └── tickr-api.postman_collection.json
 ```
 
 ---
@@ -216,17 +232,18 @@ docs/
 | Catégorie | Pages | Complétude | Priorité |
 |-----------|-------|-----------|----------|
 | Fonctionnel | 3 | 100% ✅ | P0 |
-| Technique | 4 | 100% ✅ | P0 |
-| Architecture | 13 | 100% ✅ | P0 |
-| Infrastructure | 4 | 100% ✅ | P1 |
+| Technique | 10 | 100% ✅ | P0 |
+| Architecture | 17 | 100% ✅ | P0 |
+| Infrastructure | 5 | 100% ✅ | P1 |
 | Git Workflow | 4 | 100% ✅ | P0 |
 | Testing | 4 | 100% ✅ | P0 |
-| **Total** | **32** | **100%** | - |
+| Copilot Agents | 3 | 100% ✅ | P2 |
+| **Total** | **46** | **100%** | - |
 
 ### Temps de Lecture
 
 - **Quick Start:** 1h30 (5 docs essentiels)
-- **Complet:** 10h (25 docs)
+- **Complet:** ~12h (all docs)
 - **Par catégorie:** ~1h30-2h chacune
 
 ---
