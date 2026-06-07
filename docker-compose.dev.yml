@@ -51,6 +51,19 @@ services:
       S3_BUCKET: tickr-dev
       S3_ENDPOINT: http://localstack:4566
       
+      # SES / SNS (LocalStack)
+      SES_FROM_EMAIL: noreply@tickr.local
+      SES_REGION: eu-west-1
+      SES_CONFIGURATION_SET: tickr-notifications
+      SNS_REGION: eu-west-1
+      SNS_TOPIC_ARN: arn:aws:sns:eu-west-1:000000000000:tickr-notifications
+      
+      # Notification Rate Limits
+      NOTIFICATION_RATE_LIMIT_USER: 20
+      NOTIFICATION_RATE_LIMIT_EMAIL_SEC: 50
+      NOTIFICATION_RATE_LIMIT_SMS_MIN: 100
+      NOTIFICATION_MAX_RETRIES: 3
+      
       # Email (Maildev)
       SMTP_HOST: maildev
       SMTP_PORT: 1025

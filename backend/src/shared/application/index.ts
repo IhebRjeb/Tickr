@@ -3,6 +3,7 @@ export * from './interfaces/use-case.interface';
 export * from './interfaces/command.interface';
 export * from './interfaces/query.interface';
 export * from './interfaces/repository.interface';
+export * from './interfaces/domain-event-publisher.port';
 
 // Exceptions
 export * from './exceptions/application.exception';

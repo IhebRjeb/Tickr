@@ -6,10 +6,13 @@ import * as Joi from 'joi';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import appConfig from './config/app.config';
+import awsConfig from './config/aws.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
+import notificationConfig from './config/notification.config';
 import redisConfig from './config/redis.config';
 import { EventsModule } from './modules/events/infrastructure/events.module';
+import { NotificationsModule } from './modules/notifications/infrastructure/notifications.module';
 import { TicketsModule } from './modules/tickets/infrastructure/tickets.module';
 import { UsersModule } from './modules/users/infrastructure/users.module';
 import { CacheModule } from './shared/infrastructure/cache/cache.module';
@@ -24,7 +27,7 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
     // Global Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, redisConfig, jwtConfig],
+      load: [appConfig, awsConfig, databaseConfig, redisConfig, jwtConfig, notificationConfig],
       validationSchema: Joi.object({
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
@@ -63,6 +66,7 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
     UsersModule,
     EventsModule,
     TicketsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

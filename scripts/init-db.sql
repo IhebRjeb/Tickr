@@ -1,7 +1,7 @@
 -- Initialize PostgreSQL schemas for Tickr
 -- This script creates separate schemas for each module
 
--- Create schemas
+-- Create schemas for main database
 CREATE SCHEMA IF NOT EXISTS users;
 CREATE SCHEMA IF NOT EXISTS events;
 CREATE SCHEMA IF NOT EXISTS tickets;
