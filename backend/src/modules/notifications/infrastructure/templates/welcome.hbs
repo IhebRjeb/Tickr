@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+    .header { background: #6366F1; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; }
+    .footer { padding: 20px; text-align: center; font-size: 12px; color: #888; }
+    .button { display: inline-block; background: #6366F1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Welcome to Tickr!</h1>
+  </div>
+  <div class="content">
+    <p>Hi {{firstName}},</p>
+    <p>Welcome to Tickr, Tunisia's premier online ticketing platform!</p>
+    <p>You can now browse events, purchase tickets, and manage your bookings all in one place.</p>
+    <p><a href="{{appUrl}}/events" class="button">Browse Events</a></p>
+  </div>
+  <div class="footer">
+    <p>&copy; Tickr - Tunisia's Online Ticketing Platform</p>
+    {{#if unsubscribeUrl}}
+    <p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>
+    {{/if}}
+  </div>
+</body>
+</html>

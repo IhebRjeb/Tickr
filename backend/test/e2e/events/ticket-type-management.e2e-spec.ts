@@ -34,9 +34,9 @@ import { IsEventOwnerGuard } from '../../../src/modules/events/infrastructure/gu
 import { EventMapper } from '../../../src/modules/events/infrastructure/persistence/mappers/event.mapper';
 import { TicketTypeMapper } from '../../../src/modules/events/infrastructure/persistence/mappers/ticket-type.mapper';
 import { S3StorageService } from '../../../src/modules/events/infrastructure/services/s3-storage.service';
+import { DOMAIN_EVENT_PUBLISHER } from '../../../src/shared/application/interfaces/domain-event-publisher.port';
 import { JwtAuthGuard } from '../../../src/shared/infrastructure/common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../src/shared/infrastructure/common/guards/roles.guard';
-import { DomainEventPublisher } from '../../../src/shared/infrastructure/events/domain-event.publisher';
 
 import {
   InMemoryEventRepository,
@@ -101,7 +101,7 @@ describe('E2E: Ticket Type Management', () => {
         TicketTypeMapper,
         { provide: EVENT_REPOSITORY, useValue: eventRepository },
         { provide: USER_VALIDATION_SERVICE, useValue: mockUserValidation },
-        { provide: DomainEventPublisher, useValue: domainEventPublisher },
+        { provide: DOMAIN_EVENT_PUBLISHER, useValue: domainEventPublisher },
         { provide: S3StorageService, useValue: createMockS3Service() },
         JwtAuthGuard,
         RolesGuard,

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import type { DomainEventPublisherPort } from '../../application/interfaces/domain-event-publisher.port';
 import { DomainEvent } from '../../domain/domain-event.base';
 
 import { EventStoreService } from './event-store.service';
@@ -11,7 +12,7 @@ import { EventStoreService } from './event-store.service';
  * Publishes domain events with outbox pattern for reliability
  */
 @Injectable()
-export class DomainEventPublisher {
+export class DomainEventPublisher implements DomainEventPublisherPort {
   private readonly logger = new Logger(DomainEventPublisher.name);
 
   constructor(
