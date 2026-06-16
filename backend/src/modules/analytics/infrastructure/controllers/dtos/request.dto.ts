@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
 
 export class TimeRangeQueryDto {
   @ApiProperty({ description: 'Start date (ISO 8601)', example: '2025-01-01T00:00:00Z' })

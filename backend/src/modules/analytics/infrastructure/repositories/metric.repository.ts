@@ -4,7 +4,6 @@ import { Between, Repository } from 'typeorm';
 
 import type { MetricRepositoryPort, AggregateOptions, MetricAggregation } from '../../application/ports/metric.repository.port';
 import { MetricEntity } from '../../domain/entities/metric.entity';
-import type { EntityType } from '../../domain/value-objects/entity-type.vo';
 import type { MetricType } from '../../domain/value-objects/metric-type.vo';
 import { MetricOrmEntity } from '../persistence/entities/metric.orm-entity';
 import { MetricPersistenceMapper } from '../persistence/mappers/metric-persistence.mapper';

@@ -1,5 +1,5 @@
-import { TimeRangeVO } from '@modules/analytics/domain/value-objects/time-range.vo';
 import { InvalidTimeRangeException } from '@modules/analytics/domain/exceptions/invalid-time-range.exception';
+import { TimeRangeVO } from '@modules/analytics/domain/value-objects/time-range.vo';
 
 describe('TimeRangeVO', () => {
   const validStart = new Date('2025-01-01');

@@ -1,7 +1,7 @@
 import type { EventAnalyticsEntity } from '../../domain/entities/event-analytics.entity';
+import type { TimeSeriesDataVO } from '../../domain/value-objects/time-series-data.vo';
 import type { EventAnalyticsDto } from '../dtos/event-analytics.dto';
 import type { TimeSeriesDto } from '../dtos/time-series.dto';
-import type { TimeSeriesDataVO } from '../../domain/value-objects/time-series-data.vo';
 
 // ============================================
 // Event Analytics Mapper (Domain ↔ DTO)

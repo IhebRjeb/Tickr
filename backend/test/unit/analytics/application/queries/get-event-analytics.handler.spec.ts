@@ -1,7 +1,7 @@
-import { GetEventAnalyticsHandler } from '@modules/analytics/application/queries/get-event-analytics/get-event-analytics.handler';
-import { GetEventAnalyticsQuery } from '@modules/analytics/application/queries/get-event-analytics/get-event-analytics.query';
 import type { CachePort } from '@modules/analytics/application/ports/cache.port';
 import type { EventAnalyticsRepositoryPort } from '@modules/analytics/application/ports/event-analytics.repository.port';
+import { GetEventAnalyticsHandler } from '@modules/analytics/application/queries/get-event-analytics/get-event-analytics.handler';
+import { GetEventAnalyticsQuery } from '@modules/analytics/application/queries/get-event-analytics/get-event-analytics.query';
 import { EventAnalyticsEntity } from '@modules/analytics/domain/entities/event-analytics.entity';
 import { TimeSeriesDataVO } from '@modules/analytics/domain/value-objects/time-series-data.vo';
 import { Logger } from '@nestjs/common';

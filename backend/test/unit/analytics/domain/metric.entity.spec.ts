@@ -1,6 +1,6 @@
 import { MetricEntity } from '../../../../src/modules/analytics/domain/entities/metric.entity';
-import { MetricType } from '../../../../src/modules/analytics/domain/value-objects/metric-type.vo';
 import { EntityType } from '../../../../src/modules/analytics/domain/value-objects/entity-type.vo';
+import { MetricType } from '../../../../src/modules/analytics/domain/value-objects/metric-type.vo';
 
 describe('MetricEntity', () => {
   const validProps = {

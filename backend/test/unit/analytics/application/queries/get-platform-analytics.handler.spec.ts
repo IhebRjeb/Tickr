@@ -1,7 +1,7 @@
-import { GetPlatformAnalyticsHandler } from '@modules/analytics/application/queries/get-platform-analytics/get-platform-analytics.handler';
-import { GetPlatformAnalyticsQuery } from '@modules/analytics/application/queries/get-platform-analytics/get-platform-analytics.query';
 import type { CachePort } from '@modules/analytics/application/ports/cache.port';
 import type { PlatformAnalyticsRepositoryPort } from '@modules/analytics/application/ports/platform-analytics.repository.port';
+import { GetPlatformAnalyticsHandler } from '@modules/analytics/application/queries/get-platform-analytics/get-platform-analytics.handler';
+import { GetPlatformAnalyticsQuery } from '@modules/analytics/application/queries/get-platform-analytics/get-platform-analytics.query';
 import { PlatformAnalyticsEntity } from '@modules/analytics/domain/entities/platform-analytics.entity';
 import { Logger } from '@nestjs/common';
 

@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
 
+import { PlatformAnalyticsMapper } from '../../mappers/platform-analytics.mapper';
 import { ANALYTICS_CACHE } from '../../ports/cache.port';
 import type { CachePort } from '../../ports/cache.port';
 import { PLATFORM_ANALYTICS_REPOSITORY } from '../../ports/platform-analytics.repository.port';
 import type { PlatformAnalyticsRepositoryPort } from '../../ports/platform-analytics.repository.port';
-import { PlatformAnalyticsMapper } from '../../mappers/platform-analytics.mapper';
 
 import type {
   GetPlatformAnalyticsError,

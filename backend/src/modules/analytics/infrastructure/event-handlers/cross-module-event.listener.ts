@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { EntityType } from '../../domain/value-objects/entity-type.vo';
-import { MetricType } from '../../domain/value-objects/metric-type.vo';
 import { RecordMetricCommand } from '../../application/commands/record-metric/record-metric.command';
 import { RecordMetricHandler } from '../../application/commands/record-metric/record-metric.handler';
+import { EntityType } from '../../domain/value-objects/entity-type.vo';
+import { MetricType } from '../../domain/value-objects/metric-type.vo';
 
 /**
  * Cross-Module Event Handler (Infrastructure)

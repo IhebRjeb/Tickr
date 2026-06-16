@@ -1,7 +1,7 @@
-import { MetricAggregationService } from '@modules/analytics/infrastructure/services/metric-aggregation.service';
 import { MetricEntity } from '@modules/analytics/domain/entities/metric.entity';
-import { MetricType } from '@modules/analytics/domain/value-objects/metric-type.vo';
 import { EntityType } from '@modules/analytics/domain/value-objects/entity-type.vo';
+import { MetricType } from '@modules/analytics/domain/value-objects/metric-type.vo';
+import { MetricAggregationService } from '@modules/analytics/infrastructure/services/metric-aggregation.service';
 
 describe('MetricAggregationService', () => {
   let service: MetricAggregationService;

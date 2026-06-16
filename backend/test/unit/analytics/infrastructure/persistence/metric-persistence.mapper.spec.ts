@@ -1,8 +1,8 @@
-import { MetricPersistenceMapper } from '@modules/analytics/infrastructure/persistence/mappers/metric-persistence.mapper';
 import { MetricEntity } from '@modules/analytics/domain/entities/metric.entity';
-import { MetricType } from '@modules/analytics/domain/value-objects/metric-type.vo';
 import { EntityType } from '@modules/analytics/domain/value-objects/entity-type.vo';
+import { MetricType } from '@modules/analytics/domain/value-objects/metric-type.vo';
 import { MetricOrmEntity } from '@modules/analytics/infrastructure/persistence/entities/metric.orm-entity';
+import { MetricPersistenceMapper } from '@modules/analytics/infrastructure/persistence/mappers/metric-persistence.mapper';
 
 describe('MetricPersistenceMapper', () => {
   let mapper: MetricPersistenceMapper;

@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
 
+import { EventAnalyticsMapper } from '../../mappers/event-analytics.mapper';
 import { ANALYTICS_CACHE } from '../../ports/cache.port';
 import type { CachePort } from '../../ports/cache.port';
 import { EVENT_ANALYTICS_REPOSITORY } from '../../ports/event-analytics.repository.port';
 import type { EventAnalyticsRepositoryPort } from '../../ports/event-analytics.repository.port';
-import { EventAnalyticsMapper } from '../../mappers/event-analytics.mapper';
 
 import type { GetEventAnalyticsError, GetEventAnalyticsResult } from './get-event-analytics.query';
 import { GetEventAnalyticsQuery } from './get-event-analytics.query';

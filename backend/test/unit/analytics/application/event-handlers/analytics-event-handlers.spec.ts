@@ -1,9 +1,9 @@
-import { AnalyticsEventListener } from '@modules/analytics/application/event-handlers/analytics-event.listener';
 import { RecordMetricHandler } from '@modules/analytics/application/commands/record-metric/record-metric.handler';
-import { MetricType } from '@modules/analytics/domain/value-objects/metric-type.vo';
+import { AnalyticsEventListener } from '@modules/analytics/application/event-handlers/analytics-event.listener';
 import { EntityType } from '@modules/analytics/domain/value-objects/entity-type.vo';
-import { Result } from '@shared/domain/result';
+import { MetricType } from '@modules/analytics/domain/value-objects/metric-type.vo';
 import { Logger } from '@nestjs/common';
+import { Result } from '@shared/domain/result';
 
 describe('AnalyticsEventListener', () => {
   let handlers: AnalyticsEventListener;

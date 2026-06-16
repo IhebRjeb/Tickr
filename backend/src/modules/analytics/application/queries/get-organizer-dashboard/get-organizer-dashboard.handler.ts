@@ -2,13 +2,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
 
 import { MetricType } from '../../../domain/value-objects/metric-type.vo';
+import { EventAnalyticsMapper } from '../../mappers/event-analytics.mapper';
 import { ANALYTICS_CACHE } from '../../ports/cache.port';
 import type { CachePort } from '../../ports/cache.port';
 import { EVENT_ANALYTICS_REPOSITORY } from '../../ports/event-analytics.repository.port';
 import type { EventAnalyticsRepositoryPort } from '../../ports/event-analytics.repository.port';
 import { METRIC_REPOSITORY } from '../../ports/metric.repository.port';
 import type { MetricRepositoryPort } from '../../ports/metric.repository.port';
-import { EventAnalyticsMapper } from '../../mappers/event-analytics.mapper';
 
 import type {
   GetOrganizerDashboardError,
