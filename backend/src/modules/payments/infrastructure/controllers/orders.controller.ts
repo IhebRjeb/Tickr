@@ -42,6 +42,7 @@ import {
 
 @ApiTags('Orders')
 @ApiBearerAuth()
+@ApiResponse({ status: 401, description: 'Unauthorized — missing or invalid JWT token' })
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
