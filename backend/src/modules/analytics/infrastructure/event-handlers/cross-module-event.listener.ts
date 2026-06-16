@@ -15,8 +15,8 @@ import { RecordMetricHandler } from '../../application/commands/record-metric/re
  * Records CHECK_IN and REFUND metrics from ticket/payment events.
  */
 @Injectable()
-export class CrossModuleEventHandler {
-  private readonly logger = new Logger(CrossModuleEventHandler.name);
+export class CrossModuleEventListener {
+  private readonly logger = new Logger(CrossModuleEventListener.name);
 
   constructor(
     private readonly recordMetricHandler: RecordMetricHandler,

@@ -198,8 +198,8 @@ test/integration/analytics/
 | Phase 2: Domain Layer | ✅ DONE | D-01, D-02, D-03, D-04, D-05, D-06, D-07 |
 | Phase 3: Application Layer | ✅ DONE | A-01, A-02, A-03, A-04, A-05, A-06, A-07, A-08 |
 | Phase 4: Infrastructure Layer | ✅ DONE | I-01, I-02, I-03, I-04, I-05, I-06, I-07, I-08, I-09, I-10 |
-| Phase 5: Testing | 🔄 NEXT | — |
-| Phase 6: Cross-Cutting (Final) | ⬜ NOT STARTED | — |
+| Phase 5: Testing | ✅ DONE | T-01, T-02, T-03, T-05 |
+| Phase 6: Cross-Cutting (Final) | 🔄 NEXT | — |
 
 ---
 
@@ -683,7 +683,7 @@ Wire all providers, imports, and exports in the analytics module.
 
 ## Phase 5: Testing
 
-### ANLYT-T-01 — Domain Layer Unit Tests
+### ✅ ANLYT-T-01 — Domain Layer Unit Tests
 
 **Type:** Story | **Priority:** High | **Points:** 5
 
@@ -703,7 +703,7 @@ Pure unit tests for all domain entities, VOs, and events.
 
 ---
 
-### ANLYT-T-02 — Application Layer Unit Tests
+### ✅ ANLYT-T-02 — Application Layer Unit Tests
 
 **Type:** Story | **Priority:** High | **Points:** 5
 
@@ -725,7 +725,7 @@ Unit tests for all command/query handlers with mocked ports.
 
 ---
 
-### ANLYT-T-03 — Infrastructure Services Unit Tests
+### ✅ ANLYT-T-03 — Infrastructure Services Unit Tests
 
 **Type:** Story | **Priority:** High | **Points:** 3
 
@@ -759,7 +759,7 @@ End-to-end flows with real/in-memory database.
 
 ---
 
-### ANLYT-T-05 — Architecture Test Verification
+### ✅ ANLYT-T-05 — Architecture Test Verification
 
 **Type:** Task | **Priority:** High | **Points:** 1
 

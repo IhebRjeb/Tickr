@@ -42,7 +42,7 @@ import {
   PlatformAnalyticsQueryDto,
   SalesTimelineQueryDto,
   TimeRangeQueryDto,
-} from './request.dto';
+} from './dtos/request.dto';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()

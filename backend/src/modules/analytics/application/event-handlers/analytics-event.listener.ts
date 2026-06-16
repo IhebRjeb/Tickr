@@ -16,8 +16,8 @@ import { RecordMetricHandler } from '../commands/record-metric/record-metric.han
  * Uses only event payload data — no cross-module domain imports.
  */
 @Injectable()
-export class AnalyticsEventHandlers {
-  private readonly logger = new Logger(AnalyticsEventHandlers.name);
+export class AnalyticsEventListener {
+  private readonly logger = new Logger(AnalyticsEventListener.name);
 
   constructor(
     private readonly recordMetricHandler: RecordMetricHandler,

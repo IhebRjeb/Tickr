@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GenerateReportHandler } from '../application/commands/generate-report/generate-report.handler';
 import { RecordMetricHandler } from '../application/commands/record-metric/record-metric.handler';
 import { RefreshAnalyticsHandler } from '../application/commands/refresh-analytics/refresh-analytics.handler';
-import { AnalyticsEventHandlers } from '../application/event-handlers/analytics-event.handlers';
+import { AnalyticsEventListener } from '../application/event-handlers/analytics-event.listener';
 import { ANALYTICS_CACHE } from '../application/ports/cache.port';
 import { EVENT_ANALYTICS_REPOSITORY } from '../application/ports/event-analytics.repository.port';
 import { METRIC_REPOSITORY } from '../application/ports/metric.repository.port';
@@ -20,7 +20,7 @@ import { GetSalesTimeSeriesHandler } from '../application/queries/get-sales-time
 
 import { S3ReportStorageAdapter } from './adapters/s3-report-storage.adapter';
 import { AnalyticsController } from './controllers/analytics.controller';
-import { CrossModuleEventHandler } from './event-handlers/cross-module-event.handler';
+import { CrossModuleEventListener } from './event-handlers/cross-module-event.listener';
 import { EventAnalyticsOrmEntity } from './persistence/entities/event-analytics.orm-entity';
 import { MetricOrmEntity } from './persistence/entities/metric.orm-entity';
 import { PlatformAnalyticsOrmEntity } from './persistence/entities/platform-analytics.orm-entity';
@@ -59,8 +59,8 @@ const QueryHandlers = [
 // Event Handlers
 // ============================================
 const EventHandlers = [
-  AnalyticsEventHandlers,
-  CrossModuleEventHandler,
+  AnalyticsEventListener,
+  CrossModuleEventListener,
 ];
 
 // ============================================
