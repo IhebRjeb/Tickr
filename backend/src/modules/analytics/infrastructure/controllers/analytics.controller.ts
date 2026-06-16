@@ -18,6 +18,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 
 import { CurrentUser, Roles } from '../../../users/infrastructure/decorators/auth.decorators';
@@ -61,7 +62,9 @@ export class AnalyticsController {
 
   @Get('events/:id')
   @ApiOperation({ summary: 'Get analytics for a specific event' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
   @ApiResponse({ status: 200, description: 'Event analytics data' })
+  @ApiResponse({ status: 403, description: 'Access denied — not event owner or admin' })
   @ApiResponse({ status: 404, description: 'Analytics not found for event' })
   async getEventAnalytics(
     @Param('id', ParseUUIDPipe) eventId: string,
@@ -143,8 +146,10 @@ export class AnalyticsController {
 
   @Get('events/:id/sales-timeline')
   @ApiOperation({ summary: 'Get sales time series for an event' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
   @ApiResponse({ status: 200, description: 'Time series data' })
   @ApiResponse({ status: 400, description: 'Invalid filters' })
+  @ApiResponse({ status: 404, description: 'Event not found' })
   async getSalesTimeline(
     @Param('id', ParseUUIDPipe) eventId: string,
     @CurrentUser() user: { userId: string; role: string },

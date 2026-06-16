@@ -1,6 +1,7 @@
 import { IRepository } from '@shared/application/interfaces/repository.interface';
 
 import type { MetricEntity } from '../../domain/entities/metric.entity';
+import type { MetricType } from '../../domain/value-objects/metric-type.vo';
 import type { AggregateOptions, MetricAggregation } from '../types/metric-aggregation.types';
 
 export type { AggregateOptions, MetricAggregation } from '../types/metric-aggregation.types';
