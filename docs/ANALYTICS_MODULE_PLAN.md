@@ -197,8 +197,8 @@ test/integration/analytics/
 | Phase 1: Cross-Cutting (Foundation) | ✅ DONE | X-01, X-02, X-03 |
 | Phase 2: Domain Layer | ✅ DONE | D-01, D-02, D-03, D-04, D-05, D-06, D-07 |
 | Phase 3: Application Layer | ✅ DONE | A-01, A-02, A-03, A-04, A-05, A-06, A-07, A-08 |
-| Phase 4: Infrastructure Layer | 🔄 NEXT | — |
-| Phase 5: Testing | ⬜ NOT STARTED | — |
+| Phase 4: Infrastructure Layer | ✅ DONE | I-01, I-02, I-03, I-04, I-05, I-06, I-07, I-08, I-09, I-10 |
+| Phase 5: Testing | 🔄 NEXT | — |
 | Phase 6: Cross-Cutting (Final) | ⬜ NOT STARTED | — |
 
 ---
@@ -513,7 +513,7 @@ Application-layer mappers for converting between domain and DTO.
 
 ## Phase 4: Infrastructure Layer
 
-### ANLYT-I-01 — TypeORM ORM Entities & Persistence Mappers
+### ✅ ANLYT-I-01 — TypeORM ORM Entities & Persistence Mappers
 
 **Type:** Story | **Priority:** Highest | **Points:** 5
 
@@ -530,7 +530,7 @@ TypeORM entity classes and domain ↔ persistence mappers.
 
 ---
 
-### ANLYT-I-02 — TypeORM Repository Implementations
+### ✅ ANLYT-I-02 — TypeORM Repository Implementations
 
 **Type:** Story | **Priority:** Highest | **Points:** 5
 
@@ -547,7 +547,7 @@ Concrete repository implementations with query builders.
 
 ---
 
-### ANLYT-I-03 — Redis Cache Service
+### ✅ ANLYT-I-03 — Redis Cache Service
 
 **Type:** Story | **Priority:** High | **Points:** 3
 
@@ -564,7 +564,7 @@ Redis-based cache adapter implementing `CachePort`.
 
 ---
 
-### ANLYT-I-04 — Metric Aggregation Service
+### ✅ ANLYT-I-04 — Metric Aggregation Service
 
 **Type:** Story | **Priority:** High | **Points:** 3
 
@@ -580,7 +580,7 @@ Service for time-based metric aggregation and statistical calculations.
 
 ---
 
-### ANLYT-I-05 — Report Generator Service
+### ✅ ANLYT-I-05 — Report Generator Service
 
 **Type:** Story | **Priority:** High | **Points:** 3
 
@@ -595,7 +595,7 @@ Generates PDF and CSV reports from analytics data.
 
 ---
 
-### ANLYT-I-06 — S3 Report Storage Adapter
+### ✅ ANLYT-I-06 — S3 Report Storage Adapter
 
 **Type:** Task | **Priority:** High | **Points:** 2
 
@@ -611,7 +611,7 @@ S3 adapter for uploading and serving generated reports.
 
 ---
 
-### ANLYT-I-07 — Analytics Refresh Service (Cron)
+### ✅ ANLYT-I-07 — Analytics Refresh Service (Cron)
 
 **Type:** Story | **Priority:** High | **Points:** 3
 
@@ -627,7 +627,7 @@ Scheduled job that refreshes materialized analytics views.
 
 ---
 
-### ANLYT-I-08 — Analytics Controller
+### ✅ ANLYT-I-08 — Analytics Controller
 
 **Type:** Story | **Priority:** High | **Points:** 5
 
@@ -648,7 +648,7 @@ REST controller exposing analytics endpoints.
 
 ---
 
-### ANLYT-I-09 — Cross-Module Event Handlers (Infrastructure)
+### ✅ ANLYT-I-09 — Cross-Module Event Handlers (Infrastructure)
 
 **Type:** Story | **Priority:** Medium | **Points:** 3
 
@@ -664,7 +664,7 @@ Infrastructure-level event listeners that bridge other module events into analyt
 
 ---
 
-### ANLYT-I-10 — NestJS Module Wiring
+### ✅ ANLYT-I-10 — NestJS Module Wiring
 
 **Type:** Task | **Priority:** Highest | **Points:** 3
 
