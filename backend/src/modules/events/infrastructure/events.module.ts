@@ -18,7 +18,7 @@ import { UploadEventImageHandler } from '../application/commands/upload-event-im
 import { EventCancelledEventHandler } from '../application/event-handlers/event-cancelled.handler';
 import { EventPublishedEventHandler } from '../application/event-handlers/event-published.handler';
 import { TicketTypeSoldOutEventHandler } from '../application/event-handlers/ticket-type-sold-out.handler';
-import { EVENT_REPOSITORY } from '../application/ports/event.repository.port';
+import { EVENT_REPOSITORY, TICKET_TYPE_REPOSITORY } from '../application/ports/event.repository.port';
 import { USER_VALIDATION_SERVICE } from '../application/ports/user-validation.service.port';
 import { GetEventByIdHandler } from '../application/queries/get-event-by-id/get-event-by-id.handler';
 import { GetEventsByCategoryHandler } from '../application/queries/get-events-by-category/get-events-by-category.handler';
@@ -145,7 +145,10 @@ const userValidationServiceProvider: Provider = {
 
     // Repository
     repositoryProvider,
-    TicketTypeTypeOrmRepository,
+    {
+      provide: TICKET_TYPE_REPOSITORY,
+      useClass: TicketTypeTypeOrmRepository,
+    },
 
     // User validation service (cross-module adapter)
     userValidationServiceProvider,
@@ -170,6 +173,9 @@ const userValidationServiceProvider: Provider = {
   exports: [
     // Export repository token for potential use by other modules
     EVENT_REPOSITORY,
+
+    // Export ticket type repository for cross-module use (Payments)
+    TICKET_TYPE_REPOSITORY,
 
     // Export event mapper for DTO transformations
     EventMapper,

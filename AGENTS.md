@@ -8,7 +8,7 @@
 - **Backend**: NestJS 11 + TypeScript 5.7 (Hexagonal Architecture)
 - **Frontend**: Next.js 16 + React 19 + TailwindCSS 4
 - **Architecture**: Modular Monolith with 6 bounded contexts (Users, Events, Tickets, Payments, Notifications, Analytics)
-- **Current State**: Users, Events, Tickets & Payments modules implemented; Notifications & Analytics planned
+- **Current State**: Users, Events, Tickets, Payments & Analytics modules implemented; Notifications planned
 
 ---
 

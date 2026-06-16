@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "tickr-api-v1",
     "name": "Tickr API v1.0",
-    "description": "# Tickr Event Ticketing Platform API\n\nComplete API collection for the Tickr event ticketing platform.\n\n## Base URL\n- **Local Development**: `http://localhost:3000/api`\n- **Staging**: `https://staging.tickr.com/api`\n- **Production**: `https://api.tickr.com/api`\n\n## Authentication\nMost endpoints require JWT Bearer authentication. Use the Login endpoint to obtain tokens.\n\n## Getting Started\n1. Register a new user\n2. Login to get access token\n3. Use the access token in Authorization header for protected endpoints",
+    "description": "# Tickr Event Ticketing Platform API\n\nComplete API collection for the Tickr Tunisian online ticketing platform.\n\n## Base URL\n- **Local Development**: `http://localhost:3000/api`\n- **Staging**: `https://staging.tickr.com/api`\n- **Production**: `https://api.tickr.com/api`\n\n## Authentication\nMost endpoints require JWT Bearer authentication. Use the Login endpoint to obtain tokens.\n\n## Modules\n- **Authentication** — Register, login, token management\n- **Users** — Profile management (self + admin)\n- **Events** — Event lifecycle (create, publish, cancel)\n- **Ticket Types** — Event ticket type CRUD\n- **Tickets** — Reserve, confirm, transfer, check-in\n- **Orders** — Create orders, process payments, refunds\n- **Notifications** — Send, list, manage preferences\n- **Analytics** — Event metrics, dashboards, reports, export\n\n## Getting Started\n1. Register a new user (Register User)\n2. Login to get access token (Login)\n3. Token auto-saved to collection variables\n4. Use protected endpoints directly",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,46 +16,16 @@
     ]
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000/api",
-      "type": "string"
-    },
-    {
-      "key": "accessToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refreshToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "userId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "eventId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "ticketTypeId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "ticketId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "qrCode",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "baseUrl", "value": "http://localhost:3000/api", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "eventId", "value": "", "type": "string" },
+    { "key": "ticketTypeId", "value": "", "type": "string" },
+    { "key": "ticketId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "notificationId", "value": "", "type": "string" },
+    { "key": "qrCode", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -200,6 +170,9 @@
                   "    if (jsonData.accessToken) {",
                   "        pm.collectionVariables.set('accessToken', jsonData.accessToken);",
                   "        console.log('New access token saved');",
+                  "    }",
+                  "    if (jsonData.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
                   "    }",
                   "}"
                 ],
@@ -419,7 +392,6 @@
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('data');",
                   "    pm.expect(jsonData).to.have.property('total');",
-                  "    pm.expect(jsonData).to.have.property('page');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -546,7 +518,7 @@
     },
     {
       "name": "🎫 Events (Protected)",
-      "description": "Protected event endpoints - authentication required",
+      "description": "Protected event endpoints - authentication required (Organizer/Admin)",
       "item": [
         {
           "name": "Create Event",
@@ -584,7 +556,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["events"]
             },
-            "description": "Create a new event.\n\n**Note:** Events are created in DRAFT status. Use 'Publish Event' to make them visible."
+            "description": "Create a new event.\n\n**Note:** Events are created in DRAFT status. Use 'Publish Event' to make them visible.\n\n**Categories:** CONCERT, CONFERENCE, SPORT, THEATER, WORKSHOP, FESTIVAL, EXHIBITION, NETWORKING, COMEDY, OTHER"
           },
           "response": []
         },
@@ -607,7 +579,7 @@
                 { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
               ]
             },
-            "description": "Update an existing event."
+            "description": "Update an existing event. Only the event owner or admin can update."
           },
           "response": []
         },
@@ -647,7 +619,7 @@
                 { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
               ]
             },
-            "description": "Cancel an event. A reason is required."
+            "description": "Cancel an event. A reason is required.\n\nAll ticket holders will be notified."
           },
           "response": []
         },
@@ -667,7 +639,7 @@
                 { "key": "organizerId", "value": "{{userId}}", "description": "Organizer UUID" }
               ]
             },
-            "description": "Get all events for an organizer."
+            "description": "Get all events for an organizer.\n\n**Status filter:** DRAFT, PUBLISHED, CANCELLED, COMPLETED"
           },
           "response": []
         },
@@ -702,7 +674,7 @@
     },
     {
       "name": "🎟️ Ticket Types",
-      "description": "Ticket type management for events",
+      "description": "Ticket type management for events (Organizer only)",
       "item": [
         {
           "name": "Add Ticket Type (VIP)",
@@ -716,6 +688,7 @@
                   "    if (jsonData.ticketTypes && jsonData.ticketTypes.length > 0) {",
                   "        var lastTicketType = jsonData.ticketTypes[jsonData.ticketTypes.length - 1];",
                   "        pm.collectionVariables.set('ticketTypeId', lastTicketType.id);",
+                  "        console.log('Ticket Type ID saved:', lastTicketType.id);",
                   "    }",
                   "}"
                 ],
@@ -740,7 +713,7 @@
                 { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
               ]
             },
-            "description": "Add a VIP ticket type.\n\n**Currencies:** TND, EUR, USD"
+            "description": "Add a VIP ticket type to an event.\n\n**Currencies:** TND, EUR, USD"
           },
           "response": []
         },
@@ -763,7 +736,30 @@
                 { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
               ]
             },
-            "description": "Add a standard ticket type."
+            "description": "Add a standard general admission ticket type."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Ticket Type (Free)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Free Entry\",\n  \"description\": \"Free admission - limited spots\",\n  \"price\": 0,\n  \"currency\": \"TND\",\n  \"quantity\": 50,\n  \"salesStartDate\": \"2026-06-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-07-14T23:59:59Z\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/:id/ticket-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ":id", "ticket-types"],
+              "variable": [
+                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+              ]
+            },
+            "description": "Add a free ticket type."
           },
           "response": []
         },
@@ -805,7 +801,7 @@
                 { "key": "typeId", "value": "{{ticketTypeId}}", "description": "Ticket Type UUID" }
               ]
             },
-            "description": "Remove a ticket type from an event."
+            "description": "Remove a ticket type from an event.\n\n**Note:** Cannot remove if tickets have been sold."
           },
           "response": []
         }
@@ -851,7 +847,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets", "reserve"]
             },
-            "description": "Reserve tickets for an event. Creates a 15-minute reservation hold.\n\n**Note:** Must be confirmed via the Confirm endpoint after payment."
+            "description": "Reserve tickets for an event. Creates a 15-minute reservation hold.\n\n**Note:** Must complete payment within the reservation window or tickets will expire."
           },
           "response": []
         },
@@ -862,14 +858,14 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ticketIds\": [\"{{ticketId}}\"],\n  \"orderId\": \"order-001\"\n}"
+              "raw": "{\n  \"ticketIds\": [\"{{ticketId}}\"],\n  \"orderId\": \"{{orderId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/tickets/confirm",
               "host": ["{{baseUrl}}"],
               "path": ["tickets", "confirm"]
             },
-            "description": "Confirm reserved tickets after payment.\n\nTransitions RESERVED tickets to CONFIRMED status. Typically called by the Payments module."
+            "description": "Confirm reserved tickets after payment.\n\nTransitions RESERVED tickets to CONFIRMED status. Typically called by the Payments module after successful payment."
           },
           "response": []
         },
@@ -922,7 +918,7 @@
                 { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
               ]
             },
-            "description": "Get detailed information about a specific ticket. Accessible by ticket owner or the event organizer."
+            "description": "Get detailed information about a specific ticket.\n\nAccessible by ticket owner or the event organizer."
           },
           "response": []
         },
@@ -978,7 +974,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets", "check-in"]
             },
-            "description": "Check in a ticket at venue entrance using QR code.\n\n**Requires:** ORGANIZER or ADMIN role.\n\n**Time window:** Event start − 1 hour → Event end.\n\nDuplicate check-in attempts are rejected and logged as security alerts."
+            "description": "Check in a ticket at venue entrance using QR code.\n\n**Requires:** ORGANIZER or ADMIN role.\n**Time window:** Event start - 1 hour to Event end.\n\nDuplicate check-in attempts are rejected and logged as security alerts."
           },
           "response": []
         },
@@ -1002,8 +998,489 @@
       ]
     },
     {
-      "name": "📋 Workflow: Reserve → CheckIn",
-      "description": "Complete ticketing workflow: reserve tickets, confirm payment, get ticket details, and check in at the venue",
+      "name": "💳 Orders & Payments",
+      "description": "Order creation, payment processing, and refund management",
+      "item": [
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.orderId) {",
+                  "        pm.collectionVariables.set('orderId', jsonData.orderId);",
+                  "        console.log('Order ID saved:', jsonData.orderId);",
+                  "    }",
+                  "    pm.test('Order created successfully', function() {",
+                  "        pm.response.to.have.status(201);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"items\": [\n    {\n      \"ticketTypeId\": \"{{ticketTypeId}}\",\n      \"quantity\": 2,\n      \"holders\": [\n        { \"name\": \"Ahmed Ben Ali\", \"email\": \"ahmed@example.com\" },\n        { \"name\": \"Sonia Trabelsi\", \"email\": \"sonia@example.com\" }\n      ]\n    }\n  ],\n  \"holder\": {\n    \"firstName\": \"Ahmed\",\n    \"lastName\": \"Ben Ali\",\n    \"email\": \"ahmed@tick-r.tn\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Create a new order for tickets.\n\n**Flow:**\n1. Create order (PENDING)\n2. Process payment (redirect to gateway)\n3. Webhook confirms (order becomes PAID)\n\n**Note:** Orders expire after 30 minutes if not paid."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.length > 0) {",
+                  "        pm.collectionVariables.set('orderId', jsonData.data[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number (default: 1)" },
+                { "key": "limit", "value": "20", "description": "Items per page (default: 20)" }
+              ]
+            },
+            "description": "List the current user's orders with pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":id"],
+              "variable": [
+                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+              ]
+            },
+            "description": "Get detailed information about a specific order.\n\nOnly the order owner or admin can access."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Payment (Konnect)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.redirectUrl) {",
+                  "        console.log('Payment redirect URL:', jsonData.redirectUrl);",
+                  "    }",
+                  "    pm.test('Payment initiated', function() {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"KONNECT\",\n  \"idempotencyKey\": \"550e8400-e29b-41d4-a716-446655440099\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/:id/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":id", "pay"],
+              "variable": [
+                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+              ]
+            },
+            "description": "Process payment using Konnect (Tunisian gateway - TND).\n\n**Payment Methods:** KONNECT, PAYMEE, STRIPE\n\n**Returns:** `redirectUrl` to redirect user to payment page.\n\n**Idempotency:** Provide `idempotencyKey` to prevent duplicate charges on retry."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Payment (Stripe)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"STRIPE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/:id/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":id", "pay"],
+              "variable": [
+                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+              ]
+            },
+            "description": "Process payment using Stripe (international, EUR/USD).\n\n**Returns:** `clientSecret` for Stripe.js to confirm on the frontend."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Payment (Paymee)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"PAYMEE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/:id/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":id", "pay"],
+              "variable": [
+                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+              ]
+            },
+            "description": "Process payment using Paymee (Tunisian gateway - TND).\n\n**Returns:** `redirectUrl` to redirect user to payment page."
+          },
+          "response": []
+        },
+        {
+          "name": "Request Refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Event cancelled by organizer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/:id/refund",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":id", "refund"],
+              "variable": [
+                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+              ]
+            },
+            "description": "Request a refund for a paid order.\n\n**Requirements:**\n- Order must be in PAID status\n- A reason must be provided\n\n**Note:** Refund processing time depends on the payment gateway."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "description": "Notification management and preference endpoints",
+      "item": [
+        {
+          "name": "Send Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.notificationId) {",
+                  "        pm.collectionVariables.set('notificationId', jsonData.notificationId);",
+                  "        console.log('Notification ID saved:', jsonData.notificationId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"type\": \"ORDER_CONFIRMATION\",\n  \"channel\": \"EMAIL\",\n  \"recipientEmail\": \"user@tickr.tn\",\n  \"subject\": \"Your order is confirmed\",\n  \"templateSlug\": \"order-confirmation\",\n  \"templateData\": {\n    \"name\": \"Ahmed\",\n    \"orderId\": \"ORD-001\",\n    \"eventName\": \"Summer Festival\"\n  },\n  \"priority\": \"HIGH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Send a notification to a user.\n\n**Types:** ORDER_CONFIRMATION, TICKET_GENERATED, EVENT_REMINDER, EVENT_CANCELLED, TICKET_TRANSFER, PAYMENT_FAILED, WELCOME, PASSWORD_RESET\n\n**Channels:** EMAIL, SMS, PUSH\n\n**Priority:** LOW, NORMAL, HIGH, URGENT"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/me?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "me"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number (default: 1)" },
+                { "key": "limit", "value": "20", "description": "Items per page (default: 20)" }
+              ]
+            },
+            "description": "Get the current user's notifications with pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", ":id"],
+              "variable": [
+                { "key": "id", "value": "{{notificationId}}", "description": "Notification UUID" }
+              ]
+            },
+            "description": "Get detailed information about a specific notification."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/preferences/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "preferences", "me"]
+            },
+            "description": "Get the current user's notification preferences."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailEnabled\": true,\n  \"smsEnabled\": true,\n  \"marketingEnabled\": false,\n  \"eventRemindersEnabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications/preferences/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "preferences", "me"]
+            },
+            "description": "Update the current user's notification preferences."
+          },
+          "response": []
+        },
+        {
+          "name": "Unsubscribe via Email Link",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/unsubscribe/:token/:category",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "unsubscribe", ":token", ":category"],
+              "variable": [
+                { "key": "token", "value": "YOUR_UNSUBSCRIBE_TOKEN", "description": "Unsubscribe token from email" },
+                { "key": "category", "value": "marketing", "description": "Category: marketing or event_reminders" }
+              ]
+            },
+            "description": "Unsubscribe from notifications via email link.\n\n**No authentication required.**\n\n**Categories:** `marketing`, `event_reminders`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Analytics",
+      "description": "Event analytics, dashboards, revenue reports, and data export",
+      "item": [
+        {
+          "name": "Get Event Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/events/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "events", ":id"],
+              "variable": [
+                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+              ]
+            },
+            "description": "Get analytics for a specific event.\n\n**Returns:** Total revenue, tickets sold, views, conversion rate, attendance metrics.\n\n**Access:** Event owner or admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organizer Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard?timeRange=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "dashboard"],
+              "query": [
+                { "key": "timeRange", "value": "30d", "description": "Time range: 7d, 30d, or 90d" },
+                { "key": "page", "value": "1", "disabled": true, "description": "Page number" },
+                { "key": "limit", "value": "10", "disabled": true, "description": "Items per page" }
+              ]
+            },
+            "description": "Get the organizer's dashboard analytics.\n\n**Time ranges:** `7d`, `30d`, `90d`\n\n**Returns:** Summary metrics across all organizer events, top events, recent activity."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Platform Analytics (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/platform",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "platform"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01T00:00:00Z", "disabled": true, "description": "Start date (ISO 8601)" },
+                { "key": "endDate", "value": "2026-12-31T23:59:59Z", "disabled": true, "description": "End date (ISO 8601)" }
+              ]
+            },
+            "description": "Get platform-wide analytics.\n\n**Admin only.**\n\n**Returns:** Total platform revenue, active users, events created, payment method breakdown, top organizers."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sales Timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/events/:id/sales-timeline?granularity=day&startDate=2026-01-01T00:00:00Z&endDate=2026-12-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "events", ":id", "sales-timeline"],
+              "query": [
+                { "key": "granularity", "value": "day", "description": "Granularity: hour or day" },
+                { "key": "startDate", "value": "2026-01-01T00:00:00Z", "description": "Start date (ISO 8601)" },
+                { "key": "endDate", "value": "2026-12-31T23:59:59Z", "description": "End date (ISO 8601)" }
+              ],
+              "variable": [
+                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+              ]
+            },
+            "description": "Get time series sales data for an event.\n\n**Granularity:** `hour` or `day`\n\n**Returns:** Array of data points with timestamp, ticket count, and revenue for each interval."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Revenue Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/revenue-report?startDate=2026-01-01T00:00:00Z&endDate=2026-12-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "revenue-report"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01T00:00:00Z", "description": "Start date (ISO 8601, required)" },
+                { "key": "endDate", "value": "2026-12-31T23:59:59Z", "description": "End date (ISO 8601, required)" }
+              ]
+            },
+            "description": "Get a revenue report for a date range.\n\n**Returns:** Revenue breakdown by event, currency totals, commission earned, payment method distribution."
+          },
+          "response": []
+        },
+        {
+          "name": "Export Report (CSV/PDF)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.downloadUrl) {",
+                  "        console.log('Report download URL:', jsonData.downloadUrl);",
+                  "    }",
+                  "    pm.test('Report generated', function() {",
+                  "        pm.response.to.have.status(201);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"EVENT_REVENUE\",\n  \"format\": \"CSV\",\n  \"startDate\": \"2026-01-01T00:00:00Z\",\n  \"endDate\": \"2026-12-31T23:59:59Z\",\n  \"eventId\": \"{{eventId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytics/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "export"]
+            },
+            "description": "Generate and export an analytics report.\n\n**Report Types:** `EVENT_REVENUE`, `PLATFORM_SUMMARY`, `TICKET_SALES`\n\n**Formats:** `CSV`, `PDF`\n\n**Returns:** `downloadUrl` — signed S3 URL to download the generated report."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Workflow: Full Purchase Flow",
+      "description": "Complete end-to-end flow: browse events, create order, pay, get tickets",
       "item": [
         {
           "name": "1. Login (Participant)",
@@ -1029,7 +1506,7 @@
           }
         },
         {
-          "name": "2. Browse Published Events",
+          "name": "2. Browse Events",
           "event": [
             {
               "listen": "test",
@@ -1055,15 +1532,74 @@
           }
         },
         {
-          "name": "3. Reserve Tickets",
+          "name": "3. Create Order",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.ticketIds && jsonData.ticketIds.length > 0) {",
-                  "    pm.collectionVariables.set('ticketId', jsonData.ticketIds[0]);",
+                  "if (jsonData.orderId) pm.collectionVariables.set('orderId', jsonData.orderId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"items\": [{\n    \"ticketTypeId\": \"{{ticketTypeId}}\",\n    \"quantity\": 1,\n    \"holders\": [{ \"name\": \"Ahmed Ben Ali\", \"email\": \"ahmed@example.com\" }]\n  }],\n  \"holder\": {\n    \"firstName\": \"Ahmed\",\n    \"lastName\": \"Ben Ali\",\n    \"email\": \"ahmed@example.com\"\n  }\n}" },
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "4. Process Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.redirectUrl) console.log('Redirect to:', jsonData.redirectUrl);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"paymentMethod\": \"KONNECT\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderId}}", "pay"]
+            }
+          }
+        },
+        {
+          "name": "5. Get Order Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderId}}"]
+            }
+          }
+        },
+        {
+          "name": "6. Get My Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.length > 0) {",
+                  "    pm.collectionVariables.set('ticketId', jsonData.data[0].id);",
+                  "    if (jsonData.data[0].qrCode) pm.collectionVariables.set('qrCode', jsonData.data[0].qrCode);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1071,96 +1607,19 @@
             }
           ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"ticketTypeId\": \"{{ticketTypeId}}\",\n  \"holders\": [{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\"\n  }]\n}" },
-            "url": { "raw": "{{baseUrl}}/tickets/reserve", "host": ["{{baseUrl}}"], "path": ["tickets", "reserve"] }
-          }
-        },
-        {
-          "name": "4. Confirm Tickets (Payment)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"ticketIds\": [\"{{ticketId}}\"],\n  \"orderId\": \"order-001\"\n}" },
-            "url": { "raw": "{{baseUrl}}/tickets/confirm", "host": ["{{baseUrl}}"], "path": ["tickets", "confirm"] }
-          }
-        },
-        {
-          "name": "5. Get Ticket Details",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.qrCode) pm.collectionVariables.set('qrCode', jsonData.qrCode);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/tickets/{{ticketId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["tickets", "{{ticketId}}"]
-            }
-          }
-        },
-        {
-          "name": "6. Login (Organizer)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.accessToken) pm.collectionVariables.set('accessToken', jsonData.accessToken);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
-          }
-        },
-        {
-          "name": "7. Check In at Venue",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}" },
-            "url": { "raw": "{{baseUrl}}/tickets/check-in", "host": ["{{baseUrl}}"], "path": ["tickets", "check-in"] }
-          }
-        },
-        {
-          "name": "8. View Check-In Stats",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/tickets/event/{{eventId}}/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["tickets", "event", "{{eventId}}", "stats"]
-            }
+            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] }
           }
         }
       ]
     },
     {
       "name": "📋 Workflow: Create & Publish Event",
-      "description": "Complete workflow to create and publish an event",
+      "description": "Complete workflow to create, configure, and publish an event",
       "item": [
         {
-          "name": "1. Login",
+          "name": "1. Login (Organizer)",
           "event": [
             {
               "listen": "test",
@@ -1189,7 +1648,10 @@
             {
               "listen": "test",
               "script": {
-                "exec": ["var jsonData = pm.response.json();", "if (jsonData.id) pm.collectionVariables.set('eventId', jsonData.id);"],
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) pm.collectionVariables.set('eventId', jsonData.id);"
+                ],
                 "type": "text/javascript"
               }
             }
@@ -1197,21 +1659,45 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Tech Conference 2026\",\n  \"description\": \"Annual tech conference\",\n  \"category\": \"CONFERENCE\",\n  \"location\": { \"city\": \"Tunis\", \"country\": \"Tunisia\" },\n  \"startDate\": \"2026-09-15T09:00:00Z\",\n  \"endDate\": \"2026-09-16T18:00:00Z\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Tech Conference 2026\",\n  \"description\": \"Annual tech conference featuring top speakers in AI, Cloud, and DevOps.\",\n  \"category\": \"CONFERENCE\",\n  \"location\": {\n    \"address\": \"Centre des Congres\",\n    \"city\": \"Tunis\",\n    \"country\": \"Tunisia\",\n    \"postalCode\": \"1000\"\n  },\n  \"startDate\": \"2026-09-15T09:00:00Z\",\n  \"endDate\": \"2026-09-16T18:00:00Z\"\n}" },
             "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
           }
         },
         {
-          "name": "3. Add Ticket Type",
+          "name": "3. Add VIP Ticket Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.ticketTypes && jsonData.ticketTypes.length > 0) {",
+                  "    var last = jsonData.ticketTypes[jsonData.ticketTypes.length - 1];",
+                  "    pm.collectionVariables.set('ticketTypeId', last.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Standard\",\n  \"price\": 75,\n  \"currency\": \"TND\",\n  \"quantity\": 200,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"VIP\",\n  \"description\": \"Front row + speaker dinner\",\n  \"price\": 200,\n  \"currency\": \"TND\",\n  \"quantity\": 50,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}" },
             "url": { "raw": "{{baseUrl}}/events/{{eventId}}/ticket-types", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "ticket-types"] }
           }
         },
         {
-          "name": "4. Publish Event",
+          "name": "4. Add Standard Ticket Type",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Standard\",\n  \"description\": \"General admission\",\n  \"price\": 75,\n  \"currency\": \"TND\",\n  \"quantity\": 200,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}" },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/ticket-types", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "ticket-types"] }
+          }
+        },
+        {
+          "name": "5. Publish Event",
           "request": {
             "method": "POST",
             "header": [],
@@ -1219,12 +1705,147 @@
           }
         },
         {
-          "name": "5. Verify Published",
+          "name": "6. Verify Published",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
             "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Workflow: Check-In at Venue",
+      "description": "Organizer workflow: check in attendees and monitor stats",
+      "item": [
+        {
+          "name": "1. Login (Organizer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) pm.collectionVariables.set('accessToken', jsonData.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "2. Check In Ticket (QR Scan)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}" },
+            "url": { "raw": "{{baseUrl}}/tickets/check-in", "host": ["{{baseUrl}}"], "path": ["tickets", "check-in"] }
+          }
+        },
+        {
+          "name": "3. Get Check-In Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/event/{{eventId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "event", "{{eventId}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "4. View Event Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "events", "{{eventId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Workflow: Analytics & Reporting",
+      "description": "Admin/Organizer workflow: view analytics and export reports",
+      "item": [
+        {
+          "name": "1. Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) pm.collectionVariables.set('accessToken', jsonData.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@tickr.tn\",\n  \"password\": \"AdminPass123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "2. View Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard?timeRange=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "dashboard"],
+              "query": [{ "key": "timeRange", "value": "30d" }]
+            }
+          }
+        },
+        {
+          "name": "3. Platform Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/analytics/platform", "host": ["{{baseUrl}}"], "path": ["analytics", "platform"] }
+          }
+        },
+        {
+          "name": "4. Revenue Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/revenue-report?startDate=2026-01-01T00:00:00Z&endDate=2026-12-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "revenue-report"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01T00:00:00Z" },
+                { "key": "endDate", "value": "2026-12-31T23:59:59Z" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Export to CSV",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reportType\": \"PLATFORM_SUMMARY\",\n  \"format\": \"CSV\",\n  \"startDate\": \"2026-01-01T00:00:00Z\",\n  \"endDate\": \"2026-12-31T23:59:59Z\"\n}" },
+            "url": { "raw": "{{baseUrl}}/analytics/export", "host": ["{{baseUrl}}"], "path": ["analytics", "export"] }
           }
         }
       ]

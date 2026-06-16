@@ -75,6 +75,15 @@ services:
       FRONTEND_URL: http://localhost:3001
       CORS_ORIGIN: http://localhost:3001
       
+      # Stripe (test keys for development)
+      STRIPE_SECRET_KEY: sk_test_placeholder_replace_with_real_key
+      STRIPE_PUBLIC_KEY: pk_test_placeholder_replace_with_real_key
+      STRIPE_WEBHOOK_SECRET: whsec_test_placeholder
+      
+      # Flouci (local payments - TND)
+      FLOUCI_APP_TOKEN: placeholder_flouci_token
+      FLOUCI_APP_SECRET: placeholder_flouci_secret
+      
       # Debug
       DEBUG: tickr:*
       LOG_LEVEL: debug
