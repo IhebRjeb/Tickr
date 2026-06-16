@@ -31,9 +31,14 @@ export class StripeAdapter implements PaymentProviderPort {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY', '');
     this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET', '');
 
-    this.stripe = new Stripe(secretKey, {
-      apiVersion: '2025-11-17.clover',
-    });
+    if (secretKey) {
+      this.stripe = new Stripe(secretKey, {
+        apiVersion: '2025-11-17.clover',
+      });
+    } else {
+      this.logger.warn('STRIPE_SECRET_KEY not configured - Stripe payments will not work');
+      this.stripe = null as unknown as Stripe;
+    }
   }
 
   async createPaymentIntent(order: OrderEntity): Promise<PaymentIntent> {

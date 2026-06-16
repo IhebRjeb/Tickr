@@ -13,6 +13,7 @@ import notificationConfig from './config/notification.config';
 import redisConfig from './config/redis.config';
 import { EventsModule } from './modules/events/infrastructure/events.module';
 import { NotificationsModule } from './modules/notifications/infrastructure/notifications.module';
+import { PaymentsModule } from './modules/payments/infrastructure/payments.module';
 import { AnalyticsModule } from './modules/analytics/infrastructure/analytics.module';
 import { TicketsModule } from './modules/tickets/infrastructure/tickets.module';
 import { UsersModule } from './modules/users/infrastructure/users.module';
@@ -67,6 +68,7 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
     UsersModule,
     EventsModule,
     TicketsModule,
+    PaymentsModule,
     NotificationsModule,
     AnalyticsModule,
   ],
