@@ -9,23 +9,22 @@
 
 ### Paiements
 
-#### Carte Bancaire Locale (Prioritaire)
+#### Gateway Local Tunisie (Prioritaire)
 
 **Gateways Tunisie:**
-- **Clictopay** (recommandé)
-  - Frais: 2.5% + 0.3 TND par transaction
-  - Délai paiement organisateur: J+7
+- **Konnect** (gateway principal)
+  - Montants traités en millimes (TND × 1000)
+  - Flux par redirection (page de paiement hébergée)
   - API REST disponible
-  
-- **Edinar** (alternative)
-  - Frais: 2.8% par transaction
-  - Délai paiement organisateur: J+10
-  - Intégration plus complexe
+
+- **Paymee** (fallback)
+  - Montants en TND (format décimal, ex: 10.500)
+  - Flux par redirection (page de paiement hébergée)
+  - Utilisé en repli si Konnect indisponible
 
 **Contraintes:**
-- Plafond transaction: 5,000 TND max
 - Conversion 3D Secure obligatoire
-- Remboursement: jusqu'à 14 jours après paiement
+- Remboursement Konnect: manuel via dashboard
 
 #### Stripe International (Secondaire)
 
@@ -122,11 +121,11 @@ Tickr reçoit: 3 TND
 
 **Qui paie ?** Organisateur (inclus dans commission)
 
-**Exemple Clictopay:**
+**Exemple Konnect:**
 ```
 Billet: 50 TND
 Commission Tickr: 3 TND (6%)
-Frais Clictopay: 1.58 TND (2.5% de 53 + 0.3)
+Frais gateway: ~1.58 TND
 
 Organisateur reçoit: 45.42 TND
 Tickr reçoit net: 1.42 TND
@@ -393,7 +392,7 @@ Avant développement, vérifier compréhension:
 
 ```yaml
 ✅ Paiements:
-  - [ ] Gateways Tunisie identifiés (Clictopay/Edinar)
+  - [ ] Gateways Tunisie identifiés (Konnect/Paymee)
   - [ ] Frais et délais compris
   - [ ] Stripe comme fallback
 
