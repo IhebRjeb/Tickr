@@ -1,7 +1,7 @@
 # 🔌 API Contract - Tickr REST API
 
 **Version:** 1.0  
-**Base URL:** `https://api.tickr.tn/v1`  
+**Base URL:** `https://api.tickr.tn/api`  
 **Temps lecture:** 20 minutes
 
 ---
@@ -559,7 +559,7 @@ GET /events?page=1&limit=12
 **Body:**
 ```json
 {
-  "paymentMethod": "CLICTOPAY"
+  "paymentMethod": "KONNECT"
 }
 ```
 
@@ -569,7 +569,7 @@ GET /events?page=1&limit=12
   "orderId": "uuid",
   "amount": 104.00,
   "status": "PENDING",
-  "paymentUrl": "https://clictopay.com/pay/abc123",
+  "paymentUrl": "https://gateway.konnect.network/pay/abc123",
   "expiresAt": "2024-01-15T10:45:00Z"
 }
 ```
@@ -578,10 +578,10 @@ GET /events?page=1&limit=12
 
 ## 💳 Paiements
 
-### POST /payments/webhook/clictopay
+### GET /payments/webhooks/konnect
 
 **Auth:** Webhook signature  
-**Description:** Callback Clictopay
+**Description:** Callback Konnect (gateway TN principal)
 
 **Body:**
 ```json
@@ -604,12 +604,19 @@ GET /events?page=1&limit=12
 
 ---
 
-### POST /payments/webhook/stripe
+### POST /payments/webhooks/stripe
 
 **Auth:** Stripe signature  
-**Description:** Callback Stripe
+**Description:** Callback Stripe (paiements internationaux)
 
 **Body:** (Stripe Event Object)
+
+---
+
+### POST /payments/webhooks/paymee
+
+**Auth:** Webhook signature  
+**Description:** Callback Paymee (gateway TN fallback)
 
 ---
 

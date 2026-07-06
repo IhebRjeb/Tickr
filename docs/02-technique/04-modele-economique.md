@@ -60,7 +60,7 @@ Exemple: Billet à 50 TND
 - Prix billet HT: 50.00 TND
 - Commission Tickr (6%): 3.00 TND
 - **Total participant:** 53.00 TND
-- Frais Clictopay (2.5% + 0.3): ~1.58 TND
+- Frais gateway TN (Konnect, estimé): ~1.58 TND
 - **Tickr net:** 1.42 TND (47% de la commission)
 - **Organisateur net:** 47.00 TND (94%)
 
@@ -134,8 +134,9 @@ TOTAL FIXES: ~104 TND/mois (~1,250 TND/an)
 
 ```yaml
 Paiements Gateway:
-  Clictopay: 2.5% + 0.3 TND par transaction
-  Stripe: 2.9% + 0.3 USD (fallback)
+  Konnect (gateway TN principal): estimation frais par transaction
+  Paymee (gateway TN fallback): estimation frais par transaction
+  Stripe: 2.9% + 0.3 USD (international)
   
   Exemple 10,000 billets/mois à 40 TND:
   = 10,000 × 1.3 TND = 13,000 TND/mois
@@ -200,7 +201,7 @@ Rentabilité positive si volume × 2
 ### 1. Réduire Frais Gateway (Priorité Haute)
 
 **Actions:**
-- Négocier taux avec Clictopay (volume > 100k TND/mois)
+- Négocier taux avec gateway TN (Konnect/Paymee) (volume > 100k TND/mois)
 - Cible: 2% au lieu de 2.5% = +20% marges
 - Contacter directement banques (taux négociés)
 
@@ -235,7 +236,7 @@ Rentabilité positive si volume × 2
 - ✅ Support client réactif
 - ✅ Dashboard analytics avancé
 - ✅ Check-in mobile temps réel
-- ✅ Paiement multi-gateway (Clictopay + Stripe)
+- ✅ Paiement multi-gateway (Konnect + Paymee + Stripe)
 - ✅ Notifications SMS/Email automatiques
 
 **Recommandation:** 6% validé par benchmark marché

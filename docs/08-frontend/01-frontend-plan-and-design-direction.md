@@ -14,7 +14,7 @@
 
 ## 1. Context
 
-The **Tickr** backend is feature-complete for the V1 MVP. It is built as a **Modular Hexagonal (Ports & Adapters) Monolith** on **NestJS 11 + TypeScript 5.7**, exposing a versioned REST API at base path **`/v1`**.
+The **Tickr** backend is feature-complete for the V1 MVP. It is built as a **Modular Hexagonal (Ports & Adapters) Monolith** on **NestJS 11 + TypeScript 5.7**, exposing a REST API under the global prefix **`/api`** (configurable via `API_PREFIX`).
 
 All six bounded contexts are implemented, tested, and documented (Swagger + Postman):
 
@@ -61,7 +61,7 @@ These are already fixed by the repository and backend and are **inputs**, not op
 
 ### 2.2 API & auth contract (from `docs/02-technique/02-api-contract.md`)
 
-- Base URL: `https://api.tickr.tn/v1` (JSON, HTTPS, UTF-8).
+- Base URL: `https://api.tickr.tn/api` (JSON, HTTPS, UTF-8).
 - Auth: `Authorization: Bearer <JWT>` — **HS256**, access token **24h**, refresh token **30d** (`POST /auth/refresh-token`).
 - Roles (from `UserRole` enum): **`PARTICIPANT`**, **`ORGANIZER`**, **`ADMIN`**.
 - Pagination: `?page=&limit=` → `{ data, meta: { page, limit, total, totalPages } }`.
@@ -226,7 +226,7 @@ frontend/src/
 ```
 
 Must specify:
-- **API layer:** single axios instance, base URL `/v1`, request/response interceptors, **automatic token refresh on `401`**, error normalization to the backend error envelope.
+- **API layer:** single axios instance, base URL `/api`, request/response interceptors, **automatic token refresh on `401`**, error normalization to the backend error envelope.
 - **Data layer:** react-query key conventions, cache/stale times (e.g. `GET /config/public` cached ~1h with 6% fallback), pagination handling.
 - **State management:** what lives in zustand (auth/session, reservation timer, UI) vs. react-query (server data).
 - **Routing & auth:** role-based route protection (`PARTICIPANT`/`ORGANIZER`/`ADMIN`), redirect rules.
@@ -256,7 +256,7 @@ Must specify:
 
 ## 6. Backend Endpoint Reference (source of truth for this Epic)
 
-> Verified against controllers in `backend/src/modules/**`. All paths are relative to `/v1`.
+> Verified against controllers in `backend/src/modules/**`. All paths are relative to `/api`.
 
 **Config** — `GET /config/public`
 

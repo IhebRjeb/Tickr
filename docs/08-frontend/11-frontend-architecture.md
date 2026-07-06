@@ -39,7 +39,7 @@ frontend/src/
 Each `features/<module>/` contains: `api.ts` (endpoints), `hooks.ts` (react-query), `types.ts`, `components/`, and `schemas.ts` (zod).
 
 ## 2. API Layer
-- Single **axios** instance, base URL `/v1`.
+- Single **axios** instance, base URL `/api`.
 - Request interceptor: attach `Authorization: Bearer <access>`.
 - Response interceptor: on `401` → attempt `POST /auth/refresh-token` once, retry original request; on failure → clear session, redirect `/login`.
 - Normalize errors to the backend envelope `{ statusCode, message, errors[], timestamp }`.
@@ -69,7 +69,7 @@ Each `features/<module>/` contains: `api.ts` (endpoints), `hooks.ts` (react-quer
 ## 7. Worked Data-Flow Example (Event Listing)
 ```
 /events (Server Component)
-  → lib/api/events.list(page)  (axios GET /v1/events)
+  → lib/api/events.list(page)  (axios GET /api/events)
   → features/events/hooks useEvents()  (react-query)
   → components/EventCard[]  + Pagination (from meta)
 ```

@@ -62,7 +62,8 @@ docs/
 │   ├── 13-users-module-architecture.md # Users module (✅ 100%)
 │   ├── 14-tickets-module-architecture.md # Tickets module (✅ 100%)
 │   ├── 15-payments-module-architecture.md # Payments module (✅ 100%)
-│   └── 16-payments-module-plan.md      # Payments implementation plan
+│   ├── 16-payments-module-plan.md      # Payments implementation plan
+│   └── 17-analytics-module-architecture.md # Analytics module (✅ 100%)
 │
 ├── 04-infrastructure/                  # INFRASTRUCTURE & DÉPLOIEMENT
 │   ├── 01-aws-architecture.md          # ECS, RDS, S3, EventBridge
@@ -213,7 +214,7 @@ docs/
 
 ✅ Comptes Créés:
   - [ ] AWS Account (Free Tier)
-  - [ ] Clictopay/Edinar (Tunisia)
+  - [ ] Konnect / Paymee (Tunisia)
   - [ ] Stripe (international)
   - [ ] GitHub (repository)
 
@@ -314,8 +315,8 @@ Infrastructure:
 
 ### Paiements Tunisie
 
-- [Clictopay](https://www.clictopay.com.tn/)
-- [Edinar](https://www.edinar.tn/)
+- [Konnect](https://www.konnect.network/)
+- [Paymee](https://www.paymee.tn/)
 - [Stripe Tunisia](https://stripe.com/docs/connect/payouts)
 
 ---

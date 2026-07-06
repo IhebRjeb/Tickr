@@ -269,7 +269,7 @@ NEXT_PUBLIC_ENABLE_ANALYTICS=false
 ```bash
 NEXT_PUBLIC_API_URL=https://api.tickr.tn
 NEXT_PUBLIC_STRIPE_PUBLIC_KEY=pk_live_...
-NEXT_PUBLIC_CLICTOPAY_PUBLIC_KEY=...
+# Konnect & Paymee use redirect-based, server-side flows (no public key needed)
 ```
     "prettier": "^3.1.0"
   }

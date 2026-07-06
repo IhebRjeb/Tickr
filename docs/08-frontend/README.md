@@ -21,7 +21,7 @@ Each document maps to a phase of the Epic. Do not start React implementation unt
 ## Conventions
 
 - **Roles:** `PARTICIPANT`, `ORGANIZER`, `ADMIN`.
-- **API base:** `/v1` — see the endpoint reference in the Epic doc, §6.
+- **API base:** `/api` — see the endpoint reference in the Epic doc, §6.
 - **Payment gateways:** Konnect (primary TN), Paymee (TN fallback), Stripe (international).
 - **Currency:** TND. **Commission:** configurable (default 6%) via `GET /config/public`.
 - **Stack:** Next.js 16 (App Router) · React 19 · TailwindCSS 4 · TanStack Query · axios · react-hook-form + zod · zustand · Headless UI. Tests: Vitest + Playwright.
