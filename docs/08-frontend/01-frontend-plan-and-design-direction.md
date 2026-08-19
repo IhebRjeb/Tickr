@@ -4,9 +4,9 @@
 | --- | --- |
 | **Type** | Epic / Discovery |
 | **Priority** | High |
-| **Status** | To Do |
+| **Status** | 🚧 Phases 1–7 & 11 delivered · 8–10 pending Figma |
 | **Sprint** | Frontend Sprint 0 (Foundation) |
-| **Depends on** | Backend REST API (v1) — complete |
+| **Depends on** | Backend REST API (`/api`) — complete |
 | **Blocks** | All frontend implementation tickets |
 | **Owner** | Frontend Lead / Product Design |
 
@@ -31,7 +31,25 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 
 **This Epic is a design & architecture discovery phase — not implementation.** Its purpose is to remove all UX/UI ambiguity and produce a single source of truth before the first React component is written, so that the frontend maps 1:1 to the existing backend contracts.
 
-> **Correction vs. prior drafts:** Payment gateways are **Stripe, Konnect, and Paymee** (multi-provider, `PaymentProviderFactory`) — *not* Clictopay/Edinar. Commission is **configurable (default 6%)** and fetched at runtime via `GET /config/public`. All monetary values are in **TND**.
+> **Correction vs. prior drafts:** Payment gateways are **Stripe, Konnect, and Paymee** (multi-provider, `PaymentProviderFactory`) — *not* Clictopay/Edinar. Commission is **configurable (default 6%)**, added **on top** of the ticket price. All monetary values are in **TND**.
+
+> ### ⚠️ Contract corrections verified against source (2026-08-20)
+>
+> Grounding the Phase 1–11 deliverables against `backend/src` surfaced five claims in the original
+> Epic body that do **not** match the implemented backend. The deliverables follow the code; this
+> Epic text is corrected here so the two agree.
+>
+> | Epic originally said | Verified reality | Source |
+> |---|---|---|
+> | Base path `/v1` | **`/api`** — `setGlobalPrefix(apiPrefix)`, `API_PREFIX \|\| 'api'` | `main.ts:17`, `config/app.config.ts:6` |
+> | Commission fetched via `GET /config/public` | **That endpoint does not exist.** No config controller is implemented anywhere; the rate is read only inside the order handler | `create-order.handler.ts:41`; no `*config*.controller.ts` in the tree |
+> | Pagination `{ data, meta: { … } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | `event-list.dto.ts`, `order.dto.ts` |
+> | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, message, error, timestamp, path }`; only *validation* errors carry `errors[]` | `http-exception.filter.ts`, `validation-exception.filter.ts` |
+> | Sold out → `409`, rate limited → `429` | Sold out returns **`400`** (`INSUFFICIENT_AVAILABILITY`); order-creation rate limiting returns **`403`** (`RATE_LIMITED` → `ForbiddenException`) | `tickets.controller.ts`, `orders.controller.ts:90` |
+>
+> Two of these are **backend work items**, not documentation fixes: implementing `GET /config/public`,
+> and adding a machine-readable `code` to the error envelope so the UI can tell "sold out" from
+> "bad input". Both are tracked in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend).
 
 ---
 
@@ -64,9 +82,9 @@ These are already fixed by the repository and backend and are **inputs**, not op
 - Base URL: `https://api.tickr.tn/api` (JSON, HTTPS, UTF-8).
 - Auth: `Authorization: Bearer <JWT>` — **HS256**, access token **24h**, refresh token **30d** (`POST /auth/refresh-token`).
 - Roles (from `UserRole` enum): **`PARTICIPANT`**, **`ORGANIZER`**, **`ADMIN`**.
-- Pagination: `?page=&limit=` → `{ data, meta: { page, limit, total, totalPages } }`.
-- Error envelope: `{ statusCode, message, errors[], timestamp }`.
-- Status codes in use: `200/201/204/400/401/403/404/409/429/500` — the UI **must** define a state for `401`, `403`, `404`, `409` (business conflict, e.g. sold out), and `429`.
+- Pagination: `?page=&limit=` → `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` (flat, **not** nested under `meta`).
+- Error envelope: `{ statusCode, message, error, timestamp, path }`. Validation failures add `errors[]`.
+- Status codes in use: `200/201/204/400/401/403/404/409/429/500` — the UI **must** define a state for `401`, `403`, `404`, business conflicts (sold out — **currently surfaced as `400`, not `409`**), and `429`.
 
 ---
 
@@ -227,7 +245,7 @@ frontend/src/
 
 Must specify:
 - **API layer:** single axios instance, base URL `/api`, request/response interceptors, **automatic token refresh on `401`**, error normalization to the backend error envelope.
-- **Data layer:** react-query key conventions, cache/stale times (e.g. `GET /config/public` cached ~1h with 6% fallback), pagination handling.
+- **Data layer:** react-query key conventions, cache/stale times (once `GET /config/public` exists it is cached ~1h with a 6% fallback; **until then** a build-time `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE` constant is the single source), flat pagination handling.
 - **State management:** what lives in zustand (auth/session, reservation timer, UI) vs. react-query (server data).
 - **Routing & auth:** role-based route protection (`PARTICIPANT`/`ORGANIZER`/`ADMIN`), redirect rules.
 - **Design tokens** wired into Tailwind config.
@@ -258,7 +276,7 @@ Must specify:
 
 > Verified against controllers in `backend/src/modules/**`. All paths are relative to `/api`.
 
-**Config** — `GET /config/public`
+**Config** — `GET /config/public` ⚠️ **NOT IMPLEMENTED — required backend work.** No config controller exists in `backend/src`.
 
 **Auth** (`/auth`) — `POST /register`, `POST /login`, `POST /verify-email`, `POST /request-reset`, `POST /reset-password`, `POST /refresh-token`
 
