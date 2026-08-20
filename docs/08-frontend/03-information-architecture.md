@@ -42,9 +42,11 @@ introduce a route, rename a segment, or invent a query parameter without amendin
 first. Phase 4 (Screen Inventory) enumerates *screens* against these routes; Phase 11 (Frontend
 Architecture) enumerates *modules* against them. Both consume this tree; neither redefines it.
 
-Everything below is constrained by the API that actually exists. The tree contains **no route that
-cannot be built today** — with two explicitly marked exceptions, both flagged as backend work items
-rather than quietly designed around.
+Everything below is constrained by the API that actually exists. Every route can be built today, but
+**four ship degraded** until backend work lands, and each says so in place rather than being quietly
+designed around: `/register` and `/forgot-password` (no mail is sent), `/organizer/events/[id]` and
+its child tabs (no `DRAFT` is reachable by id), `/admin/moderation` (no admin-capable delete), and
+`/organizer/events/[id]/participants` (aggregates, no attendee rows).
 
 ### 0.2 Five corrections to the Epic text
 
@@ -55,16 +57,18 @@ five claims that do not match `backend/src`. **This document follows the code.**
 | Epic says | Verified reality | Source |
 |---|---|---|
 | Base path `/v1` | **`/api`** — `app.setGlobalPrefix(apiPrefix)` with `API_PREFIX` defaulting to `'api'`. Full base: `https://api.tickr.tn/api`. Swagger at `/api/docs` | `backend/src/main.ts:17`, `config/app.config.ts` |
-| Pagination `{ data, meta: { page, limit, total, totalPages } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`. There is no `meta` object | `event-list.dto.ts:195-210` (`PaginatedEventListDto`) |
-| Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, message, error, timestamp, path }`. Validation failures only add `errors`: `{ statusCode, message: 'Validation failed', errors, timestamp, path }` | `http-exception.filter.ts`, `validation-exception.filter.ts` |
-| Sold out → `409`, rate limited → `429` | Sold out (`INSUFFICIENT_AVAILABILITY`) → **`400`**. Order-creation rate limiting (`RATE_LIMITED`) → **`403`**. `429` exists but only from the global throttler | `orders.controller.ts`, `users.module.ts:131` |
+| Pagination `{ data, meta: { page, limit, total, totalPages } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`. There is no `meta` object | `event-list.dto.ts:174-215` (`PaginatedEventListDto`) |
+| Error envelope `{ statusCode, message, errors[], timestamp }` | The only globally registered filter is **`AllExceptionsFilter`**, which emits `{ statusCode, code, message, details, timestamp, path, method }`. `http-exception.filter.ts` and `validation-exception.filter.ts` exist but are wired to nothing, so their shapes are never returned. A `ValidationPipe` rejection arrives with `message` as a **string array**, not a string — the error renderer must handle both | `app.module.ts:80-83`, `all-exceptions.filter.ts:52-60` |
+| Sold out → `409`, rate limited → `429` | Sold out (`INSUFFICIENT_AVAILABILITY`) → **`400`** (`orders.controller.ts:93`); order-creation rate limiting (`RATE_LIMITED`) → **`403`** (`:91`). **No controller emits `409` or `204` at all** — the only path to `409` is a `ConflictException` nothing throws. The throttler limits that would produce `429` are configured but their guard is not registered ([§5.3](#53-the-eight-meanings-of-403)) | `orders.controller.ts:88-95`, `users.module.ts:131-146` |
 | Commission fetched at runtime via `GET /config/public` | **No such endpoint exists.** See [§0.3](#03--get-configpublic-does-not-exist) | — |
 
-There is also **no machine-readable `code` field** in the error envelope. The domain error types
+The envelope's `code` is **not** a machine-readable domain code: for anything a controller throws it
+is the HTTP reason phrase — `'Bad Request'`, `'Forbidden'`, `'Not Found'`. The domain error types
 (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`, …) are
-produced internally and **discarded at the controller boundary**. Every route in this document that
-must distinguish two errors behind one status code does so by **status + endpoint context**,
-isolated in a single `mapApiError()` module — see [Phase 1 §G.2](02-product-design-brief.md#g2-http-and-business-error-mapping).
+produced internally and **discarded at the controller boundary** — only `error.message` survives.
+Every route that must distinguish two errors behind one status code therefore does so by
+**status + endpoint context**, isolated in a single `mapApiError()` module — see
+[Phase 1 §G.2](02-product-design-brief.md#g2-http-and-business-error-mapping).
 
 ### 0.3 ⚠ `GET /config/public` DOES NOT EXIST
 
@@ -72,9 +76,15 @@ isolated in a single `mapApiError()` module — see [Phase 1 §G.2](02-product-d
 in the codebase**. `PLATFORM_COMMISSION_RATE` is read in exactly one place, inside
 `create-order.handler.ts:41`, and is never exposed over HTTP.
 
-The Epic body, `docs/README.md` and `docs/02-technique/05-configuration-management.md` all reference
-`GET /config/public`. **Every one of those references is aspirational.** Treat it as a required
-backend task, never as an available call.
+⚠ **Do not read the rate out of `config/payments.config.ts`.** That file declares
+`payments.commission.rate` with a fallback of `0.04`, but it is **not in `ConfigModule.forRoot`'s
+`load[]`** (`app.module.ts:32`), so the `payments.*` namespace never resolves and the value is dead.
+The live rate is the `0.06` inline fallback at `create-order.handler.ts:41`, and the fraud limits
+below come from the inline fallbacks at `fraud-detection.service.ts:36-43` for the same reason.
+
+The Epic body and `docs/02-technique/05-configuration-management.md:278` both reference
+`GET /config/public`. **Both references are aspirational.** Treat it as a required backend task,
+never as an available call.
 
 **Where the frontend would have used it, and what it does instead:**
 
@@ -95,8 +105,8 @@ export const PLATFORM_COMMISSION_RATE = Number(
 );                                   // create-order.handler.ts:41
 export const RESERVATION_TTL_MINUTES = 15;   // reserve-tickets.handler.ts:24
 export const ORDER_EXPIRATION_MINUTES = 15;  // create-order.handler.ts:42
-export const MAX_TICKETS_PER_EVENT = 10;     // fraud-detection.service.ts
-export const MAX_ORDERS_PER_HOUR = 5;        // fraud-detection.service.ts
+export const MAX_TICKETS_PER_EVENT = 10;     // fraud-detection.service.ts:40-43
+export const MAX_ORDERS_PER_HOUR = 5;        // fraud-detection.service.ts:36-39
 export const CURRENCY = 'TND';               // currency.vo.ts
 export const CURRENCY_SYMBOL = 'DT';
 export const CURRENCY_DECIMALS = 3;          // millimes
@@ -119,12 +129,12 @@ can show, so each is recorded here rather than being discovered during implement
 | # | Finding | Source | IA consequence |
 |---|---|---|---|
 | **1** | **`GET /events/organizer/:organizerId` requires `ORGANIZER` or `ADMIN`.** An organizer may only pass their own id (403 otherwise); only an admin may pass another's | `events.controller.ts:405-429` | **No public organizer profile page is possible in V1.** Confirms the non-goal in [Phase 1 §A.4](02-product-design-brief.md#a4-what-tickr-is-deliberately-not) |
-| **2** | **`organizer.displayName` is a hard-coded placeholder** — every one of the six event query handlers returns `'Event Organizer'` with a `// TODO: Fetch from Users module` | `get-event-by-id.handler.ts:158-164`, `get-published-events.handler.ts:144`, +4 others | **No real organizer name may be rendered anywhere** — not on cards, not on `/events/[id]`. The organizer block is omitted from V1 rather than showing "Event Organizer" |
+| **2** | **`organizer.displayName` is a hard-coded placeholder** — every one of the six event query handlers returns `'Event Organizer'` with a `// TODO: Fetch from Users module` | `get-event-by-id.handler.ts:163`, `get-published-events.handler.ts:144`, +4 others | **No real organizer name may be rendered anywhere** — not on cards, not on `/events/[id]`. The organizer block is omitted from V1 rather than showing "Event Organizer" |
 | **3** | **`GET /events` rejects `q`.** The global `ValidationPipe` runs `whitelist + forbidNonWhitelisted`, and `EventFilterDto` has no `q` field, so `/api/events?q=jazz` returns **400** | `main.ts:28-36`, `event-filter.dto.ts` | Search and filtering are **two non-composable surfaces**. See [§6.3](#63-search--a-separate-non-composable-surface) |
 | **4** | **`GET /events/search` accepts only `q`, `page`, `limit`** — no category, city, date, price or sort | `events.controller.ts:255-289` | `/search` cannot carry filter chips. Flagged as a backend work item |
 | **5** | **`DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard`, and neither has an ADMIN bypass** (`RolesGuard` has no superuser rule; `IsEventOwnerGuard` compares `organizerId === user.userId` only) | `events.controller.ts:582-584`, `roles.guard.ts:78-85`, `is-event-owner.guard.ts:75-80` | **`/admin/moderation` cannot delete an event today.** The route ships **read-only**, with the destructive action visible-but-blocked and the gap raised. See [§1.5](#15-admin-zone--admin) |
-| **6** | **DRAFT events are owner-only, with no admin bypass** — `isOwner = requestingUserId === event.organizerId` | `get-event-by-id.handler.ts:70-77` | An `ADMIN` in the organizer zone sees `PUBLISHED` events only. `/organizer/events/[id]` is a 403 for an admin viewing someone's draft |
-| **7** | **`POST /auth/register` never issues a verification token** (the code is a commented-out `TODO`) while **`POST /auth/login` returns 403 when `emailVerified` is false** | `auth.controller.ts:154-155` vs `:187-192` | **A newly registered user cannot log in.** `/register → /verify-email → /login` is broken end-to-end until the backend sends the token. Blocking backend task — see [§8](#8-open-items-handed-to-other-phases) |
+| **6** | **`GET /events/:id` cannot return a DRAFT to anyone — including its owner.** The handler gates on `isOwner = requestingUserId === event.organizerId`, but the route is `@Public()`, `EventsController` carries **no class-level `JwtAuthGuard`**, and no `APP_GUARD` is registered anywhere. Passport therefore never runs on this route, `@CurrentUser()` returns `null`, and `requestingUserId` is `undefined` on every call | `get-event-by-id.handler.ts:70-77`, `events.controller.ts:180-181` (no class guard) and `:368-377`, `current-user.decorator.ts` | **Every DRAFT is a 403 when fetched by id.** A draft exists for the organizer zone only as an `EventListDto` row from `GET /events/organizer/:organizerId` — which carries no `description`, no `imageUrl` and no `ticketTypes[]`, so a draft cannot be reopened, prefilled for edit, or given ticket types after a reload. Blocking backend task — see [§8](#8-open-items-handed-to-other-phases) |
+| **7** | **No transactional e-mail is sent by either token flow.** `POST /auth/register` never issues a verification token (a commented-out `TODO`) while `POST /auth/login` returns 403 when `emailVerified` is false; `POST /auth/request-reset` creates a reset token but its send is also a `TODO` | `auth.controller.ts:154-155` vs `:187-192`; `:282` | **A newly registered user cannot log in, and no reset link is ever delivered.** `/register → /verify-email → /login` and `/forgot-password → /reset-password` are both broken end-to-end. There is no resend-verification endpoint either, so the 403 has **no recovery path in the API**. Blocking backend task — see [§8](#8-open-items-handed-to-other-phases) |
 | **8** | **Notifications have no read/unread state.** `NotificationDto` carries a delivery `status` (`PENDING · SENDING · SENT · DELIVERED · FAILED`), not `isRead` | `notification.dto.ts:22-63`, `notification-status.vo.ts` | `/notifications` is a **delivery log**, not an inbox. **No unread badge is possible** on any navigation surface. Copy says « Messages envoyés », never « Notifications non lues » |
 | **9** | **`EmailVerifiedGuard` exists and is provided but is applied to no controller** | `users.module.ts:78,182` — no `@UseGuards(EmailVerifiedGuard)` anywhere | No route may gate on email verification. A « vérifiez votre adresse » banner is advisory only |
 
@@ -148,13 +158,13 @@ can show, so each is recorded here rather than being discovered during implement
 |---|---|---|---|---|---|
 | `/` | Landing / discovery home | — | `SSR` · `ISR 60` on the no-city variant | `GET /events/upcoming` | Accepts `city`/`country`/`page`/`limit` only — **no category, date or price filters**. Editorial rails that need those hit `GET /events` instead. City-first scoping per [Phase 1 §J](02-product-design-brief.md#j-competitive-inspiration) |
 | `/events` | Discovery listing with filters | — | `SSR` (dynamic — `searchParams`) | `GET /events` | The only surface carrying the full filter set. **Rejects `q` with 400** (gap 3). Param contract in [§6.2](#62-the-events-parameter-contract) |
-| `/events/[id]` | Event detail + ticket sheet | — | `SSR` (dynamic, never ISR) | `GET /events/:id` | `id` is a UUID (`ParseUUIDPipe` → 400 on a malformed id, render as 404). Never cached: availability is a per-fetch snapshot ([Phase 1 §E.2](02-product-design-brief.md#e2--availability-is-stated-in-words-and-numbers-never-implied-by-a-disabled-button)). Sends the bearer token when present so an **owner sees their own DRAFT**; a non-owner gets 403. `generateMetadata` + JSON-LD `Event` here — this is the page that gets pasted into WhatsApp |
-| `/search` | Search results | — | `CSR` | `GET /events/search` | `q` is **required**; an empty `q` is a 400. Only `q`, `page`, `limit` are accepted. `noindex, follow` |
+| `/events/[id]` | Event detail + ticket sheet | — | `SSR` (dynamic, never ISR) | `GET /events/:id` | `id` is a UUID (`ParseUUIDPipe` → 400 on a malformed id, render as 404). Never cached: availability is a per-fetch snapshot ([Phase 1 §E.2](02-product-design-brief.md#e2--availability-is-stated-in-words-and-numbers-never-implied-by-a-disabled-button)). ⚠ The route is `@Public()` with no guard, so **the bearer token is ignored and nobody — not even the owner — can fetch a DRAFT** (gap 6). A 403 here means *unpublished*, and renders as « Cet événement n'est pas disponible », never as a permission error. `generateMetadata` + JSON-LD `Event` here — this is the page that gets pasted into WhatsApp |
+| `/search` | Search results | — | `CSR` | `GET /events/search` | `q` is **required** and must be **2–200 characters** after trimming (`search-events.handler.ts:59-70`) — a 1-character or empty query is a 400, so the submit threshold is two characters. Only `q`, `page`, `limit` are read. `noindex, follow` |
 | `/categories/[category]` | Category listing | — | `SSR` · `ISR 60` · `generateStaticParams` over the 10 enum values | `GET /events/category/:category` | Segment is the **lowercased** enum (`/categories/concert`); the API upper-cases it. Only `page`/`limit` — no other filters. An unknown category is a 400 → render `not-found.tsx`. Canonical form for single-category browse ([§6.4](#64-categoriescategory-vs-eventscategory)) |
-| `/login` | Sign in | — | `CSR` | `POST /auth/login` | Throttled **5 / 15 min** → 429. `401` = bad credentials · **`403` = email not verified or account deactivated** (not a role failure). Accepts `?next=` ([§5.4](#54-the-next-parameter-contract)) |
+| `/login` | Sign in | — | `CSR` | `POST /auth/login` | Throttled **5 / 15 min** → 429. **`403` means e-mail not verified and nothing else** (`auth.controller.ts:188`); a deactivated account raises `UnauthorizedException` in `local.strategy.ts:73`, so it is a **401** indistinguishable by status from bad credentials. Neither is a role failure. Accepts `?next=` ([§5.4](#54-the-next-parameter-contract)) |
 | `/register` | Create account | — | `CSR` | `POST /auth/register` | Throttled **3 / hour** → 429. Duplicate email → **400** (not 422, despite the Swagger annotation). Always creates a `PARTICIPANT`; there is no organizer self-signup endpoint. **⚠ Gap 7: no verification email is sent, so the account cannot yet log in** — the success screen must not promise an email that will not arrive until the backend task lands |
-| `/verify-email` | Email verification | — | `CSR` | `POST /auth/verify-email` | Reads `?token=` from the URL and POSTs it in the body. `SkipThrottle`. Invalid/expired → 400 with a « demander un nouveau lien » recovery. Also reachable without a token, as an instruction screen |
-| `/forgot-password` | Request reset | — | `CSR` | `POST /auth/request-reset` | Throttled **3 / hour** → 429. Always returns 200 — **the UI must not reveal whether the address exists**; the success copy is identical either way |
+| `/verify-email` | Email verification | — | `CSR` | `POST /auth/verify-email` | Reads `?token=` from the URL and POSTs it in the body. `SkipThrottle`. Invalid or expired → 400. ⚠ **There is no resend endpoint**, so the recovery is « contactez-nous » and not a « demander un nouveau lien » button (gap 7). Also reachable without a token, as an instruction screen |
+| `/forgot-password` | Request reset | — | `CSR` | `POST /auth/request-reset` | Throttled **3 / hour** → 429. Always returns 200 — **the UI must not reveal whether the address exists**; the success copy is identical either way. ⚠ The token is created but **the e-mail is never sent** (`auth.controller.ts:282`), so the flow dead-ends today (gap 7) |
 | `/reset-password` | Set a new password | — | `CSR` | `POST /auth/reset-password` | Reads `?token=` from the URL, POSTs it with the new password. On success, redirect to `/login` with a success flash — **the endpoint does not return a session** |
 | `/unsubscribe/[token]/[category]` | Email unsubscribe | — | `CSR` | `GET /notifications/unsubscribe/:token/:category` | `category` is constrained to **`marketing`** or **`event_reminders`** (any other value → 400). ⚠ The endpoint is a **`GET` with a side effect**, so it must fire on an explicit « Confirmer la désinscription » press, never on page load — email scanners and link prefetchers would otherwise unsubscribe users silently |
 | `/legal/terms` | CGU | — | `SSG` | *(static)* | Label « Conditions générales d'utilisation » |
@@ -174,7 +184,7 @@ else, and there is no second wallet.
 | `/orders` | Order history | any authenticated | `CSR` | `GET /orders` | Flat pagination. **Only `page` and `limit` are accepted** — `PaginationQueryDto` under `forbidNonWhitelisted`, so `?status=PAID` returns 400. Status filtering is client-side over the loaded pages and must be labelled as filtering *this page*, not the whole history |
 | `/orders/[id]` | Order detail + refund | any authenticated | `CSR` | `GET /orders/:id`, `POST /orders/:id/refund` | 403 here means *this order is not yours*, not a role failure. Renders `subtotal`, `platformFee`, a **conditional** `paymentFees` line and `total` verbatim. The refund confirmation must show the arithmetic first: **refund = subtotal + paymentFees; the commission is not returned** |
 | `/tickets` | My tickets (wallet) | any authenticated | `CSR` | `GET /tickets` | Accepts `page`, `limit`, **`status`** (server-side, unlike `/orders`). Default view groups by upcoming vs. past. This is the route the bottom tab points at — it must be fast and work on a bad connection |
-| `/tickets/[id]` | Ticket pass + QR | any authenticated | `CSR` | `GET /tickets/:id`, `GET /tickets/:id/pdf`, `POST /tickets/:id/transfer` | Accessible to the ticket owner **or the event's organizer**. Dark `ink-950` pass, QR ≥ 240 px, offline-capable ([Phase 1 §M.30](02-product-design-brief.md#m4-the-purchase-flow)). PDF is the backup path, not the primary. Transfer is a courtesy hand-off — no pricing, no listing |
+| `/tickets/[id]` | Ticket pass + QR | any authenticated | `CSR` | `GET /tickets/:id`, `GET /tickets/:id/pdf`, `POST /tickets/:id/transfer` | `GET /tickets/:id` admits the ticket owner **or the event's organizer** (`get-ticket-by-id.handler.ts:44-51`). `qrCode` is a plain string — `v1-{uuid}-{checksum}` (`ticket.dto.ts:33`, `qr-code.vo.ts`) — rendered and cached client-side, so the pass works offline. It is stable for the ticket's life **except across a transfer**, which mints a new one (`ticket.entity.ts:461`): invalidate the cached pass when `POST /tickets/:id/transfer` succeeds. Dark `ink-950` pass, QR ≥ 240 px ([Phase 1 §M.30](02-product-design-brief.md#m4-the-purchase-flow)). The PDF is the backup path: **owner-only**, a 302 to a signed S3 URL behind the bearer token (so never a plain `<a href>`), and a 404 until the post-confirmation listener has produced it. Transfer is a courtesy hand-off — no pricing, no listing |
 | `/notifications` | Message history | any authenticated | `CSR` | `GET /notifications/me` (`?page&limit`), `GET /notifications/:id` | **⚠ A delivery log, not an inbox** (gap 8). No read state exists, so **no unread badge anywhere**. Channels are **EMAIL and SMS only** — `PUSH` is dead in `isSupportedChannel`. Copy never says « notification »; it says « e-mail » or « SMS ». `GET /notifications/:id` powers an in-page expansion, not a route |
 | `/profile` | Profile | any authenticated | `CSR` | `GET /users/me`, `PUT /users/me` | The single source of the current user's `id` — needed by the organizer zone to call `GET /events/organizer/:organizerId`. Fetched once per session and cached |
 | `/settings` | Settings | any authenticated | `CSR` | `PATCH /users/me/password`, `GET /notifications/preferences/me`, `PUT /notifications/preferences/me`, `DELETE /users/me` | Preferences are exactly four booleans: `emailEnabled`, `smsEnabled`, `marketingEnabled`, `eventRemindersEnabled`. **Do not render a PUSH toggle.** `DELETE /users/me` sits in a separate, visually distinct danger section behind a typed confirmation |
@@ -189,15 +199,15 @@ edit, publish, delete and ticket-type controls are hidden, not disabled-and-fail
 
 | Route | Screen | Role | Rendering | Primary endpoint(s) | Notes |
 |---|---|---|---|---|---|
-| `/organizer` | Dashboard | `ORGANIZER` · `ADMIN` (read-only) | `CSR` | `GET /analytics/dashboard` | ⚠ Shows **gross sales only**. The organizer payout model is contradicted between `04-modele-economique.md` and the code, and no payout logic exists ([Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend) gap 8). Never imply a net figure |
-| `/organizer/events` | My events | `ORGANIZER` · `ADMIN` | `CSR` | `GET /events/organizer/:organizerId` | `organizerId` comes from `GET /users/me`, **never from the URL** — an organizer passing any other id gets 403. Accepts `status` (`EventStatus`), `page`, `limit`. Default view splits `DRAFT` / `PUBLISHED` / past. `DRAFT` must be unmistakable |
-| `/organizer/events/new` | Create event | `ORGANIZER` only | `CSR` | `POST /events`, then `POST /events/:id/image` | Two steps: the event is created first, the image is uploaded against the returned id. **One image per event** — no gallery. Shows the live buyer-price arithmetic from the ⚠ interim constant ([§0.3](#03--get-configpublic-does-not-exist)) |
-| `/organizer/events/[id]` | Event overview (owner view) | `ORGANIZER` (owner) | `CSR` | `GET /events/:id` | Same endpoint as the public page, **with the bearer token** — this is the only way to see a `DRAFT`. Non-owner → 403; unknown id → 404. An `ADMIN` can open `PUBLISHED` events only (gap 6) |
+| `/organizer` | Dashboard | `ORGANIZER` · `ADMIN` (read-only) | `CSR` | `GET /analytics/dashboard` | Accepts `timeRange` (`7d` · `30d` · `90d`, default `30d`). ⚠ Shows **gross sales only**. The organizer payout model is contradicted between `04-modele-economique.md` and the code, and no payout logic exists ([Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend) gap 8). Never imply a net figure |
+| `/organizer/events` | My events | `ORGANIZER` · `ADMIN` | `CSR` | `GET /events/organizer/:organizerId` | `organizerId` comes from `GET /users/me`, **never from the URL** — an organizer passing any other id gets 403. Accepts `status` (`EventStatus`), `page`, `limit`. ⚠ `status` is applied **after** the page is fetched and `total` is overwritten with the filtered page length (`get-organizer-events.handler.ts:82-90`), so a filtered view must not print a count or trust `totalPages`. Default view splits `DRAFT` / `PUBLISHED` / past. `DRAFT` must be unmistakable |
+| `/organizer/events/new` | Create event | `ORGANIZER` only | `CSR` | `POST /events`, then `POST /events/:id/image` | Two steps: the event is created first, the image is uploaded against the returned id. **One image per event** — no gallery. ⚠ The result is a `DRAFT` and therefore not re-openable by id (gap 6), so hold the created event in memory for the rest of the session. Shows the live buyer-price arithmetic from the ⚠ interim constant ([§0.3](#03--get-configpublic-does-not-exist)) |
+| `/organizer/events/[id]` | Event overview (owner view) | `ORGANIZER` (owner) | `CSR` | `GET /events/:id` | Same endpoint as the public page, and it ignores the bearer token. ⚠ **A `DRAFT` is a 403 here even for its owner** (gap 6), so until the backend accepts optional auth this screen — and `/edit` and `/ticket-types`, which read the same endpoint — can only render events that are already `PUBLISHED`. Unknown id → 404 |
 | `/organizer/events/[id]/edit` | Edit · publish · delete | `ORGANIZER` (owner) | `CSR` | `PUT /events/:id`, `POST /events/:id/publish`, `DELETE /events/:id`, `POST /events/:id/image` | All four carry `IsEventOwnerGuard`. `DRAFT → PUBLISHED` is one-way in practice — publish is a confirmation step, not a toggle. Delete lives in a danger section |
 | `/organizer/events/[id]/ticket-types` | Ticket types | `ORGANIZER` (owner) | `CSR` | `POST /events/:id/ticket-types`, `PUT /events/:id/ticket-types/:typeId`, `DELETE /events/:id/ticket-types/:typeId` | Reads the current tiers from `GET /events/:id` (`ticketTypes[]`) — there is no separate list endpoint. Each row shows `soldQuantity` / `availableQuantity` / `isSoldOut` / `isOnSale` as returned |
 | `/organizer/events/[id]/participants` | Participants & check-in stats | `ORGANIZER` (owner) · `ADMIN` | `CSR` | `GET /tickets/event/:eventId/stats` | ⚠ **This is an aggregate stats endpoint, not a participant list.** No endpoint returns per-attendee rows for an event, so the screen is a stats board with a check-in entry point, not a table of names. Flagged in [§8](#8-open-items-handed-to-other-phases) |
 | `/organizer/events/[id]/analytics` | Event analytics | `ORGANIZER` (owner) · `ADMIN` | `CSR` | `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline` | Gross sales only, as above |
-| `/organizer/scanner` | Check-in scanner | `ORGANIZER` · `ADMIN` | `CSR` | `POST /tickets/check-in` | Dark surface, huge targets, unambiguous valid/invalid, usable at a venue door at night ([Phase 1 §D.2](02-product-design-brief.md#d2-colour)). Not event-scoped in the URL — the scanned ticket carries its own event. Must degrade to manual reference entry when the camera is unavailable |
+| `/organizer/scanner` | Check-in scanner | `ORGANIZER` · `ADMIN` | `CSR` | `POST /tickets/check-in` | Dark surface, huge targets, unambiguous valid/invalid, usable at a venue door at night ([Phase 1 §D.2](02-product-design-brief.md#d2-colour)). Body is `{ qrCode, deviceId (≤ 100), locationGate (≤ 50) }` — all three **required** (`check-in.dto.ts`), so the device id and gate are chosen once per shift, not per scan. Not event-scoped in the URL — the scanned ticket carries its own event, and ⚠ the API checks the role but **not** that the operator owns that event. Must degrade to manual reference entry when the camera is unavailable |
 
 ### 1.5 Admin zone — `ADMIN`
 
@@ -205,8 +215,8 @@ edit, publish, delete and ticket-type controls are hidden, not disabled-and-fail
 |---|---|---|---|---|---|
 | `/admin` | Platform overview | `ADMIN` | `CSR` | `GET /analytics/platform` | The only endpoint carrying `@Roles('ADMIN')` in the analytics controller |
 | `/admin/reports` | Revenue reports & export | `ADMIN` | `CSR` | `GET /analytics/revenue-report`, `POST /analytics/export` | ⚠ Both are **`JwtAuthGuard` only at the guard level**; the admin scope is applied *inside* the handler (`user.role === 'ADMIN'` is passed as a flag, and a non-admin can get `ACCESS_DENIED` → 403). The UI still restricts the route to `ADMIN` — but do not assume the API does. `revenue-report` requires `startDate` and `endDate`; `NO_DATA` returns **404**, which must render as an empty state, not an error |
-| `/admin/moderation` | Event moderation | `ADMIN` | `CSR` | `GET /events` | ⚠ **Read-only in V1.** `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` with no admin bypass (gap 5), so an admin **cannot** take an event down. The screen lists published events with a « Signaler à l'organisateur » path and a visible, explained « suppression indisponible » state. Do not ship a delete button that always 403s |
-| `/admin/users` | User directory | `ADMIN` | `CSR` | `GET /users`, `GET /users/:id` | Both are `@Roles('ADMIN')`. The detail view is a **slide-over on this route**, not a separate URL — `GET /users/:id` has no route of its own. 40 px data-table rows, desktop-first ([Phase 1 §D.9](02-product-design-brief.md#d9-spacing-and-density)) |
+| `/admin/moderation` | Event moderation | `ADMIN` | `CSR` | `GET /events` | ⚠ **Read-only in V1.** `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` with no admin bypass (gap 5), so an admin **cannot** take an event down. `GET /events` also returns `PUBLISHED` only, so the list is not a moderation queue. The screen lists those events with a visible, explained « suppression indisponible » state and **no contact-the-organizer action** — no reporting endpoint exists, and gap 2 leaves the organizer nameless. Do not ship a delete button that always 403s |
+| `/admin/users` | User directory | `ADMIN` | `CSR` | `GET /users`, `GET /users/:id` | Both are `@Roles('ADMIN')`. `GET /users` also takes a server-side **`role`** filter and defaults to **`limit=10`** (max 100) — unlike every other list in this document (`users.controller.ts:49-52`, `:336-337`). The detail view is a **slide-over on this route**, not a separate URL — `GET /users/:id` has no route of its own. 40 px data-table rows, desktop-first ([Phase 1 §D.9](02-product-design-brief.md#d9-spacing-and-density)) |
 
 ### 1.6 Route count reconciliation
 
@@ -220,11 +230,10 @@ edit, publish, delete and ticket-type controls are hidden, not disabled-and-fail
 | Static `/legal/*` group | 3 |
 | **Addressable URLs** | **36** |
 
-Earlier working notes recorded **31**. The difference is two segments that were previously counted
-as part of their parents and are separate routes here: **`/checkout/[orderId]/retour`** (a distinct
-page with its own polling lifecycle, reachable directly from an external gateway redirect) and
-**`/organizer/events/[id]`** (the owner overview, distinct from `/edit`). Both need their own
-`page.tsx`, so both are counted. **33 is the number to build.**
+Earlier working notes recorded **31**, counting `/checkout/[orderId]/retour` and
+`/organizer/events/[id]` as part of their parents. Both need their own `page.tsx` — the first has its
+own polling lifecycle and is entered directly from a gateway redirect, the second is the owner
+overview distinct from `/edit` — so both are counted. **33 is the number to build.**
 
 ### 1.7 Endpoint coverage matrix
 
@@ -248,7 +257,7 @@ direction.
 | `GET /events/search` | `/search` |
 | `GET /events/category/:category` | `/categories/[category]` |
 | `GET /events/upcoming` | `/` |
-| `GET /events/:id` | `/events/[id]`, `/organizer/events/[id]`, `/organizer/events/[id]/ticket-types` |
+| `GET /events/:id` | `/events/[id]`, `/organizer/events/[id]`, `/organizer/events/[id]/edit` (form prefill), `/organizer/events/[id]/ticket-types` (the `ticketTypes[]` source) |
 | `GET /events/organizer/:organizerId` | `/organizer/events` |
 | `POST /events` · `POST /events/:id/image` | `/organizer/events/new`, `/organizer/events/[id]/edit` |
 | `PUT /events/:id` · `POST /events/:id/publish` · `DELETE /events/:id` | `/organizer/events/[id]/edit` |
@@ -441,8 +450,9 @@ Two consequences to design for:
 - Protected zones **must** render a real skeleton, never a blank screen, since first paint carries no
   data. The `loading.tsx` placement in [§2.3](#23-where-the-special-files-sit-and-why) follows from this.
 - Discovery caching is capped at **60 seconds** anywhere, and `/events/[id]` is never cached at all,
-  because `soldQuantity` moves at **hold** time and is restored on expiry — availability can legitimately
-  go *up*. A five-minute ISR window would show a sold-out tier that is no longer sold out.
+  because `soldQuantity` is incremented at **hold** time (`event-query.adapter.ts:84-92`) and restored
+  on expiry — availability can legitimately go *up*, and sold out is not terminal. A five-minute ISR
+  window would show a sold-out tier that is no longer sold out.
   See [Phase 1 §E.2](02-product-design-brief.md#e2--availability-is-stated-in-words-and-numbers-never-implied-by-a-disabled-button).
 
 If Phase 11 moves tokens into httpOnly cookies, protected routes may migrate to SSR **without any
@@ -781,14 +791,14 @@ flash of forbidden content and to produce a designed failure instead of a raw 40
 
 | Route pattern | Auth | Role admitted by the API | Frontend guard | On **401** | On **403** |
 |---|---|---|---|---|---|
-| `/` · `/events` · `/events/[id]` · `/search` · `/categories/[category]` · `/legal/*` | no | — | none | n/a | `/events/[id]` only: a 403 means **DRAFT, not yours** → render `not-found.tsx` copy (« Cet événement n'est pas encore publié »), never a login prompt |
-| `/login` · `/register` · `/verify-email` · `/forgot-password` · `/reset-password` | no | — | **Reverse guard**: an authenticated user hitting `/login` is redirected to `next` or their role home | n/a | On `/login` **403 = email not verified or account deactivated** — a form-level message with a « renvoyer le lien » action. Not a role failure |
+| `/` · `/events` · `/events/[id]` · `/search` · `/categories/[category]` · `/legal/*` | no | — | none | n/a | `/events/[id]` only: a 403 means **the event is not published** — the route ignores the token, so this fires for the owner too (gap 6). Render `not-found.tsx` copy (« Cet événement n'est pas disponible »), never « interdit » and never a login prompt |
+| `/login` · `/register` · `/verify-email` · `/forgot-password` · `/reset-password` | no | — | **Reverse guard**: an authenticated user hitting `/login` is redirected to `next` or their role home | n/a | On `/login` **403 = e-mail not verified** (a deactivated account is a 401). ⚠ No resend-verification endpoint exists, so the message must send the user to the original e-mail and to support — it may not offer an action the API cannot serve |
 | `/unsubscribe/[token]/[category]` | no | — | none | n/a | n/a — invalid token/category is a **400** |
 | `/checkout/[orderId]` · `/checkout/[orderId]/retour` | yes | any | `(participant)/layout.tsx` → `RequireAuth` | **Refresh first**, replay once, and only then `/login?next=<full path>`. The order survives — it is server-side state with its own `expiresAt` | Order belongs to another user → « Cette commande n'est pas la vôtre » + link to `/orders`. **Never a logout** |
 | `/orders` · `/orders/[id]` · `/tickets` · `/tickets/[id]` · `/notifications` · `/profile` · `/settings` | yes | any | `RequireAuth` | Refresh → replay → `/login?next=` | Resource-ownership failure → designed 403 with a link to the corresponding list |
 | `/organizer` · `/organizer/events` · `/organizer/scanner` | yes | `ORGANIZER` · `ADMIN` | `(organizer)/layout.tsx` → `RequireRole(['ORGANIZER','ADMIN'])` | Refresh → replay → `/login?next=` | Wrong role → **role-home redirect** ([§5.5](#55-role-mismatch-home-routes)) with an explanatory page, no login prompt |
 | `/organizer/events/new` | yes | **`ORGANIZER` only** | `RequireRole(['ORGANIZER'])` | as above | An `ADMIN` never sees the entry point; direct navigation renders the designed 403 |
-| `/organizer/events/[id]` | yes | `ORGANIZER` (owner) · `ADMIN` (PUBLISHED only) | `RequireRole(['ORGANIZER','ADMIN'])` + ownership resolved by the API | as above | Non-owner, or an admin on a `DRAFT` → « Vous n'êtes pas l'organisateur de cet événement » + link to `/organizer/events` |
+| `/organizer/events/[id]` | yes | `PUBLISHED` events only — `GET /events/:id` is `@Public()` and resolves no user (gap 6) | `RequireRole(['ORGANIZER','ADMIN'])`; ownership is not enforceable here today | as above | Any `DRAFT`, and any non-owner → the same 403. Copy « Cet événement n'est pas disponible » + link to `/organizer/events`, since the frontend cannot tell the two apart |
 | `/organizer/events/[id]/edit` · `/ticket-types` | yes | **`ORGANIZER` owner only** (`IsEventOwnerGuard`, no admin bypass) | `RequireRole(['ORGANIZER'])`; tabs hidden for `ADMIN` | as above | Designed 403; the event context header stays so the user is not stranded |
 | `/organizer/events/[id]/participants` · `/analytics` | yes | `ORGANIZER` (owner) · `ADMIN` | `RequireRole(['ORGANIZER','ADMIN'])` | as above | Designed 403 |
 | `/admin` · `/admin/users` | yes | `ADMIN` | `(admin)/layout.tsx` → `RequireRole(['ADMIN'])` | Refresh → replay → `/login?next=` | Role-home redirect |
@@ -833,16 +843,18 @@ alone.
 | 1 | `RolesGuard` | any `@Roles(...)` route | Wrong role | Designed 403 page + role-home link |
 | 2 | `IsEventOwnerGuard` | `PUT/DELETE /events/:id`, publish, ticket-types, image | Organizer is not the owner | « Vous n'êtes pas l'organisateur de cet événement » |
 | 3 | `events.controller.ts:426` | `GET /events/organizer/:organizerId` | An organizer passed someone else's id | Should be unreachable — the id always comes from `GET /users/me`. If it happens, it is a bug, log it |
-| 4 | `get-event-by-id.handler.ts:76` | `GET /events/:id` | A `DRAFT` requested by a non-owner | On the **public** route: render as *not published*, not as *forbidden* |
-| 5 | `get-order-by-id.handler` | `GET /orders/:id` | The order belongs to another user | « Cette commande n'est pas la vôtre » |
+| 4 | `get-event-by-id.handler.ts:76` | `GET /events/:id` | The event is not `PUBLISHED`. The route resolves no user (gap 6), so this fires for **every** caller, owner included | Render as **not available** — « Cet événement n'est pas disponible » — never as *forbidden*, on the public route and in the organizer zone alike. Naming a draft would also leak its existence |
+| 5 | `get-order-by-id.handler.ts:53-55` | `GET /orders/:id` | The order belongs to another user (an `ADMIN` is exempt here) | « Cette commande n'est pas la vôtre » |
 | 6 | **`RATE_LIMITED`** | **`POST /orders`** | The fraud limit of **5 orders / hour / user** was hit | ⚠ **Not a permission failure at all.** « Vous avez atteint la limite de 5 commandes par heure. Réessayez plus tard. » — inline on the ticket sheet, with no logout and no navigation |
-| 7 | `auth.controller.ts:188` | `POST /auth/login` | `emailVerified === false`, or the account is deactivated | Form-level message with a « renvoyer le lien de vérification » action. ⚠ Blocked by gap 7 until the backend sends the token |
-| 8 | `ACCESS_DENIED` | `GET /analytics/revenue-report`, `GET /orders` | Handler-level scope check | Designed 403 for the surface |
+| 7 | `auth.controller.ts:188` | `POST /auth/login` | `emailVerified === false` — and only that. A deactivated account is a **401** from `local.strategy.ts:73` | Form-level message pointing at the original e-mail. ⚠ **No resend-verification endpoint exists**, so this state has no recovery in the API today (gap 7); do not render a « renvoyer le lien » button that cannot call anything |
+| 8 | `ACCESS_DENIED` | `GET /analytics/revenue-report`, `POST /analytics/export`, `GET /orders` (`get-orders-by-user.handler.ts:46`), `GET /tickets/:id` (`get-ticket-by-id.handler.ts:51`) | Handler-level scope check, below the guards | Designed 403 for the surface |
 
-Note in passing that **`429` is a genuinely different failure** — it comes from the global throttler
-(3 req/s, 20 req/10 s) and from the auth-specific limits (`register` 3/h, `login` 5/15 min,
-`request-reset` 3/h). It disables the action and re-enables it on a visible timer. It is never
-confused with case 6 above, which is a business limit rather than a traffic limit.
+**`429` is a genuinely different failure.** It is configured globally (`users.module.ts:131-146`:
+3 req/s, 20 req/10 s, 100/min) and per auth route (`register` 3/h, `login` 5/15 min, `request-reset`
+3/h). It disables the action and re-enables it on a visible timer, and is never confused with case 6
+above, which is a business limit rather than a traffic limit. ⚠ **No `ThrottlerGuard` is registered
+as an `APP_GUARD` anywhere in `backend/src`**, so none of these limits is enforced today. Build the
+429 handling anyway — wiring the guard is a one-line change on the backend, not a redesign.
 
 ### 5.4 The `next` parameter contract
 
@@ -879,7 +891,7 @@ swallows their intent** — with one primary action pointing at their own home:
 
 Filter and pagination state for `/events`, `/search` and `/categories/[category]` lives **entirely in
 the URL query string**. There is no zustand store mirroring it, and no component-local filter state
-that the URL is written back from. Seven reasons, in the order they matter for Tickr:
+that the URL is written back from. Six reasons, in the order they matter for Tickr:
 
 1. **Distribution.** Tickr's traffic arrives as pasted links in WhatsApp groups and Instagram
    stories. « Voilà ce qui se passe ce week-end à Tunis » is a URL or it is nothing.
@@ -890,11 +902,10 @@ that the URL is written back from. Seven reasons, in the order they matter for T
    filtered result set is in the first HTML response — no blank grid, no hydration flash on 3G.
 4. **One cache key.** The React Query key is derived from the normalised URL params, so two paths to
    the same filter set share one cache entry and one in-flight request.
-5. **Deep-linkable empty and error states.** A support conversation is a URL, not a description of
-   which chips were tapped.
-6. **Analytics identity.** The URL *is* the page identity; no custom event is needed to know which
-   lenses people actually use.
-7. **No duplicated state to desynchronise.** zustand holds session and ephemeral UI only.
+5. **Deep-linkable empty and error states, and analytics for free.** A support conversation is a URL,
+   not a description of which chips were tapped — and the URL *is* the page identity, so no custom
+   event is needed to see which lenses people use.
+6. **No duplicated state to desynchronise.** zustand holds session and ephemeral UI only.
 
 ### 6.2 The `/events` parameter contract
 
@@ -951,10 +962,10 @@ combined server-side**, and this is a product constraint, not an implementation 
 |---|---|
 | `q` is exclusive to `/search` | `/events` never carries it; `/search` never carries a filter |
 | Typing a query while filters are applied navigates to `/search?q=…` | With a visible, dismissible note: « La recherche ignore vos filtres. » and a one-tap « Revenir aux filtres » back to the previous `/events` URL |
-| An empty or whitespace `q` is a **400** | The page never submits an empty query; it renders the "start typing" state instead |
+| A `q` shorter than **2 characters** after trimming is a **400** | `search-events.handler.ts:59-70`. The page never submits below the threshold; it renders the "start typing" state instead |
 | Results are **not** filtered client-side | The response is one server page of a larger set; filtering it locally would produce a result count that is simply wrong |
 | `/search` is `noindex, follow` | Search-result pages are not a public index surface |
-| `q` is trimmed and capped at 200 characters | Matches `SearchDto` (`@MaxLength(200)`) |
+| `q` is trimmed and capped at **200 characters** | `search-events.handler.ts:66-70`. `SearchDto` exists in `event-filter.dto.ts` but the controller does not use it — it reads `@Query('q')` directly, so the only enforced bounds are the handler's |
 
 **Backend work item:** make `GET /events/search` accept `EventFilterDto` (or add `q` to `GET /events`).
 That single change collapses these two surfaces into one and removes the note above. Recorded in
@@ -973,10 +984,10 @@ Both exist and they are not redundant.
 | Segment case | lowercase (`/categories/concert`); the API upper-cases it | UPPERCASE enum value |
 
 **The rule:** a bare category browse lives at `/categories/[category]`. The moment a second lens is
-applied, the UI navigates to `/events?category=…&city=…` and that page emits
-`<link rel="canonical" href="/categories/concert">` while any single-category-only state at `/events`
-does the same. Ten pre-rendered, indexable category pages are worth real organic traffic; a hundred
-filter permutations are not.
+applied the UI navigates to `/events?category=…&city=…`, which emits
+`<link rel="canonical" href="/categories/concert">` — as does any single-category-only state at
+`/events`. Ten pre-rendered, indexable category pages earn real organic traffic; a hundred filter
+permutations do not.
 
 ### 6.5 Protected-zone list parameters
 
@@ -984,8 +995,9 @@ filter permutations are not.
 |---|---|---|
 | `/tickets` | `status`, `page` | `status` **is** supported server-side (`GET /tickets?status=`). URL-driven, same rules as §6.2 |
 | `/orders` | `page` only | ⚠ `GET /orders` uses `PaginationQueryDto` under `forbidNonWhitelisted` — **`?status=PAID` returns 400.** Status filtering is client-side over loaded pages and must be labelled « sur cette page » |
-| `/organizer/events` | `status` (`EventStatus`), `page` | Server-side. The default view is the three-way `DRAFT` / `PUBLISHED` / past split |
-| `/admin/users`, `/admin/moderation` | `page` | Plus client-side search over the loaded page, labelled as such |
+| `/organizer/events` | `status` (`EventStatus`), `page` | ⚠ The API accepts `status` but filters **after** paginating and then sets `total` to the filtered page length (`get-organizer-events.handler.ts:82-90`) — so a filtered view shows no count and does not paginate. The default view is the three-way `DRAFT` / `PUBLISHED` / past split |
+| `/admin/users` | `page`, **`role`** | `role` filters server-side (`users.controller.ts:339`); page size defaults to **10** here, not 20. Plus client-side search over the loaded page, labelled as such |
+| `/admin/moderation` | `page` | `GET /events` returns `PUBLISHED` only, so the list is never a full moderation queue. Client-side search over the loaded page, labelled as such |
 | `/admin/reports` | `startDate`, `endDate` (both **required** by the API) | `NO_DATA` → **404**, rendered as an empty state, never as an error |
 
 ### 6.6 Path and identifier conventions
@@ -1085,20 +1097,28 @@ générales d'utilisation », `/legal/privacy` → « Politique de confidentiali
 
 ## 8. Open items handed to other phases
 
-**Backend work items surfaced or confirmed by this phase** (in priority order; 1, 2 and 5 also appear
+**Backend work items surfaced or confirmed by this phase** (in priority order; 3, 4 and 9 also appear
 in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend)):
 
 | # | Item | Blocks |
 |---|---|---|
-| **1** | **`POST /auth/register` must issue a verification token and send the email.** The code is a commented-out `TODO` (`auth.controller.ts:154-155`) while `POST /auth/login` returns 403 for `emailVerified === false` (`:187-192`). **A newly registered user cannot log in today** | The entire `/register → /verify-email → /login → /checkout` path. This is the highest-priority backend item in the whole Epic |
-| **2** | **Implement `GET /config/public`** returning at least `{ commissionRate, currency, reservationTtlMinutes }` | Removes the interim constant module in [§0.3](#03--get-configpublic-does-not-exist) and the « estimation » labels on `/events/[id]` and `/organizer/events/new` |
-| **3** | **Add a machine-readable `code` to the error envelope**, carrying the domain error types the handlers already produce | Collapses [§5.3](#53-the-eight-meanings-of-403) from context-guessing to a switch statement |
-| **4** | **Allow `ADMIN` on `DELETE /events/:id`** (and give `IsEventOwnerGuard` an admin bypass) | `/admin/moderation` ships read-only until this lands |
-| **5** | **Make `GET /events/search` accept `EventFilterDto`**, or add `q` to `GET /events` | Collapses `/search` and `/events` into one composable surface and removes the note in [§6.3](#63-search--a-separate-non-composable-surface) |
-| **6** | **Add a per-event participant list endpoint.** `GET /tickets/event/:eventId/stats` returns aggregates only | `/organizer/events/[id]/participants` is a stats board, not a list, until this exists |
-| **7** | **Populate `organizer.displayName`** from the Users module — all six event query handlers return the literal `'Event Organizer'` | Any organizer attribution on cards or `/events/[id]` |
-| **8** | **Settle the organizer payout model** | All organizer revenue UI; surfaces show **gross sales only** meanwhile |
-| **9** | **Confirm QR-string stability** (already a string — `ticket.dto.ts:33`) | Offline ticket rendering on `/tickets/[id]` |
+| **1** | **Send the two transactional e-mails.** `POST /auth/register` never issues a verification token (`auth.controller.ts:154-155`) while `POST /auth/login` returns 403 for `emailVerified === false` (`:187-192`), and `POST /auth/request-reset` never sends its link (`:282`). A resend-verification endpoint is needed too, or the 403 has no recovery | The entire `/register → /verify-email → /login → /checkout` path, and `/forgot-password → /reset-password`. The highest-priority backend item in the whole Epic |
+| **2** | **Make `GET /events/:id` resolve an optional bearer token** — apply `JwtAuthGuard` with a passthrough for `@Public()`, or add an owner-scoped `GET /events/:id` under `JwtAuthGuard`. Today the route resolves no user, so `requestingUserId` is always `undefined` and every `DRAFT` is a 403 (gap 6) | The whole organizer create → edit → publish loop. `/organizer/events/[id]`, `/edit` and `/ticket-types` can only open events that are already `PUBLISHED`, so a draft cannot be reopened after a reload |
+| **3** | **Implement `GET /config/public`** returning at least `{ commissionRate, currency, reservationTtlMinutes }` | Removes the interim constant module in [§0.3](#03--get-configpublic-does-not-exist) and the « estimation » labels on `/events/[id]` and `/organizer/events/new` |
+| **4** | **Add a machine-readable `code` to the error envelope**, carrying the domain error types the handlers already produce | Collapses [§5.3](#53-the-eight-meanings-of-403) from context-guessing to a switch statement |
+| **5** | **Allow `ADMIN` on `DELETE /events/:id`** (and give `IsEventOwnerGuard` an admin bypass) | `/admin/moderation` ships read-only until this lands |
+| **6** | **Make `GET /events/search` accept `EventFilterDto`**, or add `q` to `GET /events` | Collapses `/search` and `/events` into one composable surface and removes the note in [§6.3](#63-search--a-separate-non-composable-surface) |
+| **7** | **Add a per-event participant list endpoint.** `GET /tickets/event/:eventId/stats` returns aggregates only | `/organizer/events/[id]/participants` is a stats board, not a list, until this exists |
+| **8** | **Populate `organizer.displayName`** from the Users module — all six event query handlers return the literal `'Event Organizer'` | Any organizer attribution on cards or `/events/[id]` |
+| **9** | **Settle the organizer payout model** | All organizer revenue UI; surfaces show **gross sales only** meanwhile |
+| **10** | **Register `ThrottlerGuard` as an `APP_GUARD`** — the limits in `users.module.ts:131-146` and the `@Throttle()` decorators on the auth routes are configured but unenforced | Nothing in the UI, which handles 429 regardless; listed so the gap is not mistaken for a frontend omission |
+
+**Closed by this re-verification:** the QR payload is *not* an open question. `TicketDto.qrCode` is a
+plain string, `v1-{uuid}-{checksum}` (`ticket.dto.ts:33`, `qr-code.vo.ts`), generated once at hold
+time (`reserve-tickets.handler.ts:120`) and rewritten **only** by a transfer
+(`ticket.entity.ts:461`). The client renders and caches it locally; the sole cache rule is to
+invalidate the stored pass when `POST /tickets/:id/transfer` succeeds. Nothing here blocks
+`/tickets/[id]`.
 
 **Frontend defects to fix before the first protected route ships** (`frontend/src/lib/api/client.ts`):
 
@@ -1137,9 +1157,10 @@ in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-ba
 - [x] French vs English path segments decided and justified, with the single exception documented and given a decision deadline — [§7](#7-french-vs-english-path-segments)
 - [x] Every reference to `GET /config/public` flagged **⚠ NOT IMPLEMENTED** with the interim constant approach specified — [§0.3](#03--get-configpublic-does-not-exist)
 - [x] The five incorrect claims in the Epic body corrected against `backend/src` — [§0.2](#02-five-corrections-to-the-epic-text)
-- [ ] **Reconciled with the Screen Inventory** — blocked until [Phase 4](05-screen-inventory.md) exists
+- [x] **Reconciled with the Screen Inventory** — [Phase 4 §3](05-screen-inventory.md#3-count-and-reconciliation-with-phase-2) maps the same 33 routes to 33 screens, with no orphan in either direction
 - [ ] **`GET /config/public` implemented** — backend change; until then the interim constant stands
-- [ ] **`POST /auth/register` issues a verification token** — backend change; `/register → /login` is broken end-to-end without it
+- [ ] **`POST /auth/register` issues a verification token, and `POST /auth/request-reset` sends its mail** — backend change; `/register → /login` and `/forgot-password → /reset-password` are both broken end-to-end without it
+- [ ] **`GET /events/:id` resolves an optional bearer token** — backend change; without it no `DRAFT` is reachable by id and the organizer zone can only open published events ([§8](#8-open-items-handed-to-other-phases), item 2)
 - [ ] **`/admin/moderation` delete capability** — backend change; the route ships read-only
 - [ ] **`/checkout/[orderId]/retour` → `/return` rename** — decide in Phase 3, before the first gateway registration
 - [ ] **Reviewed and signed off by the Product Owner**

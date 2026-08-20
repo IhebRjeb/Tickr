@@ -14,7 +14,13 @@
 
 ## 1. Context
 
-The **Tickr** backend is feature-complete for the V1 MVP. It is built as a **Modular Hexagonal (Ports & Adapters) Monolith** on **NestJS 11 + TypeScript 5.7**, exposing a REST API under the global prefix **`/api`** (configurable via `API_PREFIX`).
+The **Tickr** backend is **structurally complete** for the V1 MVP — all six bounded contexts are
+implemented, tested and documented — but grounding these deliverables against `backend/src` found
+**three wiring gaps that stop the purchase path running end to end**, so "feature-complete" should
+not be read as "shippable" (see the correction block below and
+[Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend)).
+
+It is built as a **Modular Hexagonal (Ports & Adapters) Monolith** on **NestJS 11 + TypeScript 5.7**, exposing a REST API under the global prefix **`/api`** (configurable via `API_PREFIX`).
 
 All six bounded contexts are implemented, tested, and documented (Swagger + Postman):
 
@@ -33,6 +39,20 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 
 > **Correction vs. prior drafts:** Payment gateways are **Stripe, Konnect, and Paymee** (multi-provider, `PaymentProviderFactory`) — *not* Clictopay/Edinar. Commission is **configurable (default 6%)**, added **on top** of the ticket price. All monetary values are in **TND**.
 
+> ### 🔴 Wiring gaps that block the purchase path (verified 2026-08-20)
+>
+> These are not documentation errors — they are unwired code paths. Each was read in the source.
+>
+> | # | Gap | Evidence | Consequence |
+> |---|---|---|---|
+> | 1 | **Ticket reservation is a stub** | `TICKET_RESERVATION_PORT` → `TicketReservationAdapter`, whose `reserveTickets()` logs `[STUB]` and returns mock IDs (`payments.module.ts`) | `POST /orders` creates no ticket rows and moves no `soldQuantity`. **No purchase completes end to end** |
+> | 2 | **Events/Tickets/Notifications use a guard that never verifies a JWT** | `shared/.../jwt-auth.guard.ts` only checks `request.user`; nothing populates it and no `APP_GUARD` is registered | Every authenticated route on those three controllers appears to `401` — the ticket wallet, organizer creation and notifications are unreachable |
+> | 3 | **Registration never mints a verification token** | the token issuance is commented out in `auth.controller.ts`; `POST /auth/login` returns `403` for an unverified e-mail, and no resend endpoint exists | A new account can never log in |
+>
+> **The frontend design is unaffected and remains correct** — build to the documented contracts.
+> But the Epic's Definition of Done cannot be honestly closed until these three are wired, and no
+> money-path screen can be verified against real data before then.
+
 > ### ⚠️ Contract corrections verified against source (2026-08-20)
 >
 > Grounding the Phase 1–11 deliverables against `backend/src` surfaced five claims in the original
@@ -44,7 +64,7 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 > | Base path `/v1` | **`/api`** — `setGlobalPrefix(apiPrefix)`, `API_PREFIX \|\| 'api'` | `main.ts:17`, `config/app.config.ts:6` |
 > | Commission fetched via `GET /config/public` | **That endpoint does not exist.** No config controller is implemented anywhere; the rate is read only inside the order handler | `create-order.handler.ts:41`; no `*config*.controller.ts` in the tree |
 > | Pagination `{ data, meta: { … } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | `event-list.dto.ts`, `order.dto.ts` |
-> | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, message, error, timestamp, path }`; only *validation* errors carry `errors[]` | `http-exception.filter.ts`, `validation-exception.filter.ts` |
+> | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, code, message, details, timestamp, path, method }`; only *validation* errors carry `errors[]` | `http-exception.filter.ts`, `validation-exception.filter.ts` |
 > | Sold out → `409`, rate limited → `429` | Sold out returns **`400`** (`INSUFFICIENT_AVAILABILITY`); order-creation rate limiting returns **`403`** (`RATE_LIMITED` → `ForbiddenException`) | `tickets.controller.ts`, `orders.controller.ts:90` |
 >
 > Two of these are **backend work items**, not documentation fixes: implementing `GET /config/public`,
@@ -85,7 +105,7 @@ These are already fixed by the repository and backend and are **inputs**, not op
 - `POST /auth/login` returns **`403`** when the email is unverified or the account is deactivated (`auth.controller.ts:189`) — the login form must render this as "verify your email / account disabled", never as a generic forbidden.
 - Roles (from `UserRole` enum): **`PARTICIPANT`**, **`ORGANIZER`**, **`ADMIN`**.
 - Pagination: `?page=&limit=` → `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` (flat, **not** nested under `meta`).
-- Error envelope: `{ statusCode, message, error, timestamp, path }`. Validation failures add `errors[]`.
+- Error envelope: `{ statusCode, code, message, details, timestamp, path, method }`. Validation failures add `errors[]`.
 - Status codes actually emitted: `200/201/400/401/403/404/429/500` — no `204` (all DELETEs return `200` with a body) and no `409` today. The UI **must** define a state for `401`, `403`, `404`, business conflicts (sold out — **surfaced as `400`**, `INSUFFICIENT_AVAILABILITY`), and `429` (global throttle: 3 req/s, 20 req/10 s; login additionally 5 attempts/15 min).
 
 ---

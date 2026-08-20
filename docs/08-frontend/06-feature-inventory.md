@@ -13,20 +13,21 @@
 > state — loading, empty, success, error, `403`, business conflict and `429` — with French copy
 > direction for each. Every endpoint named here was read out of `backend/src` and exists. Every
 > endpoint the product *needs* and that does **not** exist is marked **⚠ NOT IMPLEMENTED** and
-> routed to §9 rather than being designed around.
+> routed to §10 rather than being designed around.
 
 ---
 
 ## 0. How to read this document
 
-**Screen IDs.** Each screen has a stable ID (`P-01` … `A-04`) used by Phase 6 (components),
-Phase 9 (wireframes) and Phase 10 (hi-fi). Never renumber; append.
+**Screen IDs.** Each screen has a stable ID — `P-01`…`P-11`, `U-01`…`U-09`, `O-01`…`O-09`,
+`A-01`…`A-04` — used by Phase 6 (components), Phase 9 (wireframes) and Phase 10 (hi-fi). Never
+renumber; append. The three `/legal/*` pages are one static group and carry no ID.
 
 **Per-screen shape.** Every screen section carries exactly five blocks, in this order:
 
 1. **Meta line** — route · rendering strategy · role · guard.
 2. **Features & interactions** — one bullet per user-visible capability. The bullet count is the
-   feature count in [§10](#11-summary--features-per-zone).
+   feature count in [§11](#11-summary--features-per-zone).
 3. **Components consumed** — names that Phase 6 must adopt verbatim.
 4. **API calls** — `METHOD /path`, relative to the base URL, with when-and-why.
 5. **Permission gating** and **UI states**.
@@ -41,9 +42,9 @@ absent row is a specification hole, `n/a` is a decision.
 | **Empty** | `200` with `total: 0` or an empty collection. |
 | **Success** | Data rendered. |
 | **Error** | `5xx`, timeout, or network failure. |
-| **Forbidden (403)** | Role failure, ownership failure, **or** `RATE_LIMITED` on order creation, **or** unverified e-mail on login. Four unrelated situations behind one status — always disambiguated by endpoint context. |
-| **Conflict** | Business conflict. **Arrives as `400`, not `409`** — sold out, event not published, order expired, invalid status. |
-| **Rate limited (429)** | Throttler. |
+| **Forbidden (403)** | Role failure, ownership failure, a `DRAFT` requested by a non-owner, `RATE_LIMITED` on order creation, an unverified e-mail on login. **Eight verified meanings behind one status** — the full table is [Phase 2 §5.3](03-information-architecture.md#53-the-eight-meanings-of-403); every screen below disambiguates by endpoint context. |
+| **Conflict** | Business conflict. **Arrives as `400`, never `409`** (no controller emits one) — sold out, event not published, order expired, invalid status. Event mutations can also raise `422` from a domain `VALIDATION_ERROR`. |
+| **Rate limited (429)** | Throttler. ⚠ The limits are declared but **not enforced today** — see the note in [§3.1](#31-rendering-and-data-policy). Every `429` row is written for the day the guard is wired. |
 
 Two further states are specified once, globally, in [§3](#3-cross-cutting-behaviour-specified-once)
 and are **not** repeated per screen unless the screen deviates: **401 / session expiry** and
@@ -68,29 +69,29 @@ verified behaviour instead. They are listed first because every downstream table
 | # | Claim in issue #64 / scaffolds | Verified reality | Where it bites |
 | --- | --- | --- | --- |
 | 1 | Base URL is `/v1` | **`https://api.tickr.tn/api`** — global prefix is `api` (`main.ts:17`, `config/app.config.ts`). Swagger at `/api/docs` | Every request. `NEXT_PUBLIC_API_URL` must end in `/api` |
-| 2 | Paginated responses are `{ data, meta: { … } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | `Pagination` component props, every list screen |
-| 3 | `GET /config/public` supplies the commission rate | **⚠ NOT IMPLEMENTED.** No config controller exists anywhere in `backend/src`. `PLATFORM_COMMISSION_RATE` is read only inside `create-order.handler.ts:41` | Fee disclosure before an order exists — see [§3.6](#36-the-commission-rate---not-implemented) |
-| 4 | Errors carry a machine-readable `code` | Envelope is `{ statusCode, message, error, timestamp, path }` only. Domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`) are **discarded at the controller boundary** | Every error state; forces the `mapApiError()` shim — see [§3.5](#35-error-mapping) |
-| 5 | Sold out → `409`, rate limit → `429` | Sold out → **`400`**; `RATE_LIMITED` on `POST /orders` → **`403`** | Checkout error states |
-| 6 | Checkout calls `POST /tickets/reserve` then `POST /orders` | **`POST /orders` reserves internally** (`create-order.handler.ts` step 5). Calling reserve first creates an orphaned second hold | The single most important rule in the participant flow |
-| 7 | `GET /events/organizer/:organizerId` is public | **`@Roles('ORGANIZER','ADMIN')`** (`events.controller.ts:406`) | No public organiser profile in V1 |
-| 8 | Auth routes live under `/auth/*` on the frontend | Canonical route tree uses `/login`, `/register`, … `frontend/src/lib/api/client.ts` hard-redirects to **`/auth/login`** | Defect — see [§3.4](#34-authentication-token-refresh-and-the-401-defect) |
+| 2 | Paginated responses are `{ data, meta: { … } }` | **Flat — but not uniform.** Events and tickets return all seven fields `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` (`event-list.dto.ts:179-215`, `ticket.dto.ts:97-121`); orders stop at `totalPages` (`order.dto.ts:38-44`); notifications stop at `limit` (`notification.dto.ts:182-191`); **`GET /users` alone is nested** — `{ data, meta: { … } }` (`users.controller.ts:56-66`) | `Pagination` takes flat props, derives what a module omits, and the users list goes through an adapter |
+| 3 | `GET /config/public` supplies the commission rate | **⚠ NOT IMPLEMENTED.** No config controller exists anywhere in `backend/src`. The rate reaches the API as an env var read at `create-order.handler.ts:41` — and, dead, in the unregistered `payments.config.ts` ([§3.6](#36-the-commission-rate---not-implemented)) | Fee disclosure before an order exists — see [§3.6](#36-the-commission-rate---not-implemented) |
+| 4 | Errors carry a machine-readable `code` | Envelope is `{ statusCode, code, message, details, timestamp, path, method }` only. Domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`) are **discarded at the controller boundary** | Every error state; forces the `mapApiError()` shim — see [§3.5](#35-error-mapping) |
+| 5 | Sold out → `409`, rate limit → `429` | Sold out and `TICKET_LIMIT_EXCEEDED` → **`400`**; `RATE_LIMITED` on `POST /orders` → **`403`**. **No controller emits `409`** | Checkout error states |
+| 6 | Checkout calls `POST /tickets/reserve` then `POST /orders` | **`POST /orders` reserves internally** (`create-order.handler.ts:137`, step 5). Calling reserve first creates an orphaned second hold | The single most important rule in the participant flow |
+| 7 | `GET /events/organizer/:organizerId` is public | **`@Roles('ORGANIZER','ADMIN')`** (`events.controller.ts:407`), and the controller rejects a mismatched `organizerId` unless the caller is `ADMIN` (`events.controller.ts:426`) | No public organiser profile in V1 |
+| 8 | Auth routes live under `/auth/*` on the frontend | Canonical route tree uses `/login`, `/register`, … `frontend/src/lib/api/client.ts:33` hard-redirects to **`/auth/login`** | Defect — see [§3.4](#34-authentication-token-refresh-and-the-401-defect) |
 
 Four further constraints were discovered while writing this phase. They are not in the issue, not in
 Phase 1, and each one changes a screen:
 
 | # | Discovery | Source | Consequence |
 | --- | --- | --- | --- |
-| 9 | **`POST /auth/register` returns `{ userId, message }` — no tokens.** And **`POST /auth/login` throws `403` when the e-mail is not verified** | `auth.controller.ts:121`, `auth.controller.ts:188` | A brand-new buyer **cannot complete a purchase in one session**. There is a mandatory inbox round-trip. See [§4.7](#p-07--register--register) and [§3.3](#33-the-e-mail-verification-wall) |
-| 10 | **`GET /events/:id` returns `403` for any event that is not `PUBLISHED`**, unless the caller is the organiser (`get-event-by-id.handler.ts:71-79`) | verified | `CANCELLED` and `COMPLETED` events are **unreachable** to the public and to admins. The Phase 1 "cancelled event banner" cannot be built on this endpoint |
+| 9 | **`POST /auth/register` returns `{ userId, message }` — no tokens.** And **`POST /auth/login` throws `403` when the e-mail is not verified** | `auth.controller.ts:61-64`, `auth.controller.ts:188-192` | A brand-new buyer **cannot complete a purchase in one session**. There is a mandatory inbox round-trip. See [P-07](#p-07--register--register) and [§3.3](#33-the-e-mail-verification-wall) |
+| 10 | **`GET /events/:id` returns `403` for any event that is not `PUBLISHED`**, unless the caller is the organiser (`get-event-by-id.handler.ts:73-78`) | verified | `CANCELLED` and `COMPLETED` events are **unreachable** to the public and to admins. The Phase 1 "cancelled event banner" cannot be built on this endpoint |
 | 11 | **`GET /events` only ever returns `PUBLISHED` events** (`get-published-events.handler.ts:76`), and **`DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` with no admin bypass** | verified | `/admin/moderation` is **read-only over published events** in V1. Specified honestly as such |
-| 12 | **`TicketDto` and `OrderDto` carry no event title, date or venue** — only `eventId` | `ticket.dto.ts`, `OrderDto` | `/tickets`, `/orders` and every ticket surface need an event-resolution strategy. See [§3.7](#37-event-resolution-for-tickets-and-orders) |
+| 12 | **`TicketDto` and `OrderDto` carry no event title, date or venue** — only `eventId` | `ticket.dto.ts:10-91`, `order.dto.ts:17-35` | `/tickets`, `/orders` and every ticket surface need an event-resolution strategy. See [§3.7](#37-event-resolution-for-tickets-and-orders) |
 
-> **Route-count note.** Phase 2 summarises the tree as "31 routes (+ `/legal/*`)", but the tree
-> itself enumerates **33 addressable routes**. The two-route delta is the payment-return sub-route
-> `/checkout/[orderId]/retour` and the organiser owner view `/organizer/events/[id]`, both of which
-> are real, separately-addressable screens. This document specifies all 33 and treats `/legal/*` as
-> one static group of three pages.
+> **Route count.** [Phase 2 §1.6](03-information-architecture.md#16-route-count-reconciliation)
+> fixes the tree at **33 canonical routes** — 11 public, 9 participant, 9 organizer, 4 admin — plus
+> the three static `/legal/*` pages, so **36 addressable URLs**. An earlier working note said 31; it
+> folded `/checkout/[orderId]/retour` and `/organizer/events/[id]` into their parents, and both need
+> their own `page.tsx`. This document specifies all 33 and treats `/legal/*` as one static group.
 
 ---
 
@@ -130,15 +131,17 @@ Everything in this section applies to **every** screen. Per-screen tables below 
 
 | Strategy | Applies to | Rule |
 | --- | --- | --- |
-| **SSR / ISR** | `/`, `/events`, `/events/[id]`, `/categories/[category]` | Rendered on the server for SEO and first paint, using the exact per-route codes fixed in [Phase 4](05-screen-inventory.md) (`ISR 60` on `/` and `/categories/*`, `ISR 30` + client refetch on `/events/[id]`, `SSR` on `/events` because the filter space is unbounded). Availability is always re-read in the browser on mount and on focus |
+| **SSR / ISR** | `/`, `/events`, `/events/[id]`, `/categories/[category]` | Rendered on the server for SEO and first paint, using the exact per-route codes fixed in [Phase 4](05-screen-inventory.md) (`ISR 60` on `/` and `/categories/*`; **`SSR` + `no-store` on `/events/[id]`** — never ISR, because availability is a per-fetch snapshot that a shared cache would falsify; `SSR` on `/events` because the filter space is unbounded). Availability is always re-read in the browser on mount and on focus |
 | **CSR** | everything behind auth, plus `/search` | TanStack Query, `staleTime` per table below |
 
-> **⚠ SSR + throttler.** The throttler is IP-scoped (`short` 3 req/s, `medium` 20 req/10 s,
-> `long` 100 req/min, `users.module.ts:131`). **All SSR traffic leaves the Next server from one
-> IP.** If the API ever enables the global `ThrottlerGuard`, SSR fan-out will trip it platform-wide.
-> Mitigations, in order: (a) never fan out more than 3 requests per SSR render — this is why the
-> landing page's category rails are *links*, not fetches; (b) `Cache-Control` on SSR fetches;
-> (c) backend task in §9 to exempt the server-side origin.
+> **⚠ The throttler is configured but not wired.** `ThrottlerModule.forRoot` declares three
+> IP-scoped tiers (`short` 3 req/s, `medium` 20 req/10 s, `long` 100 req/min,
+> `users.module.ts:131`) and the auth routes add `@Throttle` decorators, but **`ThrottlerGuard` is
+> bound nowhere**, so no route returns `429` today. Every `429` state below is written ahead of
+> enforcement and may never be the only defence against a double submit. Once the guard is wired,
+> **all SSR traffic leaves the Next server from one IP** and the fan-out trips it platform-wide,
+> so: (a) never more than 3 requests per SSR render — this is why the landing page's category rails
+> are *links*, not fetches; (b) `Cache-Control` on SSR fetches; (c) exempt the server origin (§10).
 
 **Query keys and cache policy** — one module, `src/lib/api/query-keys.ts`:
 
@@ -221,9 +224,9 @@ Consequences that every affected screen must honour:
 - **A `403` from `POST /auth/login` is never rendered as "access denied."** It means exactly one
   thing: « Votre adresse e-mail n'est pas encore vérifiée. »
 - **There is no resend-verification endpoint** — the six auth routes are register, login,
-  verify-email, request-reset, reset-password, refresh-token. A user who loses the e-mail is stuck.
-  Interim copy points at the support address; the endpoint is a **P1 backend task**
-  (§9).
+  verify-email, request-reset, reset-password, refresh-token. A user who loses the e-mail is stuck:
+  « Renvoyer le lien » is **specified but blocked**, so every screen that would offer it points at
+  the support address instead of rendering a control that cannot work (§10, P1).
 - **`emailVerified` is not exposed on `UserProfileDto`**, so `/profile` cannot display verification
   status. Also a backend task.
 
@@ -259,6 +262,7 @@ backend string to the UI.
 ```ts
 type ErrorKind =
   | 'validation'      // 400 + errors[]  → field-level, inline
+  | 'domain_invalid'  // 422 VALIDATION_ERROR, events mutations only (events.controller.ts:493-846)
   | 'sold_out'        // 400 on POST /orders,   context-disambiguated
   | 'not_published'   // 400 on POST /orders
   | 'order_expired'   // 400 on POST /orders/:id/pay
@@ -278,7 +282,7 @@ type ErrorKind =
 > `VALIDATION_ERROR` all arrive as bare `400`s, disambiguation is done by **endpoint + a substring
 > probe on `message`**. Substring probes live in exactly one file, are covered by unit tests against
 > the real backend strings, and are deleted the day the backend ships a `code` field
-> (§9, P0).
+> (§10, P0).
 
 **Three failure shapes**, per Phase 1 [G.0] — a shape is chosen by *stakes*, not by severity:
 **toast** (non-money, recoverable) · **inline** (scoped to one control) · **blocking state**
@@ -302,9 +306,9 @@ export const PLATFORM_COMMISSION_RATE = Number(
 );
 export const RESERVATION_TTL_MINUTES = 15; // reserve-tickets.handler.ts:24
 export const CURRENCY = 'TND' as const;    // symbol DT, 3 decimals
-export const MAX_TICKETS_PER_ORDER = 10;   // @ArrayMaxSize(10)
-export const MAX_TICKETS_PER_EVENT = 10;   // fraud-detection.service.ts
-export const MAX_ORDERS_PER_HOUR = 5;      // fraud-detection.service.ts
+export const MAX_TICKETS_PER_ORDER = 10;   // client mirror; POST /orders sets no array cap
+export const MAX_TICKETS_PER_EVENT = 10;   // fraud-detection.service.ts:40-43 (inline fallback)
+export const MAX_ORDERS_PER_HOUR = 5;      // fraud-detection.service.ts:36-39 (inline fallback)
 export const MAX_TICKET_TRANSFERS = 3;     // ticket.entity.ts:100
 ```
 
@@ -315,6 +319,11 @@ Rules, enforced in review:
 - **The instant an order exists, the API's `subtotal` / `platformFee` / `paymentFees` / `total` are
   authoritative** and are rendered verbatim. No component ever multiplies by a rate.
 - A hard-coded `6 %` string anywhere outside this module is a review failure.
+- ⚠ **Ignore `config/payments.config.ts`.** It declares `payments.commission.rate` with a `0.04`
+  fallback, but the file is **not in `ConfigModule.forRoot({ load: [...] })`** (`app.module.ts:32`),
+  so that namespace never resolves: the live rate is the `0.06` fallback in
+  `create-order.handler.ts:41`, and the fraud limits fall back to `5` and `10` inline
+  (`fraud-detection.service.ts:36-43`). Never quote `4 %` from that file (§10).
 - `paymentFees` is rendered as a **conditional** line, shown only when non-zero.
   `OrderEntity.setPaymentFees()` exists but nothing calls it, so it is `0` today — designing a
   three-line breakdown would break the day gateway fees are switched on.
@@ -363,8 +372,8 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 | Phase 6 draft | This document | Reason |
 | --- | --- | --- |
 | `ReservationTimer` | **`ReservationCountdown`** | Phase 1 [K.8] name; it is a countdown driven by the server's `expiresAt`, not a timer |
-| `TicketCard` | **`TicketRow`** (list) + **`TicketPass`** (detail) | Two different objects: a 72 px list row and the dark `ink-950` pass |
-| `NotificationItem` | **`NotificationRow`** | And it has **no read/unread state** — see correction below |
+| `TicketCard` | **`TicketCard`** (list) + **`TicketPass`** (detail) | Two different objects: a 72 px list row and the dark `ink-950` pass |
+| `NotificationItem` | **`NotificationList`** | And it has **no read/unread state** — see correction below |
 | `Pagination` "matches API `meta`" | `Pagination` takes **flat** props | Correction #2 |
 | `OrderSummary` "order + 6 % commission" | `OrderSummary` renders **API values verbatim** | It never computes; see [§3.6](#36-the-commission-rate---not-implemented) |
 | `PaymentMethodPicker` "Konnect/Paymee/Stripe" | unchanged, but **local-first order** and two distinct mechanisms | Konnect/Paymee → `paymentUrl` redirect; Stripe → `clientSecret` in-page |
@@ -419,28 +428,29 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 **Features & interactions**
 
 - Result grid of `EventCard`s (1 column at base, 2 at `sm`, 3 at `lg`, capped at 1280 px).
-- Full filter set, **all held in the URL** so every view is shareable and back-button-correct: `q`, `category`, `city`, `country`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice`, `sortBy`, `sortOrder`, `page`, `limit`.
+- Full filter set, **all held in the URL** so every view is shareable and back-button-correct: `category`, `city`, `country`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice`, `sortBy`, `sortOrder`, `page`, `limit` — the exact fields of `EventFilterDto` (`event-filter.dto.ts:73-139`).
+- **No text query on this screen.** `EventFilterDto` has no `q`, and `forbidNonWhitelisted` turns `?q=` into a `400`, so the header search box routes to `/search` and never to `/events`.
 - Mobile: filters live in a `Drawer` opened by a sticky « Filtrer » button showing the active-filter count; desktop: a left rail, always visible.
 - Sort select exposing only the four sorts that mean something to a buyer — « Date » (`startDate ASC`), « Les plus populaires » (`soldTickets DESC`), « Nouveautés » (`publishedAt DESC`), « Titre » (`title ASC`).
 - Price range control bound to `minPrice`/`maxPrice`, stepped in whole dinars, with the millime rule applied on display.
 - Active filters render as removable chips above the grid; « Effacer les filtres » clears all and resets to page 1.
 - Result count line: « 47 événements » — from the flat `total`.
 - Pagination: infinite scroll on mobile **with an explicit « Charger plus » button** (never scroll-only — unreachable by keyboard, unreliable on 3G); classic numbered pagination on desktop, driven by `totalPages` / `hasNextPage` / `hasPreviousPage`.
-- Page size 20 (API default), hard-capped at 100 by the backend; `limit` is never exposed in the UI.
+- Page size 20 (`PaginationDto` default, `@Max(100)`, `event-filter.dto.ts:32-44`); `limit` is never exposed in the UI.
 - Each card links to `/events/[id]`; one link, one tab stop, the whole card is the target.
 
 **Components consumed** — `PageShell`, `EventFilters`, `Drawer`, `SortSelect`, `DatePicker`, `EventCard`, `AvailabilityBadge`, `PriceDisplay`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `Badge`, `Button`
 
 **API calls**
 
-- `GET /events?q=&category=&city=&country=&dateFrom=&dateTo=&minPrice=&maxPrice=&page=&limit=20&sortBy=&sortOrder=` — the only call.
+- `GET /events?category=&city=&country=&dateFrom=&dateTo=&minPrice=&maxPrice=&page=&limit=20&sortBy=&sortOrder=` — the only call.
 
-**Permission gating** — none. Note that this endpoint returns **`PUBLISHED` events only** (`get-published-events.handler.ts:76`); the `status` filter accepted by `EventFilterDto` has no effect here and is therefore **not exposed in the UI**.
+**Permission gating** — none. This endpoint returns **`PUBLISHED` events only** (`get-published-events.handler.ts:76-78`), and `EventFilterDto` carries no `status` field — only `OrganizerEventFilterDto` does — so a status control here would be a `400`, not a no-op. None is rendered.
 
 | State | Trigger | UI treatment & copy (fr-TN) |
 | --- | --- | --- |
 | **Loading** | first render / filter change | 6 skeleton cards at the real aspect ratio; the filter rail stays interactive |
-| **Empty** | `total: 0` | `EmptyState` echoing the **actual** filters: « Aucun événement pour "jazz" à Sfax en septembre » · primary **[ Effacer les filtres ]** · secondary: the same query with the narrowest filter dropped — « Voir tous les événements à Sfax » |
+| **Empty** | `total: 0` | `EmptyState` echoing the **actual** filters: « Aucun concert à Sfax en septembre » · primary **[ Effacer les filtres ]** · secondary: the same query with the narrowest filter dropped — « Voir tous les événements à Sfax » |
 | **Success** | `total > 0` | Count line + grid + pagination. Cached data is shown immediately with a subtle refresh indicator rather than being replaced by skeletons |
 | **Error** | `5xx` / network | `ErrorState` in the grid area, filters preserved: « Impossible de charger les événements. » · **[ Réessayer ]** |
 | **Forbidden (403)** | n/a — `@Public()` | — |
@@ -451,7 +461,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 
 ### P-03 · Event detail — `/events/[id]`
 
-**Route** `/events/[id]` · **Rendering** ISR 30 + client refetch on focus · **Role** public · **Guard** none (owner sees more) · **This is the most important screen in the product**
+**Route** `/events/[id]` · **Rendering** SSR `no-store` + client refetch on focus · **Role** public · **Guard** none (owner sees more) · **This is the most important screen in the product**
 
 **Features & interactions**
 
@@ -466,7 +476,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 - Organiser block: **name only** (`organizer.displayName`). No link, no stub — `GET /events/organizer/:organizerId` is role-guarded, so a public organiser profile is impossible in V1.
 - Share: native share sheet on mobile, copy-link with confirmation toast on desktop.
 - Sticky purchase bar from the moment the price block scrolls out: lowest price left, « Choisir mes billets » right, `shadow-sticky` upward, iOS safe-area aware.
-- **Ticket-selection sheet** (documented here, not given its own route): one ticket type at a time; `QuantityStepper` bounded by three named limits — remaining availability, 10 holders per order (`@ArrayMaxSize(10)`), 10 tickets per event per user; the **binding** limit is always named on screen.
+- **Ticket-selection sheet** (documented here, not given its own route): one ticket type at a time; `QuantityStepper` bounded by two server-enforced limits — remaining availability, and 10 tickets per event per user (`fraud-detection.service.ts:40-43`, refused with a `400`); the **binding** limit is always named on screen. `CreateOrderItemDto` sets no array cap of its own, so the stepper mirrors the fraud limit rather than letting the user discover it at submit.
 - The breakdown appears the instant quantity ≥ 1, marked « Estimation » until the order exists.
 - Holder details: buyer contact captured once; ticket 1 pre-filled from the profile; tickets 2..n collapsed behind « Les billets sont à mon nom », checked by default.
 - Primary action carries the total in its label: « Continuer · 106,000 DT ».
@@ -479,8 +489,8 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 
 **API calls**
 
-- `GET /events/:id` — SSR + client refetch on focus.
-- `POST /orders` — body `{ eventId, items: [{ ticketTypeId, quantity, holders: [{ name, email, phone? }] }], holder: { firstName, lastName, email } }`. Invalidates `['events','detail',id]`.
+- `GET /events/:id` — SSR (`no-store`) + client refetch on focus.
+- `POST /orders` — body `{ eventId, items: [{ ticketTypeId, quantity, holders: [{ name, email }] }], holder: { firstName, lastName, email } }` (`request.dto.ts:22-80`). **A holder carries name and e-mail only**; `phone` belongs to `ReserveTicketsDto` and sending it here is a `400` under `forbidNonWhitelisted`. Invalidates `['events','detail',id]`.
 - ~~`POST /tickets/reserve`~~ — **must not be called from this screen** (correction #6).
 
 **Permission gating** — viewing is public. `POST /orders` requires a JWT: a `401` here means the token expired between page load and submit, so the interceptor refreshes and replays before anything is shown to the user. Non-`PUBLISHED` events are visible only to the organiser (`403` otherwise).
@@ -508,7 +518,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 - `q` is mirrored into the URL on every settled keystroke so a result page is shareable and the Back button walks the query history.
 - Recent searches (max 5) in `localStorage`, shown while the field is empty, individually removable.
 - Result list reuses `EventCard`; result count from the flat `total`; « Charger plus » paging from `hasNextPage`.
-- **⚠ `GET /events/search` accepts only `q`, `page`, `limit`** — no category, city or date facets. Refinement chips are therefore rendered as **links into `/events?q=…&city=…`**, which does support the full lens set. The transition is explicit in the copy: « Affiner par ville, date ou prix ».
+- **⚠ `GET /events/search` accepts only `q`, `page`, `limit`** (`events.controller.ts:264-266`) — no category, city or date facets. And `/events` accepts no `q`, so a refinement **cannot carry the keyword across**: chips are links into `/events?category=…&city=…` and the copy names what is dropped — « Affiner par ville ou catégorie (le mot-clé n'est pas conservé) ».
 - Zero-state before any query: the ten categories as `CategoryChip` links.
 
 **Components consumed** — `PageShell`, `SearchBar`, `EventCard`, `CategoryChip`, `Button`, `Skeleton`, `EmptyState`, `ErrorState`, `Pagination`
@@ -522,8 +532,8 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 | State | Trigger | UI treatment & copy (fr-TN) |
 | --- | --- | --- |
 | **Loading** | query in flight | 4 skeleton rows; the input never blocks and the previous results stay until the new ones land |
-| **Empty** | `total: 0` | « Aucun résultat pour "{q}" » · « Essayez un autre mot, ou parcourez par catégorie. » · **[ Voir tous les événements ]** + the category chips |
-| **Success** | `total > 0` | « {total} résultats pour "{q}" » + list + refinement links |
+| **Empty** | `total: 0` | « Aucun résultat pour “{q}” » · « Essayez un autre mot, ou parcourez par catégorie. » · **[ Voir tous les événements ]** + the category chips |
+| **Success** | `total > 0` | « {total} résultats pour “{q}” » + list + refinement links |
 | **Error** | `5xx` / network | Inline `ErrorState` under the field: « La recherche est indisponible. » · **[ Réessayer ]** |
 | **Forbidden (403)** | n/a — `@Public()` | — |
 | **Conflict** | `400` from an empty/blank `q` | Never reaches the user: the client refuses to submit a blank query and shows the zero-state instead |
@@ -575,7 +585,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 - « Créer un compte » → `/register?next=…`, preserving `next`.
 - On success: store `accessToken` + `refreshToken` + `user`, then **restore any persisted ticket selection** and route to `next` (whitelisted to same-origin paths only — an open redirect here is a phishing vector).
 - The `next` parameter survives the whole auth detour, including a bounce through `/register`.
-- Rate-limit awareness: `POST /auth/login` is throttled at **5 attempts / 15 min**; after the third failure the form shows the remaining-attempts hint.
+- Rate-limit awareness: `POST /auth/login` declares **5 attempts / 15 min** (`auth.controller.ts:173`, not enforced until the guard is wired — [§3.1](#31-rendering-and-data-policy)); after the third failure the form shows the remaining-attempts hint.
 
 **Components consumed** — `PageShell`, `Field`, `Input`, `Button`, `ErrorState`, `Toast`, `AuthGate`
 
@@ -590,8 +600,8 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 | **Loading** | submit in flight | Button enters its mandatory loading state, form disabled, no spinner overlay |
 | **Empty** | n/a — a form has no empty state | — |
 | **Success** | `200` | No success screen: navigate immediately to `next`, selection restored |
-| **Error** | `401` bad credentials | **Inline, above the form**, generic on purpose: « E-mail ou mot de passe incorrect. » Never « cet e-mail n'existe pas » — that is account enumeration |
-| **Forbidden (403)** | `!emailVerified` | ⚠ Its own state, never « accès refusé »: « Votre adresse e-mail n'est pas encore vérifiée » · « Ouvrez le lien que nous vous avons envoyé à {email} pour activer votre compte. » · secondary « Je n'ai pas reçu l'e-mail » → support, **because no resend endpoint exists** (§9, P1) |
+| **Error** | `401` — bad credentials **or** a deactivated account (`local.strategy.ts:73`) | **Inline, above the form**, generic on purpose: « E-mail ou mot de passe incorrect. » Never « cet e-mail n'existe pas » — that is account enumeration. The two causes are indistinguishable from the response, which is why the support line sits under the form |
+| **Forbidden (403)** | `!emailVerified` (`auth.controller.ts:188-192`) | ⚠ Its own state, never « accès refusé »: « Votre adresse e-mail n'est pas encore vérifiée » · « Ouvrez le lien que nous vous avons envoyé à {email} pour activer votre compte. » · the natural secondary is **« Renvoyer le lien »** and it is **blocked — no resend endpoint exists** (§10, P1), so the control is not rendered and the screen offers « Je n'ai pas reçu l'e-mail » → support address instead |
 | **Conflict** | n/a | — |
 | **Rate limited (429)** | > 5 attempts / 15 min | Submit disabled with a visible timer: « Trop de tentatives de connexion. Réessayez dans {mm:ss}. » · secondary **[ Réinitialiser mon mot de passe ]** |
 
@@ -605,7 +615,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 
 - Fields: `firstName` (1–100), `lastName` (1–100), `email`, `password`, optional `phone` (`+216XXXXXXXX`, or any `+[1-9]\d{1,14}`).
 - Live password-rule checklist mirroring the backend regex exactly — at least 8 characters, one uppercase, one lowercase, one digit, one special character. Rules are shown as a checklist that ticks as you type, never as an error after submit.
-- CGU acceptance checkbox linking to `/legal/cgu` (client-side requirement; the API does not record it).
+- CGU acceptance checkbox linking to `/legal/terms` (client-side requirement; the API does not record it).
 - **Role is not selectable.** `RegisterUserDto` has no `role` field; every account is created as `PARTICIPANT`. Becoming an `ORGANIZER` is an out-of-band operation — the page carries a « Vous organisez des événements ? » link to the support address rather than a control that would not work.
 - **After a successful registration the user is *not* logged in** — the response is `{ userId, message }` with no tokens. The screen replaces itself with a blocking verification notice.
 - Any persisted ticket selection is retained across the entire inbox round-trip ([§3.3](#33-the-e-mail-verification-wall)).
@@ -656,7 +666,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 | **Success** | `200` | « Votre compte est activé » · « Vous pouvez maintenant vous connecter. » · **[ Se connecter ]** (primary, autofocused) |
 | **Error** | `5xx` / network | « L'activation n'a pas pu aboutir » · « Ce n'est pas votre faute. » · **[ Réessayer ]** |
 | **Forbidden (403)** | n/a | — |
-| **Conflict** | `400` invalid / expired / already-used token | « Ce lien n'est plus valide » · « Il a peut-être déjà été utilisé, ou il a expiré. Essayez de vous connecter — si cela ne fonctionne pas, contactez-nous. » · **[ Se connecter ]**. ⚠ The API cannot distinguish *used* from *expired*, and there is no resend endpoint (§9) |
+| **Conflict** | `400` invalid / expired / already-used token | « Ce lien n'est plus valide » · « Il a peut-être déjà été utilisé, ou il a expiré. Essayez de vous connecter — si cela ne fonctionne pas, contactez-nous. » · **[ Se connecter ]**. ⚠ The API cannot distinguish *used* from *expired*, and there is no resend endpoint (§10) |
 | **Rate limited (429)** | repeated reloads | « Trop de tentatives. Patientez un instant. » |
 
 ---
@@ -755,9 +765,9 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 
 ---
 
-### P-12 · Legal pages — `/legal/*`
+### Legal pages — `/legal/*` · static group, no screen ID
 
-**Route** `/legal/cgu`, `/legal/confidentialite`, `/legal/remboursement` · **Rendering** SSG · **Role** public · **Guard** none
+**Route** `/legal/terms`, `/legal/privacy`, `/legal/refunds` · **Rendering** SSG · **Role** public · **Guard** none
 
 **Features & interactions**
 
@@ -765,7 +775,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 - Anchored table of contents, deep-linkable headings, print stylesheet.
 - « Dernière mise à jour » date rendered from front-matter.
 - The refund page is **content-critical**, not boilerplate: it must state, in the same arithmetic the UI shows, that **the 6 % service fee is not refunded** — `refund = subtotal + paymentFees` (`request-refund.handler.ts:56`). The wording here and the wording in `RefundBreakdown` come from the same locale keys so they can never drift.
-- The CGU page states the 15-minute hold, the 10-tickets-per-event limit and the 5-orders-per-hour limit in plain French.
+- `/legal/terms` (« Conditions générales d'utilisation ») states the 15-minute hold, the 10-tickets-per-event limit and the 5-orders-per-hour limit in plain French.
 
 **Components consumed** — `PageShell`, `Footer`, `TableOfContents`, `LocaleDate`
 
@@ -805,7 +815,7 @@ stateDiagram-v2
   Expired --> Selection: selection preserved, fresh POST /orders
 ```
 
-### C-01 · Checkout & payment — `/checkout/[orderId]`
+### U-01 · Checkout & payment — `/checkout/[orderId]`
 
 **Route** `/checkout/[orderId]` · **Rendering** CSR · **Role** authenticated (order owner) · **Guard** middleware + ownership enforced by the API
 
@@ -814,7 +824,7 @@ stateDiagram-v2
 - Reads the authoritative order with `GET /orders/:id` on mount; **nothing on this screen is computed client-side**.
 - `ReservationCountdown` pinned in the same position at every step, driven **only** by the server's `expiresAt` — never a `setTimeout` started at mount, which drifts in a backgrounded mobile tab.
 - The countdown is stated in **both** forms simultaneously: relative « Il reste 12:34 » and absolute « Vos billets sont gardés jusqu'à 21:45 ». The absolute form is the one that survives a gateway redirect.
-- Three countdown phases: > 5 min neutral (`ink-700` on `surface-2`) · ≤ 5 min `warning` tint, no animation · ≤ 1 min `sun-400` with a single pulse per 10 s, **suppressed entirely under `prefers-reduced-motion`**. Announced to screen readers at the 5-minute and 1-minute thresholds only.
+- Three countdown phases: > 5 min neutral (`ink-700` on `surface-2`) · ≤ 5 min `warning-700` on `warning-100`, no animation · ≤ 1 min `sun-400` with a single pulse per 10 s, **suppressed entirely under `prefers-reduced-motion`**. Announced to screen readers at the 5-minute and 1-minute thresholds only.
 - `OrderSummary` — the same component instance used in the selection sheet and on the order screen — rendering `subtotal`, `platformFee`, a **conditional** `paymentFees` line (shown only when non-zero) and `total`, all verbatim from the API.
 - Order recap: event, tier name, quantity, unit price, line total, holder names, order reference.
 - `PaymentMethodPicker`: three large radio cards, **local providers first** — Konnect « Carte bancaire tunisienne · e-DINAR », Paymee « Carte bancaire tunisienne », Stripe « Carte internationale (Visa / Mastercard) ». Never a dropdown. The last-used provider is pre-selected from `localStorage`.
@@ -849,7 +859,7 @@ stateDiagram-v2
 
 ---
 
-### C-02 · Payment return — `/checkout/[orderId]/retour`
+### U-02 · Payment return — `/checkout/[orderId]/retour`
 
 **Route** `/checkout/[orderId]/retour` · **Rendering** CSR + polling with back-off · **Role** authenticated (order owner) · **Guard** middleware + API ownership
 
@@ -881,24 +891,24 @@ stateDiagram-v2
 | **Success** | `PAID` | « Paiement confirmé » · amount paid, order reference, event + date + venue · « Un e-mail de confirmation vous a été envoyé. » · **[ Voir mes billets ]** |
 | **Error** | `5xx` / network while polling | Polling continues silently for the first two failures. After that: « Connexion perdue » · « Le statut de votre commande est inconnu, ne relancez pas le paiement. » · **[ Réessayer ]** · secondary « Voir mes commandes » |
 | **Forbidden (403)** | order belongs to another user | « Cette commande n'est pas la vôtre » · **[ Voir mes commandes ]** |
-| **Conflict** | status `FAILED` | « Le paiement n'a pas abouti » · « **Aucun montant n'a été débité.** Vos billets restent réservés pendant {mm:ss}. » · **[ Réessayer le paiement ]** → back to `/checkout/[orderId]` with a **new** `idempotencyKey` · secondary **[ Choisir un autre moyen de paiement ]` |
+| **Conflict** | status `FAILED` | « Le paiement n'a pas abouti » · « **Aucun montant n'a été débité.** Vos billets restent réservés pendant {mm:ss}. » · **[ Réessayer le paiement ]** → back to `/checkout/[orderId]` with a **new** `idempotencyKey` · secondary **[ Choisir un autre moyen de paiement ]** |
 | **Rate limited (429)** | polling too aggressively | The back-off schedule is the mitigation; on `429` the interval doubles and the copy is unchanged — the user never sees a rate-limit message on this screen |
 | **Ceiling reached** | still `PENDING`/`PROCESSING` after ≈ 60 s | **Not a failure**: « Votre paiement est en cours de vérification » · « Vous recevrez un e-mail dès confirmation. Référence : {orderId}. » · **[ Voir mes commandes ]**. No retry offered under any circumstances |
 
 ---
 
-### C-03 · Orders — `/orders`
+### U-03 · Orders — `/orders`
 
 **Route** `/orders` · **Rendering** CSR · **Role** authenticated · **Guard** middleware
 
 **Features & interactions**
 
-- Paginated list of the user's own orders, newest first, from the flat envelope.
+- Paginated list of the user's own orders, newest first. The orders envelope stops at `totalPages` (`order.dto.ts:38-44`), so `hasNextPage` / `hasPreviousPage` are derived client-side.
 - Each row: event name (resolved per [§3.7](#37-event-resolution-for-tickets-and-orders)), order date, item count, `total` via `PriceDisplay`, and an `OrderStatusBadge`.
 - Status vocabulary in French, mapped from `OrderStatus`: `PENDING` « En attente de paiement » · `PROCESSING` « Paiement en cours » · `PAID` « Payée » · `FAILED` « Échouée » · `CANCELLED` « Annulée » · `REFUNDED` « Remboursée ».
 - A `PENDING` order that has **not** expired shows a « Finaliser le paiement » action linking straight back to `/checkout/[orderId]`, with the remaining time inline — this is the single highest-value recovery surface in the product.
 - A `PENDING` order past its `expiresAt` is shown as « Expirée » client-side even if the server has not yet run the expiry job.
-- Client-side status filter chips (« Toutes », « Payées », « En attente », « Remboursées ») applied over the fetched page — **`GET /orders` takes only `page` and `limit`**, so filtering is local and the chip labels say « sur cette page » to stay honest. A server-side `status` filter is a §9 item.
+- Client-side status filter chips (« Toutes », « Payées », « En attente », « Remboursées ») applied over the fetched page — **`GET /orders` takes only `page` and `limit`**, so filtering is local and the chip labels say « sur cette page » to stay honest. A server-side `status` filter is a §10 item.
 - Row → `/orders/[id]`.
 
 **Components consumed** — `PageShell`, `BottomNav`, `OrderRow`, `OrderStatusBadge`, `PriceDisplay`, `LocaleDate`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `Badge`
@@ -922,7 +932,7 @@ stateDiagram-v2
 
 ---
 
-### C-04 · Order detail — `/orders/[id]`
+### U-04 · Order detail — `/orders/[id]`
 
 **Route** `/orders/[id]` · **Rendering** CSR · **Role** authenticated (owner) · **Guard** middleware + API ownership
 
@@ -969,7 +979,7 @@ stateDiagram-v2
 
 ---
 
-### C-05 · My tickets — `/tickets`
+### U-05 · My tickets — `/tickets`
 
 **Route** `/tickets` · **Rendering** CSR · **Role** authenticated · **Guard** middleware
 
@@ -984,7 +994,7 @@ stateDiagram-v2
 - The whole list is persisted to `localStorage` through the query cache so it renders offline.
 - Status vocabulary: `RESERVED` « En cours d'achat » · `CONFIRMED` « Valide » · `CHECKED_IN` « Utilisé » · `CANCELLED` « Annulé » · `EXPIRED` « Expiré ».
 
-**Components consumed** — `PageShell`, `BottomNav`, `Tabs`, `TicketRow`, `TicketStatusBadge`, `PriceDisplay`, `LocaleDate`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `OfflineBanner`
+**Components consumed** — `PageShell`, `BottomNav`, `Tabs`, `TicketCard`, `TicketStatusBadge`, `PriceDisplay`, `LocaleDate`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `OfflineBanner`
 
 **API calls**
 
@@ -1005,7 +1015,7 @@ stateDiagram-v2
 
 ---
 
-### C-06 · Ticket & QR — `/tickets/[id]`
+### U-06 · Ticket & QR — `/tickets/[id]`
 
 **Route** `/tickets/[id]` · **Rendering** CSR (offline-capable) · **Role** authenticated (owner) · **Guard** middleware + API ownership
 
@@ -1017,7 +1027,7 @@ stateDiagram-v2
 - « Augmenter la luminosité » full-screen mode; screen brightness is raised where the browser permits and restored on exit.
 - Holder name prominent, tier name, price, order reference, event date and venue.
 - Status is unmistakable: `CONFIRMED` shows a live QR · `CHECKED_IN` visually *spends* the ticket — dimmed QR, success stamp, `checkedInAt` timestamp — so a re-presented pass is obvious to both holder and door staff · `EXPIRED` and `CANCELLED` **hide the QR entirely** and explain why.
-- **PDF backup** — primary path is `ticket.pdfUrl` when non-null, opened directly. When it is null, the fallback is `GET /tickets/:id/pdf`, which responds **`302` to a signed S3 URL**; a plain `<a>` cannot carry the bearer token and a browser-followed redirect may present both the `Authorization` header and the S3 query signature. **Required interim**: a same-origin Next Route Handler proxy that attaches the token server-side and streams the file. Backend task: return `{ url }` JSON instead of a redirect (§9).
+- **PDF backup** — the only path is `GET /tickets/:id/pdf`. `TicketDto.pdfUrl` is **not fetchable**: it stores the S3 *key*, and the endpoint turns it into a fresh signed URL (`tickets.controller.ts:323-330`); a `null` key is a `404`. The endpoint answers **`302` to that signed URL**, and a plain `<a>` cannot carry the bearer token while a browser-followed redirect may present both the `Authorization` header and the S3 query signature. **Required interim**: a same-origin Next Route Handler proxy that attaches the token server-side and streams the file. Backend task: return `{ url }` JSON instead of a redirect (§10).
 - **Transfer** — `POST /tickets/:id/transfer` with `{ newOwnerEmail }`. The dialog states the two hard facts: **the recipient must already have a Tickr account** (the API returns `404` otherwise) and **a ticket can be transferred at most 3 times** (`MAX_TRANSFER_COUNT = 3`), with the remaining count shown from `transferCount`.
 - Transfer is irreversible and **invalidates the current QR** — the response returns a `newQrCode`, and the copy says so before the confirm.
 - Add-to-calendar (`.ics` generated client-side from the resolved event) and « Itinéraire » when the event has coordinates.
@@ -1027,7 +1037,7 @@ stateDiagram-v2
 **API calls**
 
 - `GET /tickets/:id` → `TicketDetailDto` (`qrCode`, `status`, `holderName`, `holderPhone`, `transferCount`, `checkedInAt`, `pdfUrl`, …).
-- `GET /tickets/:id/pdf` — via the proxy route; `302` → signed S3 URL; `404` when no PDF exists.
+- `GET /tickets/:id/pdf` — via the proxy route; `302` → signed S3 URL; `404` when the ticket has no PDF key; `403` when the caller is not the owner.
 - `POST /tickets/:id/transfer` — body `{ newOwnerEmail }` → `{ newQrCode }`. Invalidates `['tickets','detail',id]` and `['tickets','list']`.
 - `GET /events/:id` — poster, date and venue; `403` degrades to the ticket's own data.
 
@@ -1036,7 +1046,7 @@ stateDiagram-v2
 | State | Trigger | UI treatment & copy (fr-TN) |
 | --- | --- | --- |
 | **Loading** | first fetch | Dark pass skeleton with a reserved 240 px QR box — zero layout shift when the code lands |
-| **Empty** | `pdfUrl` null and the PDF endpoint returns `404` | The PDF action is **hidden**, not disabled-and-mysterious. The QR is the ticket; the PDF is a backup |
+| **Empty** | `pdfUrl` null, so the PDF endpoint would `404` | The PDF action is **hidden**, not disabled-and-mysterious. The QR is the ticket; the PDF is a backup |
 | **Success** | `status: CONFIRMED` | Live QR, brightness control, holder, tier, event facts, transfer and PDF actions |
 | **Error** | `5xx` / network | If a cached payload exists, render the pass offline with a « Hors ligne » chip. Otherwise: « Impossible d'afficher ce billet. » · **[ Réessayer ]** |
 | **Forbidden (403)** | not the owner | « Ce billet n'est pas le vôtre » · **[ Voir mes billets ]** |
@@ -1047,45 +1057,7 @@ stateDiagram-v2
 
 ---
 
-### C-07 · Notifications — `/notifications`
-
-**Route** `/notifications` · **Rendering** CSR · **Role** authenticated · **Guard** middleware
-
-**Features & interactions**
-
-- **This is a message *history*, not an inbox.** `NotificationDto` has **no `readAt` and no `isRead`** — `status` is a *delivery* status (`PENDING`, `SENDING`, `SENT`, `DELIVERED`, `FAILED`), not a read state. The screen is therefore titled « Historique des messages » and **no unread badge is shown anywhere in the product**.
-- One row per message: type label, `subject`, channel, `sentAt` (or `scheduledFor`), delivery status.
-- Type labels in French, from `NotificationType`: `ORDER_CONFIRMATION` « Confirmation de commande » · `TICKET_CONFIRMED` « Billet confirmé » · `EVENT_REMINDER` « Rappel d'événement » · `EVENT_CANCELLED` « Événement annulé » · `PASSWORD_RESET` « Réinitialisation du mot de passe » · `ACCOUNT_UPDATE` « Mise à jour du compte » · `SECURITY_ALERT` « Alerte de sécurité » · `MARKETING_PROMO` « Offre » · `WELCOME` « Bienvenue ».
-- Channel is rendered as « E-mail » or « SMS » — **never « notification »**. `PUSH` exists in the enum but `isSupportedChannel` allows only `EMAIL` and `SMS`, so it is filtered out of the UI entirely.
-- A `FAILED` delivery is shown honestly with its `failureReason` mapped to plain French and a « Vérifier mes coordonnées » link to `/profile`.
-- Client-side type filter chips over the fetched page.
-- Link to `/settings` for preferences.
-- **⚠ Pagination shape differs here**: `PaginatedNotificationsDto` is `{ data, total, page, limit }` — **no `totalPages`, no `hasNextPage`**. `Pagination` must accept a computed `totalPages = Math.ceil(total / limit)` for this one screen; the prop is optional and derived, not assumed.
-- `GET /notifications/:id` is used only for a row-expansion detail view; the list already carries everything a row needs.
-
-**Components consumed** — `PageShell`, `BottomNav`, `NotificationRow`, `Badge`, `LocaleDate`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`
-
-**API calls**
-
-- `GET /notifications/me?page={page}&limit=20`.
-- `GET /notifications/:id` — row expansion only.
-- ~~`POST /notifications`~~ — exists and is JWT-guarded, but it is an **internal send API**; the UI never calls it.
-
-**Permission gating** — authenticated, self-scoped.
-
-| State | Trigger | UI treatment & copy (fr-TN) |
-| --- | --- | --- |
-| **Loading** | first fetch | 6 skeleton rows |
-| **Empty** | `total: 0` | The calmest state in the product — no illustration: « Aucun message pour l'instant » · secondary **[ Gérer mes préférences ]** |
-| **Success** | `total > 0` | List + filters + pagination |
-| **Error** | `5xx` / network | `ErrorState` · **[ Réessayer ]** |
-| **Forbidden (403)** | n/a — self-scoped | — |
-| **Conflict** | n/a — read-only | — |
-| **Rate limited (429)** | fast paging | Stale list retained, back-off retry |
-
----
-
-### C-08 · Profile — `/profile`
+### U-07 · Profile — `/profile`
 
 **Route** `/profile` · **Rendering** CSR · **Role** authenticated · **Guard** middleware
 
@@ -1120,7 +1092,7 @@ stateDiagram-v2
 
 ---
 
-### C-09 · Settings — `/settings`
+### U-08 · Settings — `/settings`
 
 **Route** `/settings` · **Rendering** CSR · **Role** authenticated · **Guard** middleware
 
@@ -1131,7 +1103,7 @@ stateDiagram-v2
 - **Communication preferences** — four booleans from `NotificationPreferenceDto`: `emailEnabled`, `smsEnabled`, `marketingEnabled`, `eventRemindersEnabled`. Each toggle is labelled with what it actually controls, and a permanent note states that transactional messages (order confirmation, ticket, cancellation) are always sent: « Les e-mails liés à vos commandes et à vos billets sont toujours envoyés. »
 - **No `PUSH` toggle** — the channel is dead in the backend and must not be offered.
 - Toggles save individually and optimistically; a failure reverts the single toggle, never the whole group.
-- **Danger zone** — account deletion via `DELETE /users/me`, behind a typed confirmation (« SUPPRIMER »), stating what is lost: « Vos billets ne seront plus accessibles. Les commandes déjà payées restent soumises à notre politique de remboursement. » with a link to `/legal/remboursement`.
+- **Danger zone** — `DELETE /users/me` **deactivates** the account (`users.controller.ts:241-264`, returns `{ message }`); it is not an erasure and no erasure endpoint exists. Behind a typed confirmation (« DÉSACTIVER »), with copy that matches what happens: « Votre compte sera désactivé et vous ne pourrez plus vous connecter. Vos billets ne seront plus accessibles. Les commandes déjà payées restent soumises à notre politique de remboursement. » with a link to `/legal/refunds`.
 - Logout, clearing tokens, the query cache and the persisted ticket selection.
 - Language selector present but fixed to Français in V1, with Arabic shown as « bientôt disponible ».
 
@@ -1155,7 +1127,45 @@ stateDiagram-v2
 | **Forbidden (403)** | n/a — self-scoped | — |
 | **Conflict** | `400` wrong current password | Field-level on `currentPassword`: « Mot de passe actuel incorrect. » — never a generic form error |
 | **Rate limited (429)** | repeated password attempts | Submit disabled with a visible timer: « Trop de tentatives. Réessayez dans {mm:ss}. » |
-| **Deletion** | `DELETE /users/me` `200` | Full-screen farewell, tokens and caches cleared, redirect to `/` |
+| **Deactivation** | `DELETE /users/me` `200` | Full-screen farewell naming the real consequence (« compte désactivé »), tokens and caches cleared, redirect to `/`. A repeat call returns `400 ALREADY_DEACTIVATED`, unreachable from the UI because the session is already gone |
+
+---
+
+### U-09 · Notifications — `/notifications`
+
+**Route** `/notifications` · **Rendering** CSR · **Role** authenticated · **Guard** middleware
+
+**Features & interactions**
+
+- **This is a message *history*, not an inbox.** `NotificationDto` has **no `readAt` and no `isRead`** — `status` is a *delivery* status (`PENDING`, `SENDING`, `SENT`, `DELIVERED`, `FAILED`), not a read state. The screen is therefore titled « Historique des messages » and **no unread badge is shown anywhere in the product**.
+- One row per message: type label, `subject`, channel, `sentAt` (or `scheduledFor`), delivery status.
+- Type labels in French, from `NotificationType`: `ORDER_CONFIRMATION` « Confirmation de commande » · `TICKET_CONFIRMED` « Billet confirmé » · `EVENT_REMINDER` « Rappel d'événement » · `EVENT_CANCELLED` « Événement annulé » · `PASSWORD_RESET` « Réinitialisation du mot de passe » · `ACCOUNT_UPDATE` « Mise à jour du compte » · `SECURITY_ALERT` « Alerte de sécurité » · `MARKETING_PROMO` « Offre » · `WELCOME` « Bienvenue ».
+- Channel is rendered as « E-mail » or « SMS » — **never « notification »**. `PUSH` exists in the enum but `isSupportedChannel` allows only `EMAIL` and `SMS`, so it is filtered out of the UI entirely.
+- A `FAILED` delivery is shown honestly with its `failureReason` mapped to plain French and a « Vérifier mes coordonnées » link to `/profile`.
+- Client-side type filter chips over the fetched page.
+- Link to `/settings` for preferences.
+- **⚠ Pagination shape differs here**: `PaginatedNotificationsDto` is `{ data, total, page, limit }` — **no `totalPages`, no `hasNextPage`**. `Pagination` must accept a computed `totalPages = Math.ceil(total / limit)` for this one screen; the prop is optional and derived, not assumed.
+- `GET /notifications/:id` is used only for a row-expansion detail view; the list already carries everything a row needs.
+
+**Components consumed** — `PageShell`, `BottomNav`, `NotificationList`, `Badge`, `LocaleDate`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`
+
+**API calls**
+
+- `GET /notifications/me?page={page}&limit=20`.
+- `GET /notifications/:id` — row expansion only.
+- ~~`POST /notifications`~~ — exists and is JWT-guarded, but it is an **internal send API**; the UI never calls it.
+
+**Permission gating** — authenticated, self-scoped.
+
+| State | Trigger | UI treatment & copy (fr-TN) |
+| --- | --- | --- |
+| **Loading** | first fetch | 6 skeleton rows |
+| **Empty** | `total: 0` | The calmest state in the product — no illustration: « Aucun message pour l'instant » · secondary **[ Gérer mes préférences ]** |
+| **Success** | `total > 0` | List + filters + pagination |
+| **Error** | `5xx` / network | `ErrorState` · **[ Réessayer ]** |
+| **Forbidden (403)** | n/a — self-scoped | — |
+| **Conflict** | n/a — read-only | — |
+| **Rate limited (429)** | fast paging | Stale list retained, back-off retry |
 
 ---
 
@@ -1322,7 +1332,7 @@ stateDiagram-v2
 - Replace the poster via `POST /events/:id/image`; the previous image is overwritten (one image per event).
 - **Publish** from here as well, gated by the same `PublishChecklist`.
 - **Cancel the event** — `DELETE /events/:id` is **a cancellation, not a hard delete**: it requires a body `{ reason }` of 1–1000 characters and moves the event to `CANCELLED`. The UI says « Annuler l'événement », never « Supprimer », and the reason field is mandatory and labelled as visible to attendees.
-- The cancel dialog states the consequences in full: « Les billets vendus seront annulés. Les acheteurs recevront un e-mail. Consultez la politique de remboursement avant de confirmer. » with a link to `/legal/remboursement`.
+- The cancel dialog states the consequences in full: « Les billets vendus seront annulés. Les acheteurs recevront un e-mail. Consultez la politique de remboursement avant de confirmer. » with a link to `/legal/refunds`.
 - On a **published** event, date and location edits carry an explicit warning that ticket-holders are affected; a `PUBLISHED` event that has sold tickets shows the sold count next to the warning.
 - Unsaved-changes guard on navigation.
 
@@ -1361,8 +1371,8 @@ stateDiagram-v2
 - Price input in dinars with millimes, validated against the 3-decimal TND rule and echoed back through `PriceDisplay` so the organiser sees exactly the string a buyer will see.
 - **Buyer-price preview per tier**: « Le participant paiera 53,000 DT (dont 3,000 DT de frais de service) » — explicitly labelled **⚠ estimate**, derived from the interim `PLATFORM_COMMISSION_RATE` constant because **`GET /config/public` is NOT IMPLEMENTED** ([§3.6](#36-the-commission-rate---not-implemented)).
 - Sales window defaults: start = now, end = event start. Both are required, so the form pre-fills rather than leaving the organiser to guess.
-- Edit a tier — `PUT /events/:id/ticket-types/:typeId`. Reducing `quantity` below `soldQuantity` is blocked client-side with the real number: « 12 billets sont déjà vendus, la quantité ne peut pas descendre en dessous. »
-- Delete a tier — `DELETE /events/:id/ticket-types/:typeId`, behind a confirmation that names the sold count; deletion is offered only when `soldQuantity === 0`.
+- Edit a tier — `PUT /events/:id/ticket-types/:typeId`. Reducing `quantity` below `soldQuantity` is blocked client-side with the real number: « 12 billets sont déjà vendus, la quantité ne peut pas descendre en dessous. » **Price and sales window lock after the first sale** (`ticket-type.entity.ts:208`, `:279` → `CANNOT_MODIFY_AFTER_SALES`), so both fields render read-only with the reason once `soldQuantity > 0` rather than failing on save.
+- Delete a tier — `DELETE /events/:id/ticket-types/:typeId`, behind a confirmation that names the sold count. Two server rules gate it: the event must still be `DRAFT` (`remove-ticket-type.handler.ts:94-98`) and the tier must have no sales, so on a published event the delete control is replaced by « Désactiver » outright.
 - Deactivating (`isActive: false`) is presented as the safe alternative to deletion for a tier that has sales, with its effect spelled out: « Le tarif reste visible mais n'est plus achetable. »
 - Running total of `totalCapacity` across tiers, which is what makes the event publishable.
 
@@ -1384,7 +1394,7 @@ stateDiagram-v2
 | **Success** | ≥ 1 tier | Table + capacity total + buyer-price preview per row |
 | **Error** | `5xx` / network | Inline in the table area, form state retained · **[ Réessayer ]** |
 | **Forbidden (403)** | not the owner | « Vous ne pouvez modifier que vos propres événements. » |
-| **Conflict** | `400` on update/delete | « Ce tarif a déjà des ventes » · « Vous pouvez le désactiver, mais pas le supprimer. » · **[ Désactiver ]**. Quantity below sold → the inline message above |
+| **Conflict** | `400` / `422` on update or delete | `HAS_SALES` → « Ce tarif a déjà des ventes » · « Vous pouvez le désactiver, mais pas le supprimer. » · **[ Désactiver ]**. `EVENT_NOT_DRAFT` → « Un événement publié ne permet plus de supprimer un tarif. » `CANNOT_MODIFY_AFTER_SALES` → « Le prix et la période de vente sont figés depuis la première vente. » Quantity below sold → the inline message above |
 | **Rate limited (429)** | rapid CRUD | Submit disabled with a timer |
 
 ---
@@ -1399,7 +1409,7 @@ stateDiagram-v2
 - Per-tier breakdown from `byType: TicketTypeStatsDto[]` — `ticketTypeName`, `total`, `checkedIn`, `rate`.
 - Manual refresh with a « Mis à jour à 21:07 » timestamp; **no auto-polling** — the endpoint is aggregate-only and door staff use the scanner, not this screen.
 - Direct link to `/organizer/scanner` for the door.
-- **⚠ There is no attendee roster.** `GET /tickets/event/:eventId/stats` returns **aggregate counts only** (`CheckInStatsDto`), and **no endpoint anywhere returns the list of ticket-holders for an event**. `GET /tickets` is strictly self-scoped. The screen therefore states this honestly — « La liste nominative des participants n'est pas encore disponible » — and does **not** ship a fake table, an export button that produces nothing, or a search field over data that does not exist. This is the single largest organiser gap and a **P1 backend task** (§9).
+- **⚠ There is no attendee roster.** `GET /tickets/event/:eventId/stats` returns **aggregate counts only** (`CheckInStatsDto`), and **no endpoint anywhere returns the list of ticket-holders for an event**. `GET /tickets` is strictly self-scoped. The screen therefore states this honestly — « La liste nominative des participants n'est pas encore disponible » — and does **not** ship a fake table, an export button that produces nothing, or a search field over data that does not exist. This is the single largest organiser gap and a **P1 backend task** (§10).
 
 **Components consumed** — `PageShell`, `Sidebar`, `CheckInProgress`, `StatTile`, `Table`, `Button`, `Skeleton`, `EmptyState`, `ErrorState`, `RoleGate`
 
@@ -1408,7 +1418,7 @@ stateDiagram-v2
 - `GET /tickets/event/:eventId/stats` → `{ totalTickets, checkedIn, checkInRate, byType[] }`.
 - `GET /events/:id` — event name and dates for the header.
 
-**Permission gating** — `@Roles('ORGANIZER','ADMIN')` on the stats endpoint. ⚠ **The endpoint does not verify that the caller owns the event**, so any organiser could read another organiser's aggregates by id. The UI never constructs such a URL, and the hole is reported in §9.
+**Permission gating** — `@Roles('ORGANIZER','ADMIN')` on the stats endpoint. ⚠ **The endpoint does not verify that the caller owns the event**, so any organiser could read another organiser's aggregates by id. The UI never constructs such a URL, and the hole is reported in §10.
 
 | State | Trigger | UI treatment & copy (fr-TN) |
 | --- | --- | --- |
@@ -1471,7 +1481,7 @@ stateDiagram-v2
 - **The check-in window is enforced server-side: it opens 1 hour before `startDate` and closes at `endDate`** (`check-in-ticket.handler.ts:25`). The screen states the window before scanning starts and blocks the camera outside it, so staff never scan into a guaranteed rejection.
 - Torch toggle where the browser supports it.
 - **Offline is a hard stop**, stated honestly: check-in requires the server, so an offline device shows « Connexion requise pour valider les billets » and disables the scanner rather than queueing scans that might double-admit.
-- ⚠ **The API does not verify that the operator owns the event.** Any `ORGANIZER` or `ADMIN` token can check in any ticket. The UI does not exploit this and the hole is reported in §9.
+- ⚠ **The API does not verify that the operator owns the event.** Any `ORGANIZER` or `ADMIN` token can check in any ticket. The UI does not exploit this and the hole is reported in §10.
 
 **Components consumed** — `PageShell`, `CheckInScanner`, `CheckInResultPanel`, `GateSelector`, `Field`, `Input`, `Button`, `Badge`, `ErrorState`, `OfflineBanner`, `RoleGate`
 
@@ -1488,7 +1498,7 @@ stateDiagram-v2
 | **Success** | `200`, `isValid: true` | Full-screen `success-700`: « VALIDÉ » · holder name in `display-l` · tier · gate · time. Auto re-arm after 1.5 s |
 | **Error** | `5xx` / network | « Le serveur ne répond pas » · « Le billet n'a **pas** été validé. Réessayez. » · **[ Réessayer ]**. Never presented as a refusal — an ambiguous result must not turn a paying guest away |
 | **Forbidden (403)** | role is `PARTICIPANT` | Standard access-denied |
-| **Conflict** | `400` — **all refusals share this status** | Full-screen `danger-700` « REFUSÉ » plus the disambiguated reason, resolved by `mapCheckInError()`: already used → « Billet déjà utilisé » + `checkedInAt`; invalid format/checksum → « Code QR non valide »; outside window → « Les validations ouvrent 1 h avant le début » / « L'événement est terminé ». ⚠ Because the envelope has **no `code` field**, this disambiguation is a message-substring shim in one module — the sharpest instance of the §9 P0 gap |
+| **Conflict** | `400` — **all refusals share this status** | Full-screen `danger-700` « REFUSÉ » plus the disambiguated reason, resolved by `mapCheckInError()`: already used → « Billet déjà utilisé » + `checkedInAt`; invalid format/checksum → « Code QR non valide »; outside window → « Les validations ouvrent 1 h avant le début » / « L'événement est terminé ». ⚠ Because the envelope has **no `code` field**, this disambiguation is a message-substring shim in one module — the sharpest instance of the §10 P0 gap |
 | **Rate limited (429)** | fast continuous scanning | Queue scans client-side one at a time and pace to ≤ 2/s; on `429`, hold the frame and show « Ralentissez un peu » rather than dropping a scan |
 | **Not found (404)** | unknown QR | « Billet inconnu » · « Ce code ne correspond à aucun billet Tickr. » |
 
@@ -1554,7 +1564,7 @@ stateDiagram-v2
 - `GET /analytics/revenue-report?startDate={iso}&endDate={iso}`.
 - `POST /analytics/export` — body `{ reportType, format, startDate, endDate, eventId? }` → `RevenueReportDto` with `url`.
 
-**Permission gating** — `JwtAuthGuard` on both endpoints; `RoleGate` restricts the screen to `ADMIN`. ⚠ Note that **`GET /analytics/revenue-report` and `POST /analytics/export` are not `@Roles`-guarded** — any authenticated user could call them. The UI does not expose them outside `/admin`, and the gap is reported in §9.
+**Permission gating** — `JwtAuthGuard` on both endpoints; `RoleGate` restricts the screen to `ADMIN`. ⚠ Note that **`GET /analytics/revenue-report` and `POST /analytics/export` are not `@Roles`-guarded** — any authenticated user could call them. The UI does not expose them outside `/admin`, and the gap is reported in §10.
 
 | State | Trigger | UI treatment & copy (fr-TN) |
 | --- | --- | --- |
@@ -1574,19 +1584,19 @@ stateDiagram-v2
 
 **Features & interactions**
 
-- Browsable, filterable table of **published** events across the platform, reusing every `GET /events` lens: `q`, `category`, `city`, `dateFrom`, `dateTo`, `sortBy`, `sortOrder`, pagination.
+- Browsable, filterable table of **published** events across the platform, reusing every `GET /events` lens: `category`, `city`, `country`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice`, `sortBy`, `sortOrder`, pagination. **No free-text box** — `EventFilterDto` has no `q`, and `?q=` is a `400`.
 - Each row: title, organiser `displayName`, category, city, dates, capacity, `soldTickets`, `salesProgress`, with links to the public page and to `/organizer/events/[id]/analytics`.
 - « Copier le lien » and « Ouvrir la page publique » for verification.
 - **⚠ Read-only in V1, stated on screen.** Two verified constraints make moderation actions impossible:
-  1. `GET /events` returns **`PUBLISHED` events only** (`get-published-events.handler.ts:76`) — the `status` filter has no effect, so **drafts and cancelled events are invisible to admins**, and the queue an admin actually wants (« à vérifier ») cannot be built.
+  1. `GET /events` returns **`PUBLISHED` events only** (`get-published-events.handler.ts:76-78`), and `EventFilterDto` has no `status` field to ask with — so **drafts and cancelled events are invisible to admins**, and the queue an admin actually wants (« à vérifier ») cannot be built.
   2. `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` — an admin gets **`403` every time**. It is also a *cancellation* requiring a `{ reason }` body, not a delete.
-- The screen therefore ships **no take-down control** and shows a persistent notice with the escalation path (contact the organiser) rather than a button that cannot work. Both items are **P1 backend tasks** (§9).
+- The screen therefore ships **no take-down control** and shows a persistent notice with the escalation path (contact the organiser) rather than a button that cannot work. Both items are **P1 backend tasks** (§10).
 
-**Components consumed** — `PageShell`, `Sidebar`, `Table`, `EventFilters`, `SearchBar`, `EventStatusBadge`, `CopyLinkButton`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `RoleGate`
+**Components consumed** — `PageShell`, `Sidebar`, `Table`, `EventFilters`, `EventStatusBadge`, `CopyLinkButton`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `RoleGate`
 
 **API calls**
 
-- `GET /events?q=&category=&city=&dateFrom=&dateTo=&page=&limit=20&sortBy=&sortOrder=`.
+- `GET /events?category=&city=&dateFrom=&dateTo=&page=&limit=20&sortBy=&sortOrder=`.
 - ~~`DELETE /events/:id`~~ — **not callable by an admin** (`403`). Not wired.
 
 **Permission gating** — `RoleGate` `ADMIN` for the screen; the listing endpoint itself is public.
@@ -1609,18 +1619,19 @@ stateDiagram-v2
 
 **Features & interactions**
 
-- Paginated user table from `GET /users` (`@Roles('ADMIN')`), page and limit only.
+- Paginated user table from `GET /users` (`@Roles('ADMIN')`, `users.controller.ts:319-321`) with `page`, `limit` and `role`.
 - Columns: name, e-mail, role badge, `isActive`, `lastLoginAt`, `createdAt`.
 - Row expansion loads `GET /users/:id` for the full `UserProfileDto`, including `phone`.
-- Client-side filter chips by role over the fetched page, labelled « sur cette page » — **`GET /users` accepts no role or search filter**, so anything else would be a lie. A server-side filter is a §9 item.
-- **Read-only.** No endpoint exists to change a role, deactivate an account, or reset another user's password, so no such control is rendered. Promoting a `PARTICIPANT` to `ORGANIZER` — the single most-needed admin action, since registration cannot create one — is a **P0 backend task**.
+- Role filter chips are **server-side**: `GET /users` accepts `role` (`users.controller.ts:49-53`, `:340`) and returns a filtered page, so no « sur cette page » caveat is needed. There is still **no name or e-mail search**, so no search field is rendered; that filter is a §10 item.
+- **⚠ The response envelope is nested here and nowhere else** — `{ data, meta: { total, page, limit, totalPages } }` (`users.controller.ts:56-66`). `Pagination` receives adapted flat props. The server default `limit` is 10 and it is hard-capped at 100.
+- **Read-only.** The users module exposes no admin mutation at all — no role change, no deactivation of another account, no password reset — so no such control is rendered. Promoting a `PARTICIPANT` to `ORGANIZER`, the action this screen most needs because registration only ever creates participants, is a **P0 backend task** (§10, item 3).
 - E-mail addresses are copyable, and the table is never exported client-side: personal data leaves this screen only through the audited `POST /analytics/export` path.
 
 **Components consumed** — `PageShell`, `Sidebar`, `UserTable`, `Table`, `Badge`, `LocaleDate`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `RoleGate`
 
 **API calls**
 
-- `GET /users?page={page}&limit=20`.
+- `GET /users?page={page}&limit=20&role={UserRole}` — `role` optional.
 - `GET /users/:id` — row expansion.
 
 **Permission gating** — `@Roles('ADMIN')` on both endpoints.
@@ -1658,10 +1669,13 @@ Definition of Done requires: **no screen invents an endpoint, and every unwired 
 | `GET /events/upcoming` | P-01 Landing |
 | `GET /events/search` | P-04 Search |
 | `GET /events/category/:category` | P-05 Category |
-| `GET /events/:id` | P-03 Event detail · O-04 Event overview |
+| `GET /events/:id` | P-03 Event detail · O-04 Event overview · O-05 Edit (prefill) · O-06 Ticket types (tier list) · O-07 Participants (header) · and event resolution on U-01…U-06 ([§3.7](#37-event-resolution-for-tickets-and-orders)) |
 | `GET /events/organizer/:organizerId` | O-02 My events |
-| `POST /events` · `POST /events/:id/image` | O-03 Create event |
-| `PUT /events/:id` · `POST /events/:id/publish` | O-05 Edit event |
+| `POST /events` | O-03 Create event |
+| `POST /events/:id/image` | O-03 Create event · O-05 Edit event (replace) |
+| `PUT /events/:id` | O-05 Edit event |
+| `POST /events/:id/publish` | O-04 Event overview · O-05 Edit event |
+| `DELETE /events/:id` | O-05 Edit event — **a cancellation** requiring `{ reason }`, owner only. `@Roles('ORGANIZER')` + `IsEventOwnerGuard` grant no admin bypass, so A-03 cannot call it |
 | `POST\|PUT\|DELETE /events/:id/ticket-types[/:typeId]` | O-06 Ticket types |
 | `POST /orders` | P-03 (ticket selection sheet) |
 | `GET /orders` | U-03 Orders |
@@ -1671,7 +1685,7 @@ Definition of Done requires: **no screen invents an endpoint, and every unwired 
 | `GET /tickets` | U-05 My tickets |
 | `GET /tickets/:id` · `GET /tickets/:id/pdf` · `POST /tickets/:id/transfer` | U-06 Ticket detail |
 | `POST /tickets/check-in` | O-09 Door scanner |
-| `GET /tickets/event/:eventId/stats` | O-07 Participants · O-09 Scanner (counter) |
+| `GET /tickets/event/:eventId/stats` | O-07 Participants — O-09's session counter is client-side and issues no call |
 | `GET /analytics/dashboard` | O-01 Organizer dashboard |
 | `GET /analytics/events/:id` · `/sales-timeline` | O-08 Event analytics |
 | `GET /analytics/platform` | A-01 Platform dashboard |
@@ -1688,15 +1702,14 @@ Definition of Done requires: **no screen invents an endpoint, and every unwired 
 | `POST /tickets/confirm` | Invoked by the Payments module after a successful payment |
 | `POST /tickets/cancel` | No participant-facing cancel flow in V1; cancellation happens via refund or expiry |
 | `POST /notifications` | Server-side dispatch only |
-| `DELETE /events/:id` | `@Roles('ORGANIZER')` + `IsEventOwnerGuard`, **no admin bypass** — unusable for moderation. O-05 exposes it only to the owning organizer |
 | `POST /payments/webhooks/*` | Server-to-server. The UI polls `GET /orders/:id` instead |
 
 ---
 
 ## 9. Features deliberately NOT built in V1
 
-Each of these is a common ticketing feature with **no backend capability behind it**. They are listed
-so nobody designs a screen for them, and so the absence reads as a decision rather than an oversight.
+Each is a common ticketing feature with **no backend capability behind it**, listed so the absence
+reads as a decision rather than an oversight.
 
 | Not built | Why |
 |---|---|
@@ -1719,30 +1732,53 @@ so nobody designs a screen for them, and so the absence reads as a decision rath
 
 ## 10. Required backend work this phase surfaced
 
-| # | Work item | Blocks |
-|---|---|---|
-| 1 | **`GET /config/public`** returning `{ commissionRate, currency, reservationTtlMinutes }` | Authoritative pre-order pricing on P-03, O-03, O-05 |
-| 2 | **Machine-readable `code` in the error envelope** | Reliable conflict vs validation handling on every money screen |
-| 3 | **Confirm the QR string is stable for the ticket's lifetime** — it is already client-renderable (`ticket.dto.ts:33`) | U-06 cache policy — **not a P0 blocker** |
-| 4 | **Status-code alignment** — `409` for conflicts, `429` for rate limiting | Cleaner error mapping; today `RATE_LIMITED` is `403` |
-| 5 | **Settle the organizer payout model** | All organizer revenue UI |
-| 6 | **Admin bypass in `RolesGuard` / `IsEventOwnerGuard`**, or a dedicated moderation endpoint | A-03 takedown |
-| 7 | **`status` filter honoured on `GET /events`** | A-03 seeing drafts |
+Every ⚠ marker in this document lands in exactly one row here. Priorities are the Phase 4 scale:
+**P0** blocks a first usable release, **P1** blocks a complete V1, **P2** ships after launch.
+
+| # | P | Work item | What it unblocks |
+|---|---|---|---|
+| 1 | **P0** | **Machine-readable `code` in the error envelope.** `INSUFFICIENT_AVAILABILITY`, `TICKET_LIMIT_EXCEEDED`, `EVENT_NOT_PUBLISHED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED` and `GATEWAY_ERROR` all arrive as bare `400`s | Deletes the message-substring shim in `map-api-error.ts` and `mapCheckInError()` — [§3.5](#35-error-mapping), O-09 |
+| 2 | **P0** | **`GET /config/public`** returning `{ commissionRate, currency, reservationTtlMinutes }` | Authoritative pre-order pricing on P-03, O-03 and O-06; today an env constant labelled « estimation » ([§3.6](#36-the-commission-rate---not-implemented)) |
+| 3 | **P0** | **A way to grant the `ORGANIZER` role.** `RegisterUserDto` has no `role`, and no endpoint changes one | A-04 renders no promotion control; organiser onboarding is manual today |
+| 4 | **P0** | **Register `config/payments.config.ts` in `ConfigModule.forRoot({ load })` — or delete it.** It is absent from the load list (`app.module.ts:32`), so its `payments.commission.rate` fallback of `0.04` is dead and contradicts the live `0.06` (`create-order.handler.ts:41`); the fraud namespace is dead the same way (`fraud-detection.service.ts:36-43`) | Removes the only file in the repo that states a different commission rate |
+| 5 | P1 | **`POST /auth/resend-verification`** | P-06 and P-08 currently offer a support address where « Renvoyer le lien » belongs; an unverified account has no self-service recovery |
+| 6 | P1 | **`emailVerified` on `UserProfileDto`** | U-07 cannot show verification status |
+| 7 | P1 | **An attendee roster per event** — `GET /tickets/event/:eventId` or `?include=holders`. `GET /tickets/event/:eventId/stats` is aggregate-only and `GET /tickets` is self-scoped | O-07, the largest organiser gap |
+| 8 | P1 | **Ownership checks on `GET /tickets/event/:eventId/stats` and `POST /tickets/check-in`** | Any `ORGANIZER`/`ADMIN` token can read another organiser's aggregates and check in their tickets (O-07, O-09) |
+| 9 | P1 | **`@Roles('ADMIN')` on `GET /analytics/revenue-report` and `POST /analytics/export`** — both are `JwtAuthGuard` only | Any authenticated user can pull platform revenue (A-02) |
+| 10 | P1 | **Register `ThrottlerGuard`.** `ThrottlerModule` is configured (`users.module.ts:131`) and the auth routes carry `@Throttle` decorators, but no guard binds them, so no route returns `429` | Turns every `429` state in this document from speculative into real, and closes the brute-force surface on `POST /auth/login` |
+| 11 | P1 | **`GET /tickets/:id/pdf` returning `{ url }` instead of a `302`** | Removes the same-origin proxy route U-06 needs to keep the bearer token off the S3 redirect |
+| 12 | P1 | **Event summary embedded on `TicketDto` / `OrderDto`**, or `?include=event` | Removes the fan-out and the whole `403` fallback in [§3.7](#37-event-resolution-for-tickets-and-orders) |
+| 13 | P1 | **Moderation capability for `ADMIN`** — a take-down endpoint plus a way to list non-published events. Neither `RolesGuard` nor `IsEventOwnerGuard` grants a bypass, and `EventFilterDto` has no `status` | A-03 ships read-only and says so |
+| 14 | P1 | **`status` filter on `GET /orders`; name/e-mail search on `GET /users`** | U-03 and A-04 filter one page at a time |
+| 15 | P1 | **Settle the organiser payout model** | Every organiser revenue surface shows « Ventes brutes » only ([§6](#6-organizer-zone--9-routes)) |
+| 16 | P2 | **Confirm the QR string is stable for a ticket's lifetime.** It is already a plain string rendered offline (`ticket.dto.ts:33`, `qr-code.vo.ts`) | U-06 cache policy only — **not a blocker for any screen** |
+| 17 | P2 | **Exempt the SSR origin from the IP throttler** (`users.module.ts:131`) | SSR fan-out on `/`, `/events`, `/events/[id]`, `/categories/*` ([§3.1](#31-rendering-and-data-policy)) |
+| 18 | P2 | **One pagination envelope.** Orders omit `hasNextPage`/`hasPreviousPage`, notifications omit `totalPages` too, and `GET /users` is nested under `meta` | A single `Pagination` contract instead of three adapters (correction #2) |
+| 19 | P2 | **`429` rather than `403` for `RATE_LIMITED` on `POST /orders`** | A business limit currently arrives as a permission failure, which is why P-03 needs two different 403 states |
 
 ---
 
 ## 11. Summary — features per zone
 
-| Zone | Screens | Distinct features | Endpoints consumed | P0 screens |
-|---|---|---|---|---|
-| Public | 11 (+3 static) | 48 | 10 | 9 |
-| Participant | 9 | 41 | 12 | 4 |
-| Organizer | 9 | 37 | 11 | 4 |
-| Admin | 4 | 14 | 6 | 0 |
-| **Total** | **33 (+3)** | **140** | **39** | **17** |
+Feature counts are the literal bullet counts of the **Features & interactions** blocks above;
+endpoint counts are the distinct `METHOD /path` pairs named in the **API calls** blocks. P0 marks
+follow [Phase 4 §8](05-screen-inventory.md#8-the-p0-mvp-cut).
 
-Cross-cutting features from §1 (auth refresh, error boundary, offline banner, toast host, skeletons,
-focus management, i18n) are implemented once and are not counted per screen.
+| Zone | Screens | Features | Endpoints consumed | P0 screens |
+|---|---|---|---|---|
+| Public | 11 (+3 static) | 81 (+5 static) | 12 | 8 (+ the legal group) |
+| Participant | 9 | 82 | 17 | 6 |
+| Organizer | 9 | 68 | 15 | 5 |
+| Admin | 4 | 23 | 6 | 0 |
+| **Total** | **33 (+3)** | **254 (+5)** | **47 distinct** | **19 (+ the legal group)** |
+
+The four zone sets overlap on `GET /events` and `GET /events/:id`; the union is 47 endpoints, 48
+counting `POST /auth/refresh-token`, which belongs to the interceptor and to no screen.
+
+Cross-cutting behaviour from [§3](#3-cross-cutting-behaviour-specified-once) (token refresh, error
+boundary, offline banner, toast host, skeletons, focus management, i18n) is built once and is not
+counted per screen.
 
 ---
 
@@ -1752,7 +1788,7 @@ focus management, i18n) are implemented once and are not counted per screen.
 - [x] Every listed API path exists in the backend (verified against controllers, not the Epic body)
 - [x] All UI states specified per screen: loading · empty · error · success · 403 · conflict · 429
 - [x] Permission/role gating stated per screen
-- [x] Components named consistently with [Phase 6](07-component-inventory.md)
+- [x] Components named consistently with [Phase 6](07-component-inventory.md) — the six names Phase 6 must adopt are listed in [§3.10](#310-component-naming-reconciliation-with-phase-6)
 - [x] Endpoint → screen traceability complete, with unwired endpoints explained
 - [x] Features deliberately excluded from V1 recorded with their reason
 - [ ] **Reviewed and signed off by the Product Owner**

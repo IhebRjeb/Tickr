@@ -185,7 +185,7 @@ Paste this file whole. It is the entire styling foundation of the product; nothi
   --text-body-sm--line-height: 1.25rem;              /* 20 px */
   --text-body-sm--font-weight: 400;
 
-  --text-caption: 0.8125rem;                         /* 13 px — absolute floor, any text */
+  --text-caption: 0.8125rem;                         /* 13 px — floor for running text */
   --text-caption--line-height: 1.125rem;             /* 18 px */
   --text-caption--font-weight: 500;
 
@@ -299,8 +299,8 @@ Paste this file whole. It is the entire styling foundation of the product; nothi
   /* Visible focus for keyboard users only. The 2 px box-shadow in the
      page colour separates the ring from the control it surrounds, so the
      cobalt ring stays visible even on a cobalt button (§6). */
-  :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]))
-  :focus-visible {
+  :where(a, button, input, select, textarea, summary,
+         [tabindex]:not([tabindex="-1"])):focus-visible {
     outline: 3px solid var(--ring);
     outline-offset: 2px;
     box-shadow: 0 0 0 2px var(--ring-offset);
@@ -310,7 +310,8 @@ Paste this file whole. It is the entire styling foundation of the product; nothi
   }
 
   /* Dark surfaces (ticket pass, check-in scanner) are separated by a
-     hairline, never by fill value — ink-900 on ink-950 is only 1.08:1. */
+     hairline, never by fill value — a near-black panel on ink-950 measures
+     only ≈1.08:1, and there is no ink-900 token to reach for. */
   .on-dark {
     background-color: var(--color-ink-950);
     color: var(--color-ink-100);
@@ -324,8 +325,8 @@ Paste this file whole. It is the entire styling foundation of the product; nothi
 
   ::selection { background-color: var(--color-cobalt-100); color: var(--color-ink-950); }
 
-  /* Reserve layout for every image container — no cumulative layout shift
-     on a 3G connection. */
+  /* Media never overflows its column. Layout is reserved by the aspect-ratio
+     box on the container (next/image), not by this rule — Phase 1 §D.8. */
   img, video { max-width: 100%; height: auto; }
 
   /* Motion preference is honoured globally, once, not per component. */
@@ -420,7 +421,7 @@ actually ship.** ❌ rows exist so nobody re-derives them by accident.
 | Foreground | Background | Ratio | Verdict | Where it is used |
 |---|---|---|---|---|
 | **`ink-950` #0B0F1A** | **`surface` #FFFFFF** | **19.13 : 1** | ✅ AAA | Headlines, totals, primary copy |
-| `ink-950` | `canvas` #F8F7F4 | 18.05 : 1 | ✅ AAA | Page-level headings |
+| `ink-950` | `canvas` #F8F7F4 | 17.86 : 1 | ✅ AAA | Page-level headings |
 | **`ink-700` #374151** | **`surface`** | **10.31 : 1** | ✅ AAA | Body copy, form labels |
 | `ink-700` | `surface-2` #F1EFEA | 8.97 : 1 | ✅ AAA | **All text inside the order summary** |
 | **`ink-500` #6B7280** | **`surface`** | **4.83 : 1** | ✅ AA | Metadata, helper text, timestamps |
@@ -449,9 +450,8 @@ actually ship.** ❌ rows exist so nobody re-derives them by accident.
 | `border-strong` #7F848F | `surface` | **3.75 : 1** | ✅ SC 1.4.11 (non-text ≥ 3:1) | Input, checkbox, radio, stepper boundaries |
 | `border` #E5E3DD | `surface` | **1.28 : 1** | ❌ non-text fail | **Decorative only — never bounds a control** |
 
-Large text (≥ 18.66 px bold or ≥ 24 px) needs only 3 : 1, but **Tickr does not use that allowance**:
-every text pairing above clears the 4.5 : 1 normal-text threshold. The allowance exists as headroom,
-not as a budget to spend.
+Large text (≥ 18.66 px bold or ≥ 24 px) needs only 3 : 1. **Tickr does not spend that allowance** —
+every text pairing above clears the 4.5 : 1 normal-text threshold, and the headroom stays headroom.
 
 ### 2.3 The two hard rules
 
@@ -467,6 +467,10 @@ Both are trivially violated by a well-meaning developer reaching for "a lighter 
 > That pairing measures **4.21 : 1** and fails AA for normal text. Inside `surface-2` blocks —
 > which is to say **inside the order summary, the single most important block in the product to be
 > able to read** — supporting text steps up to `ink-700` (8.97 : 1).
+> The single exception is a **disabled control's own label**: WCAG 1.4.3 places no contrast
+> requirement on the text of an inactive component, which is what makes the disabled recipe in
+> [§6.2](#62-the-five-states-every-interactive-element-defines) legal. The adjacent sentence
+> explaining *why* the control is disabled is not inactive, and is `ink-700`.
 
 > **Corollary — `border` never bounds a control.**
 > `#E5E3DD` at **1.28 : 1** may draw a card edge or a divider. An input, checkbox, radio, stepper or
@@ -504,8 +508,12 @@ sends (see [§2.5](#25-the-backend-ships-hex-codes--the-frontend-ignores-them)).
 | `TicketStatus.RESERVED` | `warning-700` on `warning-100` + countdown | « Réservé » |
 | `TicketStatus.CONFIRMED` | `success-700` on `success-100`, QR live | « Confirmé » |
 | `TicketStatus.CHECKED_IN` | Neutral `ink-700` + timestamp, QR visually spent | « Scanné à 21:14 » |
-| `TicketStatus.EXPIRED` | `ink-500` on `surface-2`, QR hidden | « Expiré » |
-| `TicketStatus.CANCELLED` | `ink-500` on `surface-2`, QR hidden | « Annulé » |
+| `TicketStatus.EXPIRED` | `ink-700` on `surface-2`, QR hidden | « Expiré » |
+| `TicketStatus.CANCELLED` | `ink-700` on `surface-2`, QR hidden | « Annulé » |
+
+**Deliberate divergence from Phase 1.** [Phase 1 §D.2](02-product-design-brief.md)'s status table
+puts the two spent ticket states in `ink-500` on `surface-2` — the 4.21 : 1 pairing its own hard rule
+forbids. This document uses `ink-700` (8.97 : 1); a status badge is live text, not an inactive control.
 
 **Colour is never the only carrier.** Every badge above pairs its token with a text label, and every
 error state pairs the token with an icon *and* text (WCAG 1.4.1 Use of Colour).
@@ -518,9 +526,12 @@ Two backend metadata maps carry display colours:
   `#FF9800`, `#F44336`, `#00BCD4`, `#3F51B5`, `#FFEB3B`, `#607D8B`
 - `EVENT_STATUS_METADATA` — the same Material family
 
-**None of these enter the frontend.** They are Material Design palette values that would put ten
-competing hues on a discovery screen and destroy the "one action colour" rule. The frontend consumes
-`displayNameFr` and `icon` from that metadata and **nothing else**.
+**None of these enter the frontend** — and neither does anything else in those maps. They are
+domain-layer constants: `EventDto` and `EventListDto` expose `category: EventCategory` and nothing
+more (`event.dto.ts:110`, `event-list.dto.ts:71`), so the Material hues, the `icon` strings and
+`displayNameFr` all stop at the API boundary. The French label and the glyph are **frontend-owned
+maps keyed by the enum** ([§9](#9-iconography)). That is the right outcome anyway: ten competing
+hues on a discovery screen would destroy the "one action colour" rule.
 
 That leaves the poster fallback needing "category tinting" without category hues. V1 resolves this as
 **tone-tinted, not hue-tinted**: a `surface-2` panel carrying the category glyph in `ink-400`
@@ -551,7 +562,7 @@ colour, swaps the focus ring to `sun-400`, and re-points `--ring-offset` at `ink
 | `ink-100` on `ink-950` | 15.34 : 1 ✅ AAA | Body and headings |
 | `ink-400` on `ink-950` | 7.54 : 1 ✅ AAA | Supporting text — the one legal text use of `ink-400` |
 | `sun-400` on `ink-950` | 13.25 : 1 ✅ AAA | Accent, focus ring, brand mark |
-| `ink-900` on `ink-950` | 1.08 : 1 ❌ | **Dark surfaces are separated by `--color-hairline-dark` (1 px `rgb(255 255 255 / 0.08)`), never by fill value.** |
+| A near-black panel on `ink-950` | ≈ 1.08 : 1 ❌ | There is **no `ink-900` token**. Dark surfaces are separated by `--color-hairline-dark` (1 px `rgb(255 255 255 / 0.08)`), never by fill value. |
 
 The QR code itself is always rendered **dark-on-light** inside the dark pass — a white quiet-zone
 plate — because scanners require that polarity. The pass is dark; the code is not.
@@ -614,6 +625,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 }
 ```
 
+Only the font wiring and the `<html>` `className` change: the `keywords`, `authors`, `twitter` and
+`robots` entries already in `layout.tsx` stay exactly as they are.
+
 **Performance ceiling (hard):** two families, variable, `subsets: ['latin', 'latin-ext']`,
 `display: 'swap'`, **≤ 4 loaded axes total**. `adjustFontFallback` is on so the metric-adjusted
 fallback prevents layout shift during the swap — this matters on the 3G-first target device.
@@ -631,7 +645,7 @@ Nine steps. Every step has an assigned job; no step exists to complete a scale.
 | 4 | `text-h2` | 18 / 24 px | Inter 600 | Sub-sections, ticket-type names |
 | 5 | `text-body` | 16 / 24 px | Inter 400 | Default reading text — **never below 16 px for primary reading** |
 | 6 | `text-body-sm` | 14 / 20 px | Inter 400 | Metadata, helper text, dense lists |
-| 7 | `text-caption` | 13 / 18 px | Inter 500 | Timestamps, legal, fine print — **absolute floor for any text** |
+| 7 | `text-caption` | 13 / 18 px | Inter 500 | Timestamps, legal, fine print — **the floor for running text** |
 | 8 | `text-overline` | 12 / 16 px | Inter 600 · +6 % · uppercase | Category eyebrows, section labels — **short strings only** |
 | 9 | `tabular-nums` | inherits | modifier | **All money, all counts, all countdowns** |
 
@@ -720,11 +734,11 @@ export function speakTnd(amount: number): string {
 ```
 
 ```tsx
-// frontend/src/components/ui/price.tsx
+// frontend/src/components/ui/price-display.tsx
 import { cn } from '@/lib/utils';
 import { formatTnd, speakTnd, type TndPrecision } from '@/lib/format/money';
 
-export function Price({
+export function PriceDisplay({
   amount,
   precision = 'auto',
   className,
@@ -742,6 +756,10 @@ export function Price({
 }
 ```
 
+[Phase 6 §3.1](07-component-inventory.md) catalogues this component with a wider prop surface
+(`currency`, `size`, `from`); the code above fixes only what the token system owns — the formatter,
+`tabular-nums`, and the spoken form.
+
 The order-summary block that consumes it — note the **conditional** `paymentFees` line
 (`OrderEntity.setPaymentFees()` exists and can rewrite the total, so the line must already be there)
 and `ink-700`, never `ink-500`, because the block sits on `surface-2`:
@@ -750,22 +768,22 @@ and `ink-700`, never `ink-500`, because the block sits on `surface-2`:
 <dl className="rounded-lg bg-surface-2 p-4 text-body-sm text-ink-700">
   <div className="flex justify-between py-1">
     <dt>2 × Standard</dt>
-    <dd><Price amount={order.subtotal} /></dd>
+    <dd><PriceDisplay amount={order.subtotal} /></dd>
   </div>
   <div className="flex justify-between py-1">
     <dt>Frais de service</dt>
-    <dd><Price amount={order.platformFee} /></dd>
+    <dd><PriceDisplay amount={order.platformFee} /></dd>
   </div>
   {order.paymentFees > 0 && (
     <div className="flex justify-between py-1">
       <dt>Frais de paiement</dt>
-      <dd><Price amount={order.paymentFees} /></dd>
+      <dd><PriceDisplay amount={order.paymentFees} /></dd>
     </div>
   )}
   <div className="mt-3 flex justify-between border-t border-border pt-3">
     <dt className="text-h2 text-ink-950">Total à payer</dt>
     <dd className="font-display text-h1 text-ink-950">
-      <Price amount={order.total} precision="full" />
+      <PriceDisplay amount={order.total} precision="full" />
     </dd>
   </div>
 </dl>
@@ -895,8 +913,8 @@ it, and components never restyle focus.
 .on-surface { --ring-offset: var(--color-surface); }
 .on-dark    { --ring: var(--color-sun-400); --ring-offset: var(--color-ink-950); }
 
-:where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]))
-:focus-visible {
+:where(a, button, input, select, textarea, summary,
+       [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: 3px solid var(--ring);
   outline-offset: 2px;
   box-shadow: 0 0 0 2px var(--ring-offset);
@@ -908,6 +926,8 @@ The 2 px shadow paints the *page* colour into the `outline-offset` gap, producin
 `button → 2 px of page colour → 3 px cobalt ring`. The ring therefore always sits against a surface it
 contrasts with, on every variant. Both `outline` and `box-shadow` follow `border-radius` in every
 supported browser, so the ring hugs a `rounded-full` stepper as tightly as a `rounded-md` button.
+Note there is **no whitespace before `:focus-visible`** — a line break there is a descendant
+combinator, and the ring would land on the control's children instead of the control.
 
 | Ring | Adjacent colour | Ratio | Verdict |
 |---|---|---|---|
@@ -932,7 +952,7 @@ supported browser, so the ring hugs a `rounded-full` stepper as tightly as a `ro
 | **Hover** | Pointer devices only (`@media (hover: hover)` via Tailwind's `hover:`) — never the sole affordance |
 | **Focus-visible** | The global ring. **Never overridden, never removed, never `outline: none`** |
 | **Active / pressed** | A darker step (`cobalt-700`), applied within `duration-fast` |
-| **Disabled** | `aria-disabled="true"`, `surface-2` fill, `ink-500` text **at full opacity**, `cursor-not-allowed`. **Never `opacity-50`** — it drags every colour below threshold |
+| **Disabled** | `aria-disabled="true"`, `surface-2` fill, `ink-500` text **at full opacity**, `cursor-not-allowed`. The 4.21 : 1 pairing is legal here only because WCAG 1.4.3 exempts inactive components ([§2.3](#23-the-two-hard-rules)). **Never `opacity-50`** — it drags every colour below threshold |
 | **Loading** | Mandatory on any control that triggers a network call — see [§8.2](#82-the-button-reference-implementation) |
 
 A disabled control is always accompanied by adjacent text explaining *why*
@@ -1026,10 +1046,13 @@ const SIZE: Record<Size, string> = {
   lg: 'h-12 lg:h-11 px-6 text-body',
 };
 
+/** `pointer-events-none` is deliberately absent — it would suppress
+ *  `cursor-not-allowed`. Inertness comes from the onClick guard below, which
+ *  also covers keyboard activation. */
 const BASE =
   'relative inline-flex items-center justify-center gap-2 rounded-md font-sans font-semibold ' +
   'transition-colors duration-fast ease-standard select-none ' +
-  'aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none';
+  'aria-disabled:cursor-not-allowed';
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'disabled'> {
   variant?: Variant;
@@ -1048,6 +1071,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     loading = false,
     loadingLabel = 'Traitement en cours',
     disabled = false,
+    type = 'button',
+    onClick,
     className,
     children,
     ...props
@@ -1059,14 +1084,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <button
       ref={ref}
-      type={props.type ?? 'button'}
+      // The rest spread comes FIRST. Everything under it is a guarantee this
+      // component makes, and a caller must not be able to overwrite it — a
+      // trailing {...props} would silently restore onClick on an inert button.
+      {...props}
+      type={type}
       // aria-disabled, not `disabled`: a natively disabled button leaves the tab
       // order and stops announcing why it cannot be pressed.
       aria-disabled={inert || undefined}
       aria-busy={loading || undefined}
-      onClick={inert ? undefined : props.onClick}
+      onClick={inert ? undefined : onClick}
       className={cn(BASE, SIZE[size], VARIANT[variant], className)}
-      {...props}
     >
       {/* Loading preserves the button's exact width — the label stays in flow,
           invisible, so there is zero layout shift and no double-submit window. */}
@@ -1097,9 +1125,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ```
 
 **Why the loading state is not a nicety.** On `/checkout/[orderId]`, the pay button calls
-`POST /orders/:id/pay`. The loading state is the primary client-side defence against a double charge,
-alongside the `idempotencyKey` (UUID) the endpoint accepts. `MAX_ATTEMPTS_EXCEEDED` returns **400**,
-so a user who taps twice can lock themselves out of their own order.
+`POST /orders/:id/pay`. It is the client half of the double-charge defence; the server half is the
+optional `idempotencyKey` UUID (`request.dto.ts:98`) plus the handler returning an existing pending
+payment instead of opening a second one (`process-payment.handler.ts:80`). That budget is finite:
+`PaymentEntity.MAX_ATTEMPTS` is **3** (`payment.entity.ts:50`), after which the endpoint returns
+`MAX_ATTEMPTS_EXCEEDED` as **400** (`orders.controller.ts:183`) and the only recovery is a new order.
 
 **Usage across the purchase path:**
 
@@ -1115,11 +1145,12 @@ so a user who taps twice can lock themselves out of their own order.
 {/* Order detail — destructive, always behind a confirmation dialog */}
 <Button variant="danger">Demander un remboursement</Button>
 
-{/* Sold-out tier — disabled AND labelled, never disabled alone */}
+{/* Sold-out tier — disabled AND labelled, never disabled alone. Sold out is not
+    terminal: soldQuantity is released when a hold expires, so the recheck is a
+    real affordance and gets a real 44 px control, not a 13 px inline link. */}
 <Button disabled aria-describedby="tier-3-state">Complet</Button>
-<p id="tier-3-state" className="text-caption text-ink-500">
-  Plus aucune place à ce tarif. <button className="underline">Vérifier à nouveau</button>
-</p>
+<p id="tier-3-state" className="text-caption text-ink-500">Plus aucune place à ce tarif.</p>
+<Button variant="ghost" onClick={refetch}>Vérifier à nouveau</Button>
 ```
 
 ### 8.3 The primitives these tokens exist to serve
@@ -1128,7 +1159,7 @@ In build order, from [Phase 6](07-component-inventory.md) — the purchase path 
 
 | # | Component | Tokens it exercises |
 |---|---|---|
-| 1 | `Price` | `tabular-nums`, `text-h1`, `ink-950` |
+| 1 | `PriceDisplay` | `tabular-nums`, `text-h1`, `ink-950` |
 | 2 | `OrderSummary` | `surface-2` + `ink-700` (hard rule 2), `rounded-lg`, conditional `paymentFees` line |
 | 3 | `ReservationCountdown` | `ink-700`/`surface-2` → `warning-*` → `sun-400` + `animate-countdown-pulse` |
 | 4 | `TicketTypeRow` | `sun-400` scarcity badge, `border-strong` stepper, disabled-with-label |
@@ -1153,9 +1184,10 @@ way to make a product look assembled rather than designed.
   requirement (WCAG 1.4.1) and a hedge against cultural icon ambiguity.
 - `ink-400` is legal for decorative and disabled glyphs on light surfaces. It is not legal for text.
 
-The backend's `EVENT_CATEGORY_METADATA` supplies an `icon` **name** per category. The frontend keeps a
-single explicit map — never a dynamic component lookup, which cannot be tree-shaken and crashes on an
-unknown key:
+No endpoint ships an icon. `EVENT_CATEGORY_METADATA` (`event-category.vo.ts`) carries an `icon` name
+per category, but it is a domain constant and the events DTOs expose only `category: EventCategory`
+(`event.dto.ts:110`). The glyph map therefore lives in the frontend, keyed by the enum — one explicit
+record, never a dynamic component lookup, which cannot be tree-shaken and crashes on an unknown key:
 
 ```tsx
 // frontend/src/components/ui/category-icon.tsx
@@ -1167,22 +1199,22 @@ import type { ComponentType, SVGProps } from 'react';
 
 type Glyph = ComponentType<SVGProps<SVGSVGElement>>;
 
-/** Keys are the `icon` strings from EVENT_CATEGORY_METADATA (event-category.vo.ts). */
+/** Keys are the ten EventCategory values — the only category data the API sends. */
 const GLYPHS: Record<string, Glyph> = {
-  music: MusicalNoteIcon,          // CONCERT
-  microphone: MicrophoneIcon,      // CONFERENCE
-  trophy: TrophyIcon,              // SPORT
-  'masks-theater': TicketIcon,     // THEATER   — no mask glyph in Heroicons
-  tools: WrenchScrewdriverIcon,    // WORKSHOP
-  'party-horn': SparklesIcon,      // FESTIVAL  — no horn glyph in Heroicons
-  palette: PaintBrushIcon,         // EXHIBITION
-  users: UsersIcon,                // NETWORKING
-  laugh: FaceSmileIcon,            // COMEDY
-  calendar: CalendarDaysIcon,      // OTHER
+  CONCERT: MusicalNoteIcon,
+  CONFERENCE: MicrophoneIcon,
+  SPORT: TrophyIcon,
+  THEATER: TicketIcon,             // no mask glyph in Heroicons
+  WORKSHOP: WrenchScrewdriverIcon,
+  FESTIVAL: SparklesIcon,          // no horn glyph in Heroicons
+  EXHIBITION: PaintBrushIcon,
+  NETWORKING: UsersIcon,
+  COMEDY: FaceSmileIcon,
+  OTHER: CalendarDaysIcon,
 };
 
-export function CategoryIcon({ icon, className }: { icon: string; className?: string }) {
-  const Glyph = GLYPHS[icon] ?? CalendarDaysIcon; // unknown category degrades, never crashes
+export function CategoryIcon({ category, className }: { category: string; className?: string }) {
+  const Glyph = GLYPHS[category] ?? CalendarDaysIcon; // unknown value degrades, never crashes
   return <Glyph aria-hidden="true" className={className} />;
 }
 ```
@@ -1204,11 +1236,12 @@ Target: **WCAG 2.1 AA**. These are build obligations, checked in review, not asp
 
 ### 10.2 Typography and content
 
-- [x] Body text floor 16 px; absolute text floor 13 px (`caption`)
+- [x] Body text floor 16 px; running-text floor 13 px (`caption`) — 12 px `overline` is uppercase labels only
 - [x] Inputs are 16 px on mobile so iOS Safari does not zoom on focus
 - [x] Line-height ≥ 1.5 for body copy; prose measure capped at ~72 characters
 - [x] Layout survives 200 % zoom and 400 % text scaling — no fixed heights on text containers
-- [x] `lang="fr"` on `<html>`; all user-facing strings externalised (no hard-coded French in components)
+- [x] `lang="fr"` on `<html>` — fr-TN is the only V1 locale
+- [ ] Strings externalised for the reserved Arabic/RTL locale — deliberately deferred ([§3](#3-typography))
 
 ### 10.3 Interaction
 
@@ -1278,8 +1311,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 fail=0
+# contrast.test.ts (§11.4) is the one file that must hold hex literals — it asserts them.
 scan() { # pattern, message
-  if rg -n --glob 'src/**/*.{ts,tsx}' --glob '!src/app/globals.css' "$1" .; then
+  if rg -n --glob 'src/**/*.{ts,tsx}' --glob '!src/lib/theme/contrast.test.ts' "$1" .; then
     echo "✖ $2"; fail=1
   fi
 }
@@ -1323,21 +1357,26 @@ const T = {
   success700: '#047857', warning700: '#B45309', danger600: '#DC2626',
 };
 
+/** Tuple-typed, not inline: an inline mixed array widens to (string | number)[]
+ *  and `ratio(fg, bg)` then fails `tsc --noEmit`. */
+const CASES: ReadonlyArray<[string, string, string, number]> = [
+  ['ink-950 / white',     T.ink950,     T.white,     19.13],
+  ['ink-950 / canvas',    T.ink950,     T.canvas,    17.86],
+  ['ink-700 / white',     T.ink700,     T.white,     10.31],
+  ['ink-500 / white',     T.ink500,     T.white,      4.83],
+  ['ink-500 / canvas',    T.ink500,     T.canvas,     4.51],
+  ['cobalt-600 / white',  T.cobalt600,  T.white,      7.12],
+  ['ink-950 / sun-400',   T.ink950,     T.sun400,    13.25],
+  ['white / danger-600',  T.white,      T.danger600,  4.83],
+  ['success-700 / white', T.success700, T.white,      5.48],
+  ['warning-700 / white', T.warning700, T.white,      5.02],
+  ['ink-100 / ink-950',   T.ink100,     T.ink950,    15.34],
+  ['ink-400 / ink-950',   T.ink400,     T.ink950,     7.54],
+];
+
 describe('Tickr palette — WCAG 2.1 AA', () => {
-  it.each([
-    ['ink-950 / white',        T.ink950, T.white,   19.13],
-    ['ink-700 / white',        T.ink700, T.white,   10.31],
-    ['ink-500 / white',        T.ink500, T.white,    4.83],
-    ['ink-500 / canvas',       T.ink500, T.canvas,   4.51],
-    ['cobalt-600 / white',     T.cobalt600, T.white, 7.12],
-    ['ink-950 / sun-400',      T.ink950, T.sun400,  13.25],
-    ['white / danger-600',     T.white,  T.danger600, 4.83],
-    ['success-700 / white',    T.success700, T.white, 5.48],
-    ['warning-700 / white',    T.warning700, T.white, 5.02],
-    ['ink-100 / ink-950',      T.ink100, T.ink950,  15.34],
-    ['ink-400 / ink-950',      T.ink400, T.ink950,   7.54],
-  ])('%s ≈ %s:1', (_n, fg, bg, expected) => {
-    expect(ratio(fg, bg)).toBeCloseTo(expected as number, 1);
+  it.each(CASES)('%s ≈ %s:1', (_n, fg, bg, expected) => {
+    expect(ratio(fg, bg)).toBeCloseTo(expected, 1);
   });
 
   it('border-strong meets the 3:1 non-text threshold', () => {
@@ -1360,11 +1399,14 @@ Verified against `backend/src`. Three of these contradict [GitHub issue #64](01-
 ### 12.1 ⚠ `GET /config/public` **does not exist**
 
 > **⚠ NOT IMPLEMENTED.** There is no config controller anywhere in the backend —
-> `backend/src/config/` contains `*.config.ts` files only. `PLATFORM_COMMISSION_RATE` is read in
-> exactly one place, `create-order.handler.ts:41`, and is never exposed over HTTP.
-> The Epic doc, this folder's `README.md` and `docs/02-technique/05-configuration-management.md` all
-> reference `GET /config/public`. **Every one of those references is a required backend task, not an
-> available call.** No component may fetch it.
+> `backend/src/config/` contains `*.config.ts` files only. The rate reaches an order through exactly
+> one live read — `PLATFORM_COMMISSION_RATE`, default `0.06`, at `create-order.handler.ts:41` — and is
+> never exposed over HTTP. `config/payments.config.ts:6` declares a second, **divergent** `0.04`
+> fallback, but that file is absent from `ConfigModule.forRoot({ load: [...] })` (`app.module.ts:32`),
+> so nothing reads it: 4 % is dead config, not a real default.
+> `docs/02-technique/05-configuration-management.md` still specifies the endpoint (controller sketch
+> at `:239`, frontend fetch at `:278`); the Epic and this folder's `README.md` already flag it as
+> missing. **It is a required backend task, not an available call.** No component may fetch it.
 
 The design system is affected because [Phase 1 §E.3](02-product-design-brief.md) requires the service
 fee to be disclosed **the instant a quantity exists** — which is *before* an order exists, and
@@ -1411,13 +1453,13 @@ A hard-coded `« 6 % »` string in a component is a lint failure ([§11.2](#112-
 | Fact | Verified value | Where issue #64 is wrong | Effect here |
 |---|---|---|---|
 | API base | `https://api.tickr.tn/api` — global prefix `api` (`main.ts:17`) | Issue #64 says `/v1`. **Wrong.** | No token impact; fix the `NEXT_PUBLIC_API_URL` default, which currently points at `http://localhost:3000` with no `/api` |
-| Pagination | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | Issue #64 says `{ data, meta: {…} }`. **Wrong.** [Phase 6](07-component-inventory.md) repeats the error in the `Pagination` row | `Pagination` props read the flat fields |
-| Error envelope | `{ statusCode, message, error, timestamp, path }` — **no machine-readable `code`** | — | Status token selection ([§2.4](#24-status--token-mapping)) must key off endpoint context, not an error code. `RATE_LIMITED` arrives as **403**, `INSUFFICIENT_AVAILABILITY` as **400** |
-| Currency | TND, symbol `DT`, **3 decimals** (`currency.vo.ts`) | — | [§3.3](#33-the-money-rules), [§3.4](#34-formattnd--the-implementation) |
-| Commission | Default **0.06**, **added on top** (`order.entity.ts:192`) | — | Estimate labelling above; refund excludes it (`request-refund.handler.ts:56`) |
+| Pagination | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | Issue #64 says `{ data, meta: {…} }`. **Wrong** — [Phase 6](07-component-inventory.md) §1 corrects it as well | `Pagination` props read the flat fields |
+| Error envelope | `{ statusCode, code, message, details, timestamp, path, method }` — **no machine-readable `code`** | — | Status token selection ([§2.4](#24-status--token-mapping)) must key off endpoint context, not an error code. `RATE_LIMITED` arrives as **403**, `INSUFFICIENT_AVAILABILITY` as **400** |
+| Currency | TND, symbol `DT`, **3 decimals** (`currency.vo.ts:35-41`) | — | [§3.3](#33-the-money-rules), [§3.4](#34-formattnd--the-implementation) |
+| Commission | Default **0.06** (`create-order.handler.ts:41`), **added on top**: `total = subtotal + platformFee` (`order.entity.ts:192`) | — | Estimate labelling above; a refund pays back `subtotal + paymentFees` only (`request-refund.handler.ts:56`) |
 | `paymentFees` | Field exists; `setPaymentFees()` (`order.entity.ts:563`) can rewrite the total; **nothing calls it today** | — | The summary renders it as a **conditional** line so switching gateway fees on is not a redesign |
-| Hold | 15 min; the order carries `expiresAt` | — | Countdowns are driven by `expiresAt`, never by a client `setTimeout` |
-| Notification channels | **EMAIL and SMS only** — `PUSH` is dead in `isSupportedChannel` | — | Copy says « email » / « SMS », never « notification » |
+| Hold | 15 min (`ORDER_EXPIRATION_MINUTES`, `create-order.handler.ts:42`); the order carries `expiresAt` | — | Countdowns are driven by `expiresAt`, never by a client `setTimeout` |
+| Notification channels | **EMAIL and SMS only** — `PUSH` is in the enum but not in `SUPPORTED_CHANNELS` (`notification-channel.vo.ts:18`) | — | Copy says « email » / « SMS », never « notification » |
 
 ---
 
@@ -1427,7 +1469,7 @@ Recorded here because each one touches a file this document rewrites.
 
 | # | File | Defect | Fix |
 |---|---|---|---|
-| 1 | `frontend/src/lib/api/client.ts` | Hard-redirects to `/auth/login` and clears the token on **any** 401, with no refresh attempt, although `POST /auth/refresh-token` exists. A token expiring mid-checkout destroys the user's order context | Single-flight refresh-and-replay before any redirect |
+| 1 | `frontend/src/lib/api/client.ts` | Hard-redirects to `/auth/login` and clears the token on **any** 401, with no refresh attempt, although `POST /auth/refresh-token` exists (`auth.controller.ts:353`). A token expiring mid-checkout destroys the user's order context | Single-flight refresh-and-replay before any redirect |
 | 2 | `frontend/src/lib/api/client.ts` | Redirects to **`/auth/login`**, but the [Phase 2 canonical route tree](03-information-architecture.md) defines **`/login`** | Use `/login`. The route tree is authoritative |
 | 3 | `frontend/src/lib/utils.ts` | `formatCurrency` uses `minimumFractionDigits: 2` and `style: 'currency'` — wrong precision for TND (3 decimals) and it emits `TND` rather than `DT` | Replace with `formatTnd()` ([§3.4](#34-formattnd--the-implementation)) and delete the old function |
 | 4 | `frontend/src/app/globals.css` | Next.js starter scaffolding, including a half-wired `prefers-color-scheme: dark` block | Replaced wholesale by [§1.1](#11-the-complete-globalscss) |
