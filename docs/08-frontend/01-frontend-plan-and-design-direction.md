@@ -137,13 +137,13 @@ Document each journey as steps → screen → API call → result state. Journey
 - **Participant purchase (happy path):**
   1. Discover / search → `GET /events`, `GET /events/search`
   2. View event → `GET /events/:id`
-  3. Reserve tickets → `POST /tickets/reserve` (time-limited hold)
-  4. Create order → `POST /orders`
-  5. Pay → `POST /orders/:id/pay` (Stripe / Konnect / Paymee)
-  6. Confirmation via webhook → poll `GET /orders/:id`, then `POST /tickets/confirm`
-  7. View ticket + QR → `GET /tickets/:id`, download `GET /tickets/:id/pdf`
+  3. **Create the order → `POST /orders` — this reserves the tickets internally** (`create-order.handler.ts`, step 5), returning the 15-minute `expiresAt`.
+     ⚠️ **Corrected:** earlier drafts inserted a separate `POST /tickets/reserve` here. The participant flow must **not** call it — a second hold would be orphaned against the same stock.
+  4. Pay → `POST /orders/:id/pay` (Konnect / Paymee → `paymentUrl`; Stripe → `clientSecret`)
+  5. Confirmation is **webhook-driven** → poll `GET /orders/:id` until a terminal status. `POST /tickets/confirm` is called by the Payments module, **not** by the UI.
+  6. View ticket + QR → `GET /tickets/:id`, download `GET /tickets/:id/pdf`
 - **Organizer:** create event → `POST /events`; add ticket types → `POST /events/:id/ticket-types`; upload cover → `POST /events/:id/image`; publish → `POST /events/:id/publish`; analytics → `GET /analytics/dashboard`, `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline`; check-in → `POST /tickets/check-in`, `GET /tickets/event/:eventId/stats`.
-- **Edge cases (each must have a defined screen/state):** reservation hold expired, order/payment failed (`POST /orders/:id/pay` failure), session/token expired (`401` → refresh flow), sold out (`409`), refund (`POST /orders/:id/refund`), event cancelled, empty organizer dashboard, empty search results, no notifications, rate limited (`429`).
+- **Edge cases (each must have a defined screen/state):** reservation hold expired, order/payment failed (`POST /orders/:id/pay` failure), session/token expired (`401` → refresh flow), sold out (**currently `400`**, not `409`), refund (`POST /orders/:id/refund`), event cancelled, empty organizer dashboard, empty search results, no notifications, rate limited (`429`; note order-creation rate limiting returns **`403`**).
 
 **Acceptance:** Every journey names the exact endpoints and the UI state for both success and each failure branch.
 
