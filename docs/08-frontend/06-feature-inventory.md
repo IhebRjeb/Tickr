@@ -1723,7 +1723,7 @@ so nobody designs a screen for them, and so the absence reads as a decision rath
 |---|---|---|
 | 1 | **`GET /config/public`** returning `{ commissionRate, currency, reservationTtlMinutes }` | Authoritative pre-order pricing on P-03, O-03, O-05 |
 | 2 | **Machine-readable `code` in the error envelope** | Reliable conflict vs validation handling on every money screen |
-| 3 | **QR payload as a client-renderable string** | U-06 offline ticket — **blocks P0** |
+| 3 | **Confirm the QR string is stable for the ticket's lifetime** — it is already client-renderable (`ticket.dto.ts:33`) | U-06 cache policy — **not a P0 blocker** |
 | 4 | **Status-code alignment** — `409` for conflicts, `429` for rate limiting | Cleaner error mapping; today `RATE_LIMITED` is `403` |
 | 5 | **Settle the organizer payout model** | All organizer revenue UI |
 | 6 | **Admin bypass in `RolesGuard` / `IsEventOwnerGuard`**, or a dedicated moderation endpoint | A-03 takedown |

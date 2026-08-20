@@ -1098,7 +1098,7 @@ in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-ba
 | **6** | **Add a per-event participant list endpoint.** `GET /tickets/event/:eventId/stats` returns aggregates only | `/organizer/events/[id]/participants` is a stats board, not a list, until this exists |
 | **7** | **Populate `organizer.displayName`** from the Users module — all six event query handlers return the literal `'Event Organizer'` | Any organizer attribution on cards or `/events/[id]` |
 | **8** | **Settle the organizer payout model** | All organizer revenue UI; surfaces show **gross sales only** meanwhile |
-| **9** | **Define the QR payload contract** (string, not a server-rendered image) | Offline ticket rendering on `/tickets/[id]` |
+| **9** | **Confirm QR-string stability** (already a string — `ticket.dto.ts:33`) | Offline ticket rendering on `/tickets/[id]` |
 
 **Frontend defects to fix before the first protected route ships** (`frontend/src/lib/api/client.ts`):
 

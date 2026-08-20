@@ -369,7 +369,8 @@ Dark `ink-950` pass, `radius-xl`, perforation notch. The **QR is the largest ele
 pure white with a quiet zone regardless of the dark surround, **≥ 240 px**, generated locally from the
 payload string so it renders with no network. `CHECKED_IN` visually "spends" the ticket — dimmed QR,
 success stamp, timestamp. `EXPIRED` / `CANCELLED` hide the QR and explain why. Carries an accessible
-description including the ticket reference. ⚠ Depends on the unresolved QR payload contract
+description including the ticket reference. The payload is supplied by `TicketDto.qrCode`, a plain
+string (`ticket.dto.ts:33`) rendered locally — no network, no server-rendered image. See
 ([Phase 4 §7.9](05-screen-inventory.md#7-other-contract-gaps-that-shape-screens)).
 
 ### 3.10 Remaining domain components
@@ -458,7 +459,7 @@ exists without a consumer.
 - [x] Build order defined — the ten that unblock the purchase path
 - [x] TND formatting implemented as real, reviewable code
 - [ ] **Reviewed and signed off by the Frontend Lead**
-- [ ] `QrTicket` finalised once the QR payload contract is confirmed — **blocks P0**
+- [ ] `QrTicket` cache policy finalised once QR-string stability is confirmed (not a design blocker)
 
 ---
 

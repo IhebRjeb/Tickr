@@ -23,8 +23,8 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 
 **JWT Token:**
-- Expiration: 24h
-- Refresh token: 30 jours
+- Expiration: **7 jours** (`JWT_EXPIRES_IN`, défaut `'7d'` — `jwt.service.ts:74`)
+- Refresh token: **30 jours** (`JWT_REFRESH_EXPIRES_IN`, défaut `'30d'` — `jwt.service.ts:75`)
 - Algorithme: HS256
 
 ### Codes Statut HTTP
@@ -171,7 +171,7 @@ GET /events?page=1&limit=12
 
 ---
 
-### POST /auth/refresh
+### POST /auth/refresh-token
 
 **Description:** Renouveler access token
 

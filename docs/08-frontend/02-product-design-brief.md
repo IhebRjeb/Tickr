@@ -24,7 +24,7 @@
 | **I** | [Responsive strategy](#i-responsive-strategy) | Mobile as the design target, not the fallback |
 | **J** | [Competitive inspiration](#j-competitive-inspiration) | Meetup · Fever · Eventbrite · DICE · Shotgun — one takeaway each |
 | **K** | [Design system foundations](#k-design-system-foundations) | The Tailwind 4 token set |
-| **L** | [Open contract questions](#l-open-contract-questions-for-the-backend) | Eight gaps found while grounding this brief |
+| **L** | [Open contract questions](#l-open-contract-questions-for-the-backend) | Nine gaps found while grounding this brief |
 | **M** | [**Design Decisions Locked For Next Phase**](#m-design-decisions-locked-for-next-phase) | **What Phase 2 can safely build on** |
 | **N** | [Appendix — source references](#n-appendix--source-references) | Every backend claim, traced to a file |
 
@@ -293,7 +293,7 @@ terms ("Il reste 4 billets"), never in the system's (`INSUFFICIENT_AVAILABILITY`
 ### C.4 Anti-patterns — what Tickr must never look like
 
 - **A generic SaaS dashboard.** No sidebar-plus-white-cards-plus-blue-links default. Even
-  `/dashboard` is poster-led.
+  the organizer dashboard (`/organizer`) is poster-led.
 - **A bank portal.** Trust must not be bought with corporate navy, stock photography of handshakes,
   or dense legal type.
 - **A discount aggregator.** No countdown-pressure marketing, no strikethrough fake pricing, no
@@ -438,7 +438,7 @@ ticket reads as a physical object, and a dark scanner is usable at a venue door 
 
 On `ink-950` (`#0B0F1A`): body text is `#E8E6E1` (**15.34 : 1** ✅ AAA), supporting text may use
 `ink-400` (**7.54 : 1** ✅ AAA — the one place `ink-400` is legitimate as text), and `sun-400`
-reaches **13.25 : 1**. Note that `ink-900` on `ink-950` is only 1.08 : 1, so **dark surfaces must be
+reaches **13.25 : 1**. Note that a marginally lighter near-black panel on `ink-950` measures only ≈ 1.08 : 1, so **dark surfaces must be
 separated by a 1 px `rgba(255,255,255,0.08)` hairline, never by fill value alone.**
 
 A full app-wide dark theme is **out of scope for V1** and must not be half-implemented. The
@@ -653,7 +653,7 @@ a single event page. That user has no account and no patience. Every ticketing p
 login wall in front of the price loses that user permanently.
 
 **What it forbids.** A login wall before the price is visible. An interstitial "choose your ticket"
-page that only lists types. Losing selection state on redirect to `/auth/login`. A checkout that
+page that only lists types. Losing selection state on redirect to `/login`. A checkout that
 begins with account creation.
 
 **How it is tested.** From `/events/[id]`, tap the sticky purchase bar → the ticket sheet is open.
@@ -737,8 +737,9 @@ this principle is actually built:
    `platformFee`, `paymentFees` and `total`. Those values are rendered verbatim. The rate is
    configurable and the domain applies a minimum-fee floor, so a client-side `× 1.06` will
    eventually disagree with the actual charge.
-2. **⚠️ No endpoint currently exposes the commission rate.** `PLATFORM_COMMISSION_RATE` lives only
-   as a backend environment variable read inside `create-order.handler.ts`; there is no
+2. **⚠️ No endpoint currently exposes the commission rate.** `PLATFORM_COMMISSION_RATE` is read only
+   server-side — `create-order.handler.ts:41` (default `0.06`) and `config/payments.config.ts:6`,
+   whose divergent `0.04` fallback shows how easily an unpublished rate drifts; there is no
    `GET /config/public` controller in the codebase despite one being described in
    `docs/02-technique/05-configuration-management.md`. So **before an order exists, the frontend has
    no authoritative rate to display.** The interim design: a build-time
@@ -1014,7 +1015,7 @@ The terminal states are read from `OrderStatus` and nothing else:
 |---|---|
 | `PAID` | Success — see below |
 | `FAILED` | Payment failure with recovery ([§G](#g-error-and-edge-case-ux)) |
-| `PENDING` / `PROCESSING` past the ceiling | **Not a failure.** « Votre paiement est en cours de vérification. Vous recevrez un email dès confirmation. » with the order reference and a link to `/mes-commandes`. Under no circumstances is this presented as an error, and under no circumstances is a retry offered here — that is how double payments happen. |
+| `PENDING` / `PROCESSING` past the ceiling | **Not a failure.** « Votre paiement est en cours de vérification. Vous recevrez un email dès confirmation. » with the order reference and a link to `/orders`. Under no circumstances is this presented as an error, and under no circumstances is a retry offered here — that is how double payments happen. |
 
 **The success screen** is the product's best moment and should feel like one — but its job is
 informational: confirmation of the amount paid, the order reference, the event with its date and
@@ -1100,13 +1101,13 @@ context** to a designed state. The raw `message` is never rendered directly to a
 
 | Code | Real backend cause | User-facing treatment | Recovery |
 |---|---|---|---|
-| **400** | `EVENT_NOT_PUBLISHED`, `INSUFFICIENT_AVAILABILITY`, `VALIDATION_ERROR`, `ORDER_EXPIRED`, `INVALID_STATUS`, `MAX_ATTEMPTS_EXCEEDED`, `GATEWAY_ERROR` | **Never one generic message.** Disambiguated by context and mapped to the specific states below | Varies — see rows |
+| **400** | `EVENT_NOT_PUBLISHED`, `INSUFFICIENT_AVAILABILITY`, `TICKET_LIMIT_EXCEEDED` (10 tickets/event/user), `VALIDATION_ERROR`, `ORDER_EXPIRED`, `INVALID_STATUS`, `MAX_ATTEMPTS_EXCEEDED`, `GATEWAY_ERROR` | **Never one generic message.** Disambiguated by context and mapped to the specific states below | Varies — see rows |
 | **401** | Access token expired or absent | **Silent refresh first.** Attempt `POST /auth/refresh-token`, replay the original request once, and only then show a session-expired state | Re-authenticate and return to the exact page — selection and checkout state preserved |
-| **403** | Insufficient role **or `RATE_LIMITED` on order creation** | ⚠️ **These are two entirely different situations behind one status.** Role → « Cette page est réservée aux organisateurs ». Rate-limit → « Vous avez atteint la limite de 5 commandes par heure » | Role → go to the appropriate home. Rate limit → state when they can retry |
+| **403** | Insufficient role, **`RATE_LIMITED` on order creation**, an unverified email or deactivated account on `POST /auth/login` (`auth.controller.ts:188`), or a resource that is not the user's (someone else's order; a non-owner requesting a `DRAFT` event) | ⚠️ **Several different situations behind one status — never one generic « accès refusé ».** Role → « Cette page est réservée aux organisateurs ». Rate-limit → « Vous avez atteint la limite de 5 commandes par heure ». Login → « Vérifiez votre adresse email pour activer votre compte » | Role → go to the appropriate home. Rate limit → state when they can retry. Login → resend-verification entry point |
 | **404** | Event, ticket type, order or ticket not found | A designed 404 with the search entry point, not a bare page. For a **deleted or unpublished event**, say so rather than implying a broken link | « Découvrir des événements » |
 | **409 / sold out** | See the note below — currently surfaces as **400 `INSUFFICIENT_AVAILABILITY`** with the true remaining count in the message | Blocking sheet state: « Il ne reste que 2 billets Standard » with the quantity **auto-adjusted** to what is actually available | « Continuer avec 2 billets » as primary; other tiers offered as secondary |
 | **429** | Throttler — 3 req/s and 20 req/10 s | « Trop de tentatives. Réessayez dans quelques instants. » Disable the action and re-enable it on a visible timer | Automatic retry with exponential back-off for GETs; a manual, timed retry for anything that mutates |
-| **5xx / network** | Server or connectivity failure | « Connexion perdue » — and **if the failure happened during payment, explicitly state that the order status is unknown and must be checked, never that it failed** | « Réessayer », plus a link to `/mes-commandes` |
+| **5xx / network** | Server or connectivity failure | « Connexion perdue » — and **if the failure happened during payment, explicitly state that the order status is unknown and must be checked, never that it failed** | « Réessayer », plus a link to `/orders` |
 
 > **⚠️ Contract gap to resolve with the backend — flagged, not designed around.**
 > The specification for this phase anticipated **409** for sold-out and business conflicts, but the
@@ -1139,7 +1140,7 @@ offered as the secondary action** — a Konnect failure is very often solved by 
 three-provider architecture is only valuable if the UI actually uses it at the moment of failure.
 
 `MAX_ATTEMPTS_EXCEEDED` is a distinct case: retrying is no longer possible, so the state must say so
-and route to `/mes-commandes` rather than offering a button that will fail.
+and route to `/orders` rather than offering a button that will fail.
 
 ---
 
@@ -1174,7 +1175,7 @@ recovery costs one existing endpoint call and converts the product's worst state
 
 Two different audiences, two different treatments:
 - **A browser** sees a `danger` banner on the event page, a disabled purchase bar, and no path to buy.
-- **A ticket-holder** sees a banner on their ticket and in `/mes-billets` stating the event is
+- **A ticket-holder** sees a banner on their ticket and in `/tickets` stating the event is
   cancelled and what happens next regarding their money. The `EVENT_CANCELLED` notification type
   exists, so this is also an email — and the on-screen copy must match what the email says.
 
@@ -1485,7 +1486,7 @@ price on physical posters and Instagram flyers, so a card quoting 53 DT against 
 50 DT would read as *Tickr adding a markup*, which is the opposite of the intended effect. Tickr
 therefore takes **Fever's structure with DICE's discipline** — the face price in discovery, matching
 the poster, and the complete arithmetic from the first moment a quantity exists, per
-[E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step). If and when `GET /config/public` lands ([§L](#l-open-contract-questions-for-the-backend), gap 1), an
+[E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step). If and when `GET /config/public` exists — it does not today ([§L](#l-open-contract-questions-for-the-backend), gap 1) — an
 all-in « frais inclus » quote in discovery becomes possible and should be A/B tested against the
 face-price form. Note also that DICE's waitlists, SMS on-sale reminders and resale have no backend
 equivalent and must not be designed in.
@@ -1734,14 +1735,16 @@ that should be removed rather than entrenched. They are listed in priority order
 
 | # | Gap | Impact on the design | Proposed resolution |
 |---|---|---|---|
-| **1** | **The commission rate is not exposed by any endpoint.** `PLATFORM_COMMISSION_RATE` is read only inside `create-order.handler.ts`; no `config` controller exists, although `docs/02-technique/05-configuration-management.md` specifies `GET /config/public` | [E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step) requires the fee to be shown *before* the order exists. The frontend must currently duplicate the rate in a build-time env var — which will silently lie to users the day ops changes it | **Implement the already-documented `GET /config/public`** returning at minimum `{ commissionRate, currency, reservationTtlMinutes }`. Cache it in React Query with a long stale time. This single endpoint removes the only known-drift compromise in the brief |
+| **1** | **The commission rate is not exposed by any endpoint.** `PLATFORM_COMMISSION_RATE` is read only server-side (`create-order.handler.ts:41`; `config/payments.config.ts:6` even carries a divergent `0.04` fallback); no `config` controller exists, although `docs/02-technique/05-configuration-management.md` specifies `GET /config/public` | [E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step) requires the fee to be shown *before* the order exists. The frontend must currently duplicate the rate in a build-time env var — which will silently lie to users the day ops changes it | **Implement the already-documented `GET /config/public`** returning at minimum `{ commissionRate, currency, reservationTtlMinutes }`. Cache it in React Query with a long stale time. This single endpoint removes the only known-drift compromise in the brief |
 | **2** | **No machine-readable error code.** The envelope is `{ statusCode, message, error, timestamp, path }`; the rich domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`, …) are discarded at the controller boundary | [G.2](#g2-http-and-business-error-mapping) needs to distinguish "sold out" from "bad input" — both are 400. The frontend must key off endpoint context and, in the worst case, parse a message string, which cannot be translated | **Add a stable `code` field** carrying the existing domain error type. Zero new logic — the handlers already produce these values |
 | **3** | **Status codes do not match their semantics.** `INSUFFICIENT_AVAILABILITY` → 400 (expected 409); `RATE_LIMITED` → 403 (expected 429) | A 403 that means "you have ordered 5 times this hour" cannot be told apart from a genuine role failure, so the generic 403 handler would show the wrong message on a checkout screen | Return **409** for availability/business conflicts and **429** for rate limiting. Resolving #2 makes this lower-priority but not unnecessary |
 | **4** | **`paymentFees` is exposed but never populated.** `OrderEntity.setPaymentFees()` exists and rewrites the total, but nothing calls it | The order summary must be built for a conditional fourth line that is always zero today — untestable against real data | Confirm the intent: either wire gateway fees in, or mark the field reserved. Either way the summary component stays conditional |
-| **5** | **The QR payload contract is undefined for the client.** `QRCodeVO` exists on the ticket entity, but what the client receives — a string to render, or a pre-rendered image URL — is not settled | [F.7](#f7-the-ticket) requires **offline** QR rendering at the venue door. A server-rendered image URL makes that impossible | Return the **QR payload as a string** so the client renders it locally and can cache it. Keep the PDF as the separate backup path |
+| **5** | **The QR string's stability is unconfirmed.** The API already returns the QR payload as a plain string (`ticket.dto.ts:33`, e.g. `v1-<uuid>-a1b2`) and `POST /tickets/check-in` accepts that same string — server-side image rendering exists only for the PDF path | [F.7](#f7-the-ticket) depends on rendering that string **offline** at the venue door, so it must be immutable for the ticket's lifetime and safe to cache — neither guarantee is documented | Confirm the string is the scannable payload, immutable once `CONFIRMED`, and that no server-rendered image will replace it. Keep the PDF as the separate backup path |
 | **6** | **`PUSH` exists in `NotificationChannel` but is unsupported** (`isSupportedChannel` allows only EMAIL and SMS) | Notification-preference UI must not offer a channel that silently does nothing | Hide `PUSH` in V1. All copy says « email » or « SMS », never « notification » |
 | **7** | **One image per event** (`POST /events/:id/image`) | No gallery is possible; the event page is designed around a single hero image, which is correct for V1 but should be a conscious choice | Confirm single-image is intended for V1 |
 | **8** | **Organizer payout is undefined — and the docs contradict each other.** `04-modele-economique.md` shows the organizer netting 47 TND on a 50 TND ticket (a second 6 % on the organizer side, echoed by « payé par organisateur » in `docs/README.md`), while the same document's own breakdown does not add up (6.00 TND to the platform, then 3.00 + 1.58 beneath it). **No payout or organizer-side deduction exists in the code** | The organizer dashboard cannot show revenue, and the event-creation form cannot show « vous recevrez X » — the two numbers an organizer most wants. This is the single largest blocked area in the organizer experience | **Settle the model, then implement it.** Decide whether the platform takes 6 % from the buyer only (code today) or 6 % from each side (the economic model), correct the losing document, and expose a payout/earnings figure. Until then organizer surfaces show gross sales only |
+
+| **9** | **`config/payments.config.ts` is never registered, and it contradicts the live default.** The file declares `payments.commission.rate` with a **`0.04`** fallback and `payments.fraud.*` limits — but it is absent from `ConfigModule.forRoot({ load: [...] })` in `app.module.ts:32`, so **nothing reads it**. The order handler instead reads the raw env var directly: `configService.get('PLATFORM_COMMISSION_RATE', 0.06)` (`create-order.handler.ts:41`), and the fraud service falls back to its inline `5` / `10` literals | Two different documented defaults for the same setting (4 % vs 6 %). Today `.env.example` sets `0.06` so behaviour is correct, but any environment that omits the var gets 6 % from the handler while the config file claims 4 % — and a future reader may "fix" the wrong one | Either register `paymentsConfig` in `app.module.ts` and read `payments.commission.rate` everywhere, or delete the dead file. Do not leave both |
 
 **Also worth noting** — the frontend's current `src/lib/api/client.ts` hard-redirects to
 `/auth/login` and clears the token on **any** 401, with no refresh attempt, even though
@@ -1874,7 +1877,7 @@ Every backend claim in this document is traceable to source:
 | Payment providers and hand-off shape | `payment-method.vo.ts`, `application/types/payment-provider.types.ts` |
 | Discovery filters and sorts | `backend/src/modules/events/application/dtos/event-filter.dto.ts` |
 | Card-level price and availability | `event-list.dto.ts`, `ticket-type.dto.ts` (`TicketTypeSummaryDto`) |
-| `soldQuantity` moves at **hold** time | `backend/src/modules/tickets/infrastructure/adapters/event-query.adapter.ts:75` (atomic `sold_quantity + :qty`), called from `reserve-tickets.handler.ts:99` |
+| `soldQuantity` moves at **hold** time | `backend/src/modules/tickets/infrastructure/adapters/event-query.adapter.ts:88` (atomic `sold_quantity + :qty`), called from `reserve-tickets.handler.ts:99` |
 | Availability restored on expiry / cancel | `expire-tickets.handler.ts:93`, `cancel-tickets.handler.ts:105` |
 | Order creation reserves tickets internally | `create-order.handler.ts` (step 5, `ticketReservation.reserveTickets`) |
 | Reservation holder limits (1–10) | `backend/src/modules/tickets/application/dtos/reserve-tickets.dto.ts` |

@@ -68,5 +68,15 @@ Tracked in detail in [Phase 1 §L](02-product-design-brief.md#l-open-contract-qu
 4. **Settle the organizer payout model** — `04-modele-economique.md` shows the organizer netting
    47 TND on a 50 TND ticket, but no payout logic exists in the code. This blocks all organizer
    revenue UI; until resolved, organizer surfaces show **gross sales only**.
-5. **Define the QR payload contract** — the client must render the QR locally to work offline at a
-   venue door; a server-rendered image URL would make that impossible.
+5. **Resolve `config/payments.config.ts`** — it is not registered in `ConfigModule.load`
+   (`app.module.ts:32`), so its `payments.commission.rate` fallback of **4 %** is dead config
+   contradicting the **6 %** the order handler actually applies (`create-order.handler.ts:41`).
+   Register it or delete it — do not leave both.
+6. **Give admins a working takedown** — neither `RolesGuard` nor `IsEventOwnerGuard` grants an
+   admin bypass, so `DELETE /events/:id` always `403`s for an admin. `/admin/moderation` ships
+   read-only until this exists.
+7. **Add `POST /auth/resend-verification`** — `POST /auth/login` returns `403` for an unverified
+   email, and there is currently no way for the user to get a new link.
+8. **Confirm QR-string stability** — `TicketDto.qrCode` is already a client-renderable string
+   (`v1-{uuid}-{checksum}`), so offline tickets work as designed. The only open question is whether
+   it may be rotated, which decides the cache policy.

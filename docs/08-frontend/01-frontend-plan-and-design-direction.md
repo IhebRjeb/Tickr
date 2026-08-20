@@ -4,7 +4,7 @@
 | --- | --- |
 | **Type** | Epic / Discovery |
 | **Priority** | High |
-| **Status** | 🚧 Phases 1–7 & 11 delivered · 8–10 pending Figma |
+| **Status** | 🚧 Phases 1–7 & 11 delivered · 8–10 spec-complete, Figma artefacts pending |
 | **Sprint** | Frontend Sprint 0 (Foundation) |
 | **Depends on** | Backend REST API (`/api`) — complete |
 | **Blocks** | All frontend implementation tickets |
@@ -49,7 +49,8 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 >
 > Two of these are **backend work items**, not documentation fixes: implementing `GET /config/public`,
 > and adding a machine-readable `code` to the error envelope so the UI can tell "sold out" from
-> "bad input". Both are tracked in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend).
+> "bad input" (the validation filter already emits `code: 'VALIDATION_ERROR'`; `http-exception.filter.ts`
+> emits none). Both are tracked in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend).
 
 ---
 
@@ -77,14 +78,15 @@ These are already fixed by the repository and backend and are **inputs**, not op
 
 > Design deliverables must be expressed in terms of this stack (e.g. design tokens as Tailwind theme values, components using Headless UI primitives). No new UI framework is to be introduced in this Epic.
 
-### 2.2 API & auth contract (from `docs/02-technique/02-api-contract.md`)
+### 2.2 API & auth contract (from `docs/02-technique/02-api-contract.md`, corrected against `backend/src`)
 
 - Base URL: `https://api.tickr.tn/api` (JSON, HTTPS, UTF-8).
-- Auth: `Authorization: Bearer <JWT>` — **HS256**, access token **24h**, refresh token **30d** (`POST /auth/refresh-token`).
+- Auth: `Authorization: Bearer <JWT>` — **HS256**; access token **7 d** and refresh token **30 d** by default (`JWT_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN`, `jwt.service.ts:74–75` — the "24h" in the api-contract doc is stale). Refresh via `POST /auth/refresh-token`.
+- `POST /auth/login` returns **`403`** when the email is unverified or the account is deactivated (`auth.controller.ts:189`) — the login form must render this as "verify your email / account disabled", never as a generic forbidden.
 - Roles (from `UserRole` enum): **`PARTICIPANT`**, **`ORGANIZER`**, **`ADMIN`**.
 - Pagination: `?page=&limit=` → `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` (flat, **not** nested under `meta`).
 - Error envelope: `{ statusCode, message, error, timestamp, path }`. Validation failures add `errors[]`.
-- Status codes in use: `200/201/204/400/401/403/404/409/429/500` — the UI **must** define a state for `401`, `403`, `404`, business conflicts (sold out — **currently surfaced as `400`, not `409`**), and `429`.
+- Status codes actually emitted: `200/201/400/401/403/404/429/500` — no `204` (all DELETEs return `200` with a body) and no `409` today. The UI **must** define a state for `401`, `403`, `404`, business conflicts (sold out — **surfaced as `400`**, `INSUFFICIENT_AVAILABILITY`), and `429` (global throttle: 3 req/s, 20 req/10 s; login additionally 5 attempts/15 min).
 
 ---
 
@@ -120,10 +122,12 @@ Route tree grouped by access level and mapped to Next.js App Router segments and
 
 | Zone | Example routes | Role required |
 | --- | --- | --- |
-| Public | `/`, `/events`, `/events/[id]`, `/search`, `/login`, `/register`, `/forgot-password`, `/reset-password` | none |
-| Participant | `/checkout/[orderId]`, `/tickets`, `/tickets/[id]`, `/orders`, `/orders/[id]`, `/notifications`, `/profile`, `/settings` | `PARTICIPANT` |
-| Organizer | `/organizer`, `/organizer/events`, `/organizer/events/new`, `/organizer/events/[id]/edit`, `/organizer/events/[id]/ticket-types`, `/organizer/events/[id]/participants`, `/organizer/events/[id]/analytics`, `/organizer/scanner` | `ORGANIZER` |
-| Admin | `/admin`, `/admin/moderation`, `/admin/reports` | `ADMIN` |
+| Public | `/`, `/events`, `/events/[id]`, `/categories/[category]`, `/search`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | none |
+| Participant | `/checkout/[orderId]`, `/tickets`, `/tickets/[id]`, `/orders`, `/orders/[id]`, `/notifications`, `/profile`, `/settings` | any authenticated role |
+| Organizer | `/organizer`, `/organizer/events`, `/organizer/events/new`, `/organizer/events/[id]/edit`, `/organizer/events/[id]/ticket-types`, `/organizer/events/[id]/participants`, `/organizer/events/[id]/analytics`, `/organizer/scanner` | `ORGANIZER` (`ADMIN` read-only) |
+| Admin | `/admin`, `/admin/moderation`, `/admin/users`, `/admin/reports` | `ADMIN` |
+
+The delivered tree fixes **33 canonical routes** plus the `/legal/*` static group: Public 11 · Participant 9 · Organizer 9 · Admin 4 (see [Phase 2 §1.6](03-information-architecture.md#16-route-count-reconciliation)).
 
 **Acceptance:** Every route maps to at least one backend endpoint (or is explicitly static); navigation hierarchy validated per role.
 
@@ -140,10 +144,10 @@ Document each journey as steps → screen → API call → result state. Journey
   3. **Create the order → `POST /orders` — this reserves the tickets internally** (`create-order.handler.ts`, step 5), returning the 15-minute `expiresAt`.
      ⚠️ **Corrected:** earlier drafts inserted a separate `POST /tickets/reserve` here. The participant flow must **not** call it — a second hold would be orphaned against the same stock.
   4. Pay → `POST /orders/:id/pay` (Konnect / Paymee → `paymentUrl`; Stripe → `clientSecret`)
-  5. Confirmation is **webhook-driven** → poll `GET /orders/:id` until a terminal status. `POST /tickets/confirm` is called by the Payments module, **not** by the UI.
+  5. Confirmation is **webhook-driven** → poll `GET /orders/:id` until a terminal status. `POST /tickets/confirm` is called by the Payments module, **not** by the UI. Prolonged `PENDING`/`PROCESSING` is shown as *payment verification in progress* — never as a failure, never with a retry.
   6. View ticket + QR → `GET /tickets/:id`, download `GET /tickets/:id/pdf`
 - **Organizer:** create event → `POST /events`; add ticket types → `POST /events/:id/ticket-types`; upload cover → `POST /events/:id/image`; publish → `POST /events/:id/publish`; analytics → `GET /analytics/dashboard`, `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline`; check-in → `POST /tickets/check-in`, `GET /tickets/event/:eventId/stats`.
-- **Edge cases (each must have a defined screen/state):** reservation hold expired, order/payment failed (`POST /orders/:id/pay` failure), session/token expired (`401` → refresh flow), sold out (**currently `400`**, not `409`), refund (`POST /orders/:id/refund`), event cancelled, empty organizer dashboard, empty search results, no notifications, rate limited (`429`; note order-creation rate limiting returns **`403`**).
+- **Edge cases (each must have a defined screen/state):** reservation hold expired, order/payment failed (`POST /orders/:id/pay` failure), session/token expired (`401` → refresh flow), sold out (**currently `400`**, not `409`), ticket limit exceeded (`TICKET_LIMIT_EXCEEDED`, 10 tickets/event/user → `400`), refund (`POST /orders/:id/refund`), event cancelled, empty organizer dashboard, empty search results, no notifications, rate limited (`429`; order creation instead returns **`403`** `RATE_LIMITED` at 5 orders/h/user).
 
 **Acceptance:** Every journey names the exact endpoints and the UI state for both success and each failure branch.
 
@@ -165,7 +169,7 @@ For every screen from Phase 4, specify:
 - Features & interactions
 - Components consumed (links to Phase 6)
 - Required API calls (method + path)
-- All UI states: **loading (skeleton), empty, error, success, forbidden (`403`), conflict (`409`)**
+- All UI states: **loading (skeleton), empty, error, success, forbidden (`403`), business conflict (arrives as `400`, not `409`), rate limited (`429`)**
 - Permission/role gating
 
 **Acceptance:** Every listed API path exists in the backend Swagger/Postman collection (`docs/collections`).
@@ -175,7 +179,7 @@ For every screen from Phase 4, specify:
 ### Phase 6 — Component Inventory
 **Output:** `docs/08-frontend/07-component-inventory.md`
 
-Catalog reusable components with props contract and states. Tickr-specific components (not generic examples): `EventCard`, `EventFilters`, `TicketTypeSelector`, `ReservationTimer` (countdown for the hold), `PaymentMethodPicker` (Stripe/Konnect/Paymee), `OrderSummary` (with 6% commission line), `TicketCard`, `QrTicket`, `CheckInScanner`, `AnalyticsChart`, `SalesTimelineChart`, `RevenueStat`, plus base primitives (Button, Input, Select, Modal, Drawer, Toast, Skeleton, Badge, Pagination, DatePicker, SearchBar) built on Headless UI.
+Catalog reusable components with props contract and states. Tickr-specific components (not generic examples): `EventCard`, `EventFilters`, `TicketTypeSelector`, `ReservationTimer` (countdown for the hold), `PaymentMethodPicker` (Stripe/Konnect/Paymee), `OrderSummary` (commission line — default 6 %, added on top of the subtotal), `TicketCard`, `QrTicket`, `CheckInScanner`, `AnalyticsChart`, `SalesTimelineChart`, `RevenueStat`, plus base primitives (Button, Input, Select, Modal, Drawer, Toast, Skeleton, Badge, Pagination, DatePicker, SearchBar) built on Headless UI.
 
 **Acceptance:** Each component lists its states and maps to at least one screen from Phase 4.
 
@@ -263,9 +267,9 @@ Must specify:
 - [ ] Feature Inventory: every API path verified against backend Swagger/Postman
 - [ ] Component Inventory with props + states, each mapped to ≥1 screen
 - [ ] Design System established as Tailwind-consumable tokens (AA verified)
-- [ ] Low-fidelity wireframes for all screens
-- [ ] High-fidelity mockups for all screens (manual review passed)
-- [ ] Responsive specs + interactive prototype of the purchase flow
+- [ ] Low-fidelity wireframes for all screens — *spec complete (`09-wireframes.md`, 14 archetypes); Figma frames pending*
+- [ ] High-fidelity mockups for all screens (manual review passed) — *process + review gate specified (`10-hifi-and-responsive.md`); Figma pending*
+- [ ] Responsive specs + interactive prototype of the purchase flow — *responsive specs delivered (`10-hifi-and-responsive.md` §3–§4); prototype pending*
 - [ ] Frontend Architecture documented and mirrors backend modules
 - [ ] All deliverable docs committed under `docs/08-frontend/`
 - [ ] Ready for React implementation (downstream tickets can be created)
@@ -280,13 +284,13 @@ Must specify:
 
 **Auth** (`/auth`) — `POST /register`, `POST /login`, `POST /verify-email`, `POST /request-reset`, `POST /reset-password`, `POST /refresh-token`
 
-**Users** (`/users`) — `GET /me`, `PUT /me`, `PATCH /me/password`, `DELETE /me`, `GET /:id`
+**Users** (`/users`) — `GET /me`, `PUT /me`, `PATCH /me/password`, `DELETE /me`, `GET /:id`, `GET /` (paginated user list — **ADMIN only**)
 
-**Events** (`/events`) — `GET /`, `GET /search`, `GET /category/:category`, `GET /upcoming`, `GET /:id`, `GET /organizer/:organizerId`, `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/publish`, `POST /:id/ticket-types`, `PUT /:id/ticket-types/:typeId`, `DELETE /:id/ticket-types/:typeId`, `POST /:id/image`
+**Events** (`/events`) — `GET /` (**PUBLISHED events only**), `GET /search`, `GET /category/:category`, `GET /upcoming`, `GET /:id`, `GET /organizer/:organizerId` (**ORGANIZER/ADMIN only** — there is no public organizer profile), `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/publish`, `POST /:id/ticket-types`, `PUT /:id/ticket-types/:typeId`, `DELETE /:id/ticket-types/:typeId`, `POST /:id/image`
 
-**Tickets** (`/tickets`) — `POST /reserve`, `POST /confirm`, `GET /:id`, `GET /:id/pdf`, `POST /:id/transfer`, `POST /cancel`, `POST /check-in`, `GET /event/:eventId/stats`
+**Tickets** (`/tickets`) — `GET /` (own tickets, paginated, `?status=`), `GET /:id`, `GET /:id/pdf`, `POST /:id/transfer`, `POST /cancel`, `POST /check-in`, `GET /event/:eventId/stats` · `POST /reserve` and `POST /confirm` exist but are **never called by the UI**: reservation happens inside `POST /orders`, confirmation inside the payment webhook flow
 
-**Orders / Payments** (`/orders`) — `POST /`, `GET /:id`, `POST /:id/pay`, `POST /:id/refund` · Webhooks (server-to-server, not UI): `/payments/webhooks/{stripe,konnect,paymee}`
+**Orders / Payments** (`/orders`) — `POST /`, `GET /` (own orders, paginated), `GET /:id`, `POST /:id/pay`, `POST /:id/refund` · Webhooks (server-to-server, not UI): `/payments/webhooks/{stripe,konnect,paymee}`
 
 **Analytics** (`/analytics`) — `GET /events/:id`, `GET /dashboard`, `GET /platform`, `GET /events/:id/sales-timeline`, `GET /revenue-report`, `POST /export`
 

@@ -697,7 +697,7 @@ imagery desaturated) · `completed` · `sold-out-entirely` · `error` · `404`.
 
 **States:** `confirmed` · `checked-in` · `expired` · `cancelled` · `event-cancelled` · `offline` · `loading`.
 
-⚠ Blocked on the QR payload contract ([Phase 4 §7.9](05-screen-inventory.md#7-other-contract-gaps-that-shape-screens)) — **this blocks P0.**
+The payload comes from `TicketDto.qrCode`, a plain string rendered client-side — offline works as drawn. Only its cache lifetime is open ([Phase 4 §7.9](05-screen-inventory.md#7-other-contract-gaps-that-shape-screens)).
 
 ---
 

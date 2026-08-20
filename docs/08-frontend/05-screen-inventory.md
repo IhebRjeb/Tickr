@@ -27,7 +27,7 @@
 | **4** | [Money-path screens in detail](#4-money-path-screens-in-detail) | The five screens where a defect costs a user money |
 | **5** | [Cross-cutting states](#5-cross-cutting-states-every-screen-implements) | What every screen implements without being told |
 | **6** | [Blocked by `GET /config/public`](#6-screens-blocked-or-degraded-by-the-missing-get-configpublic) | The blast radius of the missing endpoint, and the interim constant |
-| **7** | [Other contract gaps](#7-other-contract-gaps-that-shape-screens) | Eight verified gaps that change what a screen can be — one of them blocks P0 |
+| **7** | [Other contract gaps](#7-other-contract-gaps-that-shape-screens) | Nine verified gaps that change what a screen can be — two of them block P0 |
 | **8** | [The P0 MVP cut](#8-the-p0-mvp-cut) | The minimum set for a first usable release, and its one hard dependency |
 | **9** | [Route → App Router file map](#9-route--app-router-file-map) | Directly implementable, one line per screen |
 | **10** | [Risks and open questions](#10-risks-and-open-questions) | What could still move |
@@ -68,8 +68,8 @@ Every screen also implements everything in [§5](#5-cross-cutting-states-every-s
 |---|---|
 | `L` | Loading — a skeleton matching the final layout. Never a bare spinner (Phase 1 §G.1) |
 | `∅` | A designed empty state: an explanation plus one action that resolves it |
-| `err` | The shared error mapping ([§5.4](#54-the-three-meanings-of-403)), rendered in the shape §5.3 prescribes |
-| `403` | A refusal — disambiguated, because 403 has **three unrelated meanings** in this API |
+| `err` | The shared error mapping ([§5.4](#54-the-eight-meanings-of-403--and-the-three-that-shape-screens)), rendered in one of the three failure shapes (Phase 1 §G.0) |
+| `403` | A refusal — disambiguated, because 403 has **eight documented meanings** in this API ([§5.4](#54-the-eight-meanings-of-403--and-the-three-that-shape-screens)) |
 | `404` | A designed not-found, never a bare page |
 | `off` | Offline: the screen's degraded but honest behaviour |
 
@@ -93,13 +93,13 @@ scaffolds do not match the implemented backend. **This document follows the code
 | `GET /config/public` supplies the commission rate | **⚠ NOT IMPLEMENTED** — there is no config controller anywhere. [§6](#6-screens-blocked-or-degraded-by-the-missing-get-configpublic) |
 | Pagination `{ data, meta: { … } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` |
 | The error envelope carries a machine-readable code | `{ statusCode, message, error, timestamp, path }` — the domain error types are **discarded at the controller boundary** |
-| Sold out → `409`, rate limited → `429` | Sold out → **`400`**; order-creation rate limiting → **`403`**; `429` comes only from the global throttler |
+| Sold out → `409`, rate limited → `429` | Sold out → **`400`**; order-creation rate limiting → **`403`**; `429` comes only from the throttler (3 req/s, 20 req/10 s, plus the stricter per-endpoint auth limits) |
 
 One further correction, from the existing frontend rather than the Epic:
 `frontend/src/lib/api/client.ts` redirects to **`/auth/login`**, while the canonical tree says
 **`/login`**. The same interceptor hard-redirects on *any* 401 with **no refresh attempt**, although
-`POST /auth/refresh-token` exists. Both are defects; §5.1
-specifies the fix, and checkout cannot ship before it lands.
+`POST /auth/refresh-token` exists. Both are defects; the 401 rule in
+[§5](#5-cross-cutting-states-every-screen-implements) specifies the fix, and checkout cannot ship before it lands.
 
 ---
 
@@ -250,7 +250,7 @@ All nine are **CSR**, for the reason in [§1.2](#12-why-nothing-behind-a-jwt-is-
 | **Order detail** | `/orders/[id]` | authenticated | **CSR** — the receipt: personalised and money-bearing | `GET /orders/:id`<br>`POST /orders/:id/refund` | `L` · `404` · one designed state per `OrderStatus` · the breakdown — `subtotal`, `platformFee`, a **conditional** `paymentFees` line, `total` — rendered **verbatim**, never recomputed · refund confirmation showing the arithmetic **before** the request (refund = `subtotal + paymentFees`; **the commission is not returned**) · `RefundStatus.PENDING` · refunded, with `refundedAt` / `refundReason` · refund `FAILED` → support path, **no retry button** · `PENDING` + countdown → resume payment · `403` = not your order | **P0** |
 | **My tickets** | `/tickets` | authenticated | **CSR**, cache-persisted — this is the bottom-tab destination and it must open fast on a bad connection at a venue | `GET /tickets?page=&limit=&status=` (server-side `status`, unlike `/orders`)<br>+ `GET /events/:id` per distinct `eventId` | `L` · `∅` « Vous n'avez pas encore de billets » → « Découvrir des événements » · `err` · grouped upcoming vs. past · an event happening **today** promoted to the top · `RESERVED` rows show the `reservedUntil` countdown · `CHECKED_IN` / `EXPIRED` / `CANCELLED` below the fold · `off` from cache · ⚠ same **N+1** as `/orders` | **P0** |
 | **Ticket + QR** | `/tickets/[id]` | authenticated (owner **or** the event's organizer) | **CSR + offline-first** — the most unforgiving context in the product: a venue door, at night, on a phone with no signal. `TicketDto.qrCode` is a **string**, so the code is rendered locally and cached; nothing on this screen may require the network | `GET /tickets/:id`<br>`GET /tickets/:id/pdf` (backup; `pdfUrl` may be `null`)<br>`POST /tickets/:id/transfer` `{ newOwnerEmail }` | `L` · `CONFIRMED` — live QR ≥ 240 px on white with a quiet zone, brightness boost, dark `ink-950` pass · `CHECKED_IN` — QR visually spent + `checkedInAt` · `RESERVED` — countdown, no QR yet · `EXPIRED` / `CANCELLED` — QR hidden, reason given · event-cancelled banner · transfer sheet: irreversible, **returns a new `qrCode` and kills the old one** — stated in words before confirming, and the sender's cached copy is purged on success · `off` renders from cache · `403` / `404` | **P0** |
-| **Message history** | `/notifications` | authenticated | **CSR** — personalised log | `GET /notifications/me?page=&limit=`<br>`GET /notifications/:id` (in-page expansion, not a route) | `L` · `∅` « Aucun message » — the calmest state in the product, no illustration · `err` · a `FAILED` row shows a translated reason, never the raw `failureReason` · pagination · ⚠ **a delivery log, not an inbox**: no body, no read state, therefore **no unread badge anywhere in the navigation** · channels are **EMAIL and SMS only** — the copy says « e-mail » or « SMS », never « notification » (§7.5) | P1 |
+| **Message history** | `/notifications` | authenticated | **CSR** — personalised log | `GET /notifications/me?page=&limit=`<br>`GET /notifications/:id` (in-page expansion, not a route) | `L` · `∅` « Aucun message » — the calmest state in the product, no illustration · `err` · a `FAILED` row shows a translated reason, never the raw `failureReason` · pagination · ⚠ **a delivery log, not an inbox**: no body, no read state, therefore **no unread badge anywhere in the navigation** · channels are **EMAIL and SMS only** — the copy says « email » or « SMS », never « notification » (§7.5) | P1 |
 | **Profile** | `/profile` | authenticated | **CSR** — personalised and mutating. Also the canonical source of the current user's `id`, which the organizer zone needs for `GET /events/organizer/:organizerId`; fetched once per session and cached | `GET /users/me`<br>`PUT /users/me` | `L` · view · edit with a dirty-state navigation guard · saving · field validation · saved confirmation · `err` · ⚠ `UserProfileDto` exposes **no `emailVerified` field**, so no "confirm your email" banner can be rendered here | P1 |
 | **Settings** | `/settings` | authenticated | **CSR** — personalised, mutating, destructive | `PATCH /users/me/password`<br>`GET /notifications/preferences/me`<br>`PUT /notifications/preferences/me`<br>`DELETE /users/me` | `L` · password form (current / new / confirm; `400` = wrong current password, shown on that field) · preferences are exactly **four booleans** — `emailEnabled`, `smsEnabled`, `marketingEnabled`, `eventRemindersEnabled` — optimistic toggle with rollback on failure · **no PUSH toggle**, ever · account deletion in a visually distinct danger section behind a typed confirmation, stating what happens to existing tickets · deleted → forced logout · `429` | P1 |
 
@@ -282,7 +282,7 @@ increase density to 40 px rows, never a bolted-on admin theme.
 | Screen | Route | Role | Rendering + why | Primary endpoint(s) | Key states | P |
 |---|---|---|---|---|---|---|
 | **Platform overview** | `/admin` | `ADMIN` | **CSR** — the only endpoint in the analytics controller carrying `@Roles('ADMIN')` | `GET /analytics/platform` → `{ periodStart, periodEnd, totalRevenue, currency, platformCommission, totalEvents, totalTicketsSold, activeUsers, conversionRate, revenueByCategory[], topEvents[], lastUpdated }` | `L` · `∅` · `err` · `403` non-admin · period selector · **`lastUpdated` rendered verbatim**, so a stale aggregate is never mistaken for live data | P2 |
-| **Reports & export** | `/admin/reports` | `ADMIN` | **CSR** — a form plus a generated artefact | `GET /analytics/revenue-report` (requires `startDate`, `endDate`)<br>`POST /analytics/export` `{ reportType, format: CSV\|PDF, startDate, endDate, eventId? }` → `{ url, generatedAt, … }` | `L` · form · generating · **ready → the download is a link to the returned `url`**, not a client-generated blob · **`NO_DATA` returns 404 and must render as an empty state, not an error page** · `400` invalid filters · `403` · ⚠ both endpoints are **`JwtAuthGuard` only at the guard level**; the admin scope is applied inside the handler (`ACCESS_DENIED → 403`). The UI restricts the route to `ADMIN`, but must not assume the API does | P2 |
+| **Reports & export** | `/admin/reports` | `ADMIN` | **CSR** — a form plus a generated artefact | `GET /analytics/revenue-report` (requires `startDate`, `endDate`)<br>`POST /analytics/export` `{ reportType, format: CSV\|PDF, startDate, endDate, eventId? }` → `{ reportId, url, format }` | `L` · form · generating · **ready → the download is a link to the returned `url`**, not a client-generated blob · **`NO_DATA` returns 404 and must render as an empty state, not an error page** · `400` invalid filters · `403` · ⚠ both endpoints are **`JwtAuthGuard` only — no `@Roles('ADMIN')`**: `revenue-report` can 403 via handler-level `ACCESS_DENIED`, and the export handler applies **no admin scope at all** (`generate-report.handler.ts`). The UI restricts the route to `ADMIN`, but must not assume the API does | P2 |
 | **Event moderation** | `/admin/moderation` | `ADMIN` | **CSR** | `GET /events` (read)<br>~~`DELETE /events/:id`~~ — **unusable by an admin** | `L` · `∅` · `err` · `403` · ⚠⚠ **read-only in V1.** `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` and `RolesGuard` grants **no admin bypass** (`roles.guard.ts`), so an admin gets 403 on any event they do not own. `GET /events` also returns **`PUBLISHED` only** — the controller never forwards the DTO's `status` field — so drafts are invisible. Ship a « Signaler à l'organisateur » path and a visible, explained « suppression indisponible » state; **do not ship a delete button that always 403s** (§7.8) | P2 |
 | **User directory** | `/admin/users` | `ADMIN` | **CSR** — dense table, desktop-first at 40 px rows | `GET /users?page=&limit=` (`@Roles('ADMIN')`)<br>`GET /users/:id` (`@Roles('ADMIN')`) | `L` · `∅` · `err` · `403` · pagination · **the detail view is a slide-over on this route**, not a separate URL · ⚠ **read-only in V1** — no endpoint changes a role, bans, or deactivates another user; `DELETE /users/me` is self-service only | P2 |
 
@@ -306,15 +306,15 @@ counted separately because its three pages share one template and carry no endpo
 
 ### 3.1 Endpoints deliberately left unwired
 
-Nine backend endpoints are reachable but **no V1 screen calls them**. This is intentional and recorded
+Six backend endpoints are reachable but **no V1 screen calls them**. This is intentional and recorded
 so a future reader does not mistake it for an oversight:
 
 | Endpoint | Why no screen calls it |
 |---|---|
 | `POST /tickets/reserve` | `POST /orders` reserves internally; calling this too would create an orphaned hold |
 | `POST /tickets/confirm` | Called by the Payments module after a successful payment, not by the UI |
+| `POST /tickets/cancel` | Cancellation flows through `POST /orders/:id/refund`, which releases the tickets internally |
 | `POST /notifications` | Server-side dispatch; a participant never composes a notification |
-| `GET /users/:id` | Only the admin directory needs it, and it is folded into `/admin/users` as a slide-over |
 | `POST /payments/webhooks/*` | Server-to-server. The UI **polls** `GET /orders/:id` instead |
 | `DELETE /events/:id` | Organizer-only + owner-only — see §7.8 |
 
@@ -393,7 +393,7 @@ This is a known-drift compromise, not a design — see [Phase 1 §L](02-product-
 | 7.6 | `GET /notifications/unsubscribe/:token/:category` is a **side-effecting GET** | Must never be prefetched or preloaded; `prefetch={false}` and `rel="nofollow"`. A link-scanner would silently unsubscribe users |
 | 7.7 | Organizer payout is undefined | Organizer screens show **gross sales only**, explicitly labelled; no « vous recevrez » figure until the model is settled |
 | 7.8 | **Admin moderation has no working takedown** | `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard`, and **neither guard grants an admin bypass** (`roles.guard.ts`, `is-event-owner.guard.ts:46`). An admin gets `403` on any event they do not own. `/admin/moderation` ships **read-only** with an explained « suppression indisponible » state — **never a delete button that always fails** |
-| 7.9 | QR payload contract undefined | `/tickets/[id]` requires a string payload it can render locally; a server-rendered image URL would break offline use at the door |
+| 7.9 | QR payload **is** a client-renderable string — but its stability is unspecified | ✅ Not a blocker. `TicketDto.qrCode` is a plain string `v1-{uuid}-{checksum}` (`ticket.dto.ts:33`, `qr-code.vo.ts`), so `/tickets/[id]` renders the QR locally and offline. The open question is narrower: whether the string is **stable for the life of the ticket** (safe to cache indefinitely) or may be rotated. Until confirmed, cache it and revalidate on focus |
 
 ---
 
@@ -407,8 +407,9 @@ ticket, and present it at the door; an organizer can create, publish and check i
 `/tickets` · `/tickets/[id]` · `/organizer` · `/organizer/events` · `/organizer/events/new` ·
 `/organizer/scanner`
 
-> **P0 has one hard dependency:** the QR payload contract ([§7.9](#7-other-contract-gaps-that-shape-screens)).
-> Without a client-renderable payload, `/tickets/[id]` cannot work offline and P0 is not shippable.
+> **P0 has no hard backend blocker.** The QR is already a client-renderable string, so `/tickets/[id]`
+> works offline as designed. The remaining pre-P0 confirmation is whether that string is stable for the
+> ticket's lifetime ([§7.9](#7-other-contract-gaps-that-shape-screens)) — which changes the cache policy, not the design.
 
 **P1 — the complete MVP (+12).** `/categories/[category]` · `/orders` · `/orders/[id]` ·
 `/profile` · `/settings` · `/notifications` · `/organizer/events/[id]` · `/edit` · `/ticket-types` ·
@@ -465,7 +466,7 @@ other navigation that offers an exit mid-payment.
 
 | Risk | Impact | Owner |
 |---|---|---|
-| QR payload contract undefined | **Blocks P0** | Backend |
+| QR string stability unspecified | Cache policy only — **does not block P0** | Backend |
 | `GET /config/public` missing | Pre-order prices are estimates that will drift | Backend |
 | Organizer payout contradiction | Organizer revenue UI cannot ship | Product + Backend |
 | Admin takedown 403s | `/admin/moderation` is read-only | Backend |
@@ -483,7 +484,7 @@ other navigation that offers an exit mid-payment.
 - [x] Priority cut (P0/P1/P2) defined
 - [x] Screens blocked or degraded by missing backend capability identified
 - [ ] **Reviewed and signed off by the Product Owner**
-- [ ] QR payload contract confirmed — **blocks P0**
+- [ ] QR string confirmed stable for the ticket's lifetime (affects cache policy, not the design)
 
 ---
 
