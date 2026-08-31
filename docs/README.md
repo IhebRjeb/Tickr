@@ -89,6 +89,14 @@ docs/
 │   ├── COPILOT-AGENTS-QUICK-REF.md     # Quick reference for agents
 │   └── TECH-LEAD-AGENT-GUIDE.md        # Tech lead agent guide
 │
+├── 08-frontend/                        # FRONTEND DESIGN & UX (Epic #64)
+│   ├── README.md                       # Deliverables index (Phases 1-11)
+│   ├── 01-frontend-plan-and-design-direction.md
+│   ├── 02-product-design-brief.md      # Phase 1 — design direction (locked)
+│   ├── 03-…-11-…                       # IA, journeys, screens, features,
+│   │                                   # components, design system, wireframes,
+│   │                                   # hi-fi/responsive, frontend architecture
+│
 └── collections/                        # API COLLECTIONS
     └── tickr-api.postman_collection.json
 ```
