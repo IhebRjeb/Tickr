@@ -917,7 +917,7 @@ so the URL→API mapping is a strict allowlist, not a pass-through.
 |---|---|---|---|---|
 | `category` | `category` | `EventCategory` enum, **UPPERCASE** | none | Single value. The API has no multi-category filter — the chip row is single-select, and the UI must not imply otherwise |
 | `city` | `city` | string ≤ 100, case-insensitive | none | Bound to the persistent header city chip |
-| `country` | `country` | string ≤ 100 | none | Supported but **not surfaced** in V1 (Tunisia-only product). Kept in the allowlist so a deep link does not 400 |
+| `country` | `country` | string ≤ 100 | none | Supported but **not surfaced** in the Tunisia-only V1 launch scope. Kept in the allowlist so a deep link does not 400; later markets must expose country through localisation rather than a generic global filter |
 | `dateFrom` | `dateFrom` | URL: `YYYY-MM-DD` → API: full ISO 8601 | none | Expanded to `T00:00:00.000` **in `Africa/Tunis` (UTC+1, no DST)** then serialised as UTC. Expanding in the browser's local zone is the bug this row exists to prevent |
 | `dateTo` | `dateTo` | URL: `YYYY-MM-DD` → API: full ISO 8601 | none | Expanded to `T23:59:59.999` in `Africa/Tunis`. **Inclusive** — « samedi » must include Saturday |
 | `minPrice` | `minPrice` | decimal **dinars**, `.` separator, ≥ 0 | none | Not millimes. `50` means 50 DT. The UI displays `,` per `fr-TN` but the URL always uses `.` |

@@ -333,4 +333,10 @@ Must specify:
 
 ## 8. Notes
 
-This Epic intentionally excludes frontend development. Its outcome is a complete, backend-aligned UX/UI foundation that guides all frontend implementation and future evolution (planned mobile apps and social discovery features: recommendations, matching, networking). Any deliverable that cannot be traced to a backend capability or a defined static page must be flagged for scope review before design work proceeds.
+This Epic intentionally excludes frontend development. Its outcome is a complete, backend-aligned
+UX/UI foundation for the Tunisia-first V1 and a base for Tickr's wider product direction: a global,
+market-by-market event platform with future recommendations, opt-in event matching, go-together
+flows and organizer-configurable Event Spaces that may be public or limited to verified attendees.
+Those capabilities are post-V1 horizons, not current API claims. Any V1 deliverable that cannot be
+traced to an implemented backend capability or a defined static page must be flagged for scope
+review before design work proceeds.

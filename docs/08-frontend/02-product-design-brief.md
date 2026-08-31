@@ -1,7 +1,7 @@
 # Tickr — Product Design Brief & Design Direction
 
 **Phase:** 1 — Design Discovery
-**Status:** Proposed / awaiting sign-off
+**Status:** Ready for Product Owner sign-off
 **Date:** August 2026
 **Applies to:** `frontend/` (Next.js 16 · React 19 · TypeScript 5 strict · TailwindCSS 4)
 **Backend contract:** `https://api.tickr.tn/api` — V1 MVP, source of truth
@@ -13,7 +13,7 @@
 
 | | Section | What it fixes |
 |---|---|---|
-| **A** | [Product positioning](#a-product-positioning) | The market gap and six positioning commitments |
+| **A** | [Product positioning](#a-product-positioning) | The V1 market gap, six commitments and global product horizon |
 | **B** | [Target users](#b-target-users) | Participant, organizer, admin — and the 70/25/5 design weighting |
 | **C** | [Brand personality](#c-brand-personality) | Seven attributes made operational, voice, and anti-patterns |
 | **D** | [Visual direction](#d-visual-direction) | Colour, type, shape, imagery, spacing — all contrast-validated |
@@ -66,6 +66,12 @@ than quietly designed in. Where the current API contract is ambiguous for the UI
 
 > **Tickr is the fastest, clearest way to find something to do in Tunisia tonight — and to hold
 > the ticket in your hand ninety seconds later, paid in dinars, with nothing hidden.**
+
+That is the **V1 market position**, not the limit of the company. Tickr launches by solving one
+market deeply: trusted discovery, local payment and reliable entry for events in Tunisia. The
+long-term product is a global event platform where people do not only buy access to an event; they
+can discover the right event, find people with whom to attend, and participate in a temporary
+community around it before, during and after it.
 
 ### A.2 The market gap Tickr is entering
 
@@ -120,16 +126,81 @@ without redesign. Payment offers **Konnect** and **Paymee** as first-class local
 **Stripe** for international cards — and the ordering of those options on screen reflects local
 reality, not Stripe-first habit.
 
-### A.4 What Tickr is deliberately not
+### A.4 What Tickr is deliberately not in V1
+
+These are **launch-scope exclusions**, not permanent rejections of the wider product vision. A
+future capability belongs in the roadmap only after the ticketing core is dependable and the
+required identity, consent, privacy, safety and moderation foundations exist. Until its contract is
+implemented, it must not appear as inactive or fabricated UI in V1.
 
 | Not this | Why |
 |---|---|
 | A public organizer profile page | `GET /events/organizer/:organizerId` requires the `ORGANIZER` or `ADMIN` role — an anonymous visitor cannot list an organizer's events. |
-| A social network for events | No social graph, follows, comments or friend-attendance exists in the API. Designing for it would create dead UI. |
-| An algorithmic "for you" feed | No recommendation engine exists. Curation in V1 is **editorial and filter-driven**, and must look intentional rather than broken. |
+| A social network for events **in V1** | Event-based connection is part of the long-term direction, but no social graph, matching, conversation or attendance-visibility contract exists in the current API. Designing it now would create dead UI. |
+| An algorithmic "for you" feed **in V1** | Matching and recommendations are roadmap capabilities. Curation in V1 is **editorial and filter-driven**, and must look intentional rather than broken. |
 | A seat-map / assigned-seating product | Ticket types are quantity-based (`quantity` / `soldQuantity`). No seat inventory exists. |
 | A resale marketplace | A ticket `transfer` endpoint exists (peer-to-peer), but there is no pricing, listing or escrow. Transfer is a *courtesy*, not a market. |
 | A generic corporate SaaS dashboard | Even the organizer console is an event product: poster-led, warm, legible on a phone at a venue door. |
+
+### A.5 Product horizon — from Tunisian ticketing to a global event network
+
+#### North star
+
+> **Tickr helps people anywhere discover events worth attending, get there with confidence, and
+> connect safely with the people sharing that experience.**
+
+Ticketing is the entry point because a confirmed ticket creates a trusted relationship between a
+participant, an organizer and an event. That trust becomes the foundation for later matching and
+event communities. The transaction must remain a dependable product in its own right; social
+features enhance attendance but never obstruct discovery, payment, ticket access or check-in.
+
+#### V1 / MVP — prove the core in Tunisia
+
+- Make event discovery, purchase, payment, QR delivery and check-in dependable end to end.
+- Win local trust through TND pricing, French-first UX, Konnect and Paymee, with Stripe for
+  international cards.
+- Give organizers a usable creation, sales, analytics and door-operation workflow.
+- Validate marketplace liquidity, conversion, repeat purchase, organizer retention and support
+  load before increasing product breadth.
+- Build internationalisation-ready components and logical layouts now, while exposing only the
+  countries, currencies, languages and payment methods the V1 backend actually supports.
+
+#### V2 — international readiness and connection foundations
+
+V2 is the bridge from a Tunisia-specific launch to market-by-market expansion. Its exact release
+scope remains subject to V1 evidence, but the platform should become capable of supporting:
+
+- Arabic and English alongside French, including RTL layouts and locale-aware content.
+- Multiple countries, currencies, time zones, payment providers, tax rules and refund policies
+  without forking the product per market.
+- Market-specific discovery, moderation, support and organizer verification.
+- Optional participant interests and attendance-intent controls that can seed recommendations and
+  matching without exposing a person's plans by default.
+- The safety layer required before social interaction: consent, visibility controls, reporting,
+  blocking, moderation, age policy and auditable organizer controls.
+
+Expansion is **market by market**, not a single "worldwide" switch. A country launches only when
+payments, compliance, support, content supply and event operations are ready for that market.
+
+#### V3 — matching and event-native social experiences
+
+Once identity, ticketing and safety foundations are proven, Tickr can become an event network:
+
+- **Event matching:** opt-in recommendations for relevant events and opt-in matching between
+  compatible people attending or considering the same event, with clear privacy boundaries.
+- **Go-together flows:** participants can discover a group or companion for an event without
+  publishing attendance to the whole platform.
+- **Event Spaces:** a temporary event-specific feed and conversation space available before,
+  during and after an event.
+- **Organizer-configurable access:** each Event Space can be disabled, **public**, or restricted to
+  **verified attendees**. Organizers configure its access, opening time, closing/archive policy and
+  moderation team within platform safety rules.
+- **Experience continuity:** useful event updates, meeting points, questions, attendee exchanges
+  and post-event memories live with the event rather than in a disconnected generic social feed.
+
+"V2" and "V3" are product horizons, not promises of dates or fixed bundles. Discovery research,
+legal review, safety design and measurable V1 demand must precede implementation. This brief locks
+the direction while keeping the current frontend architecture grounded in the V1 API.
 
 ---
 
@@ -1770,14 +1841,23 @@ Anything **not** on this list is still open.
 
 ### M.1 Product and scope
 
-1. **Positioning:** discovery-led, trust-engineered, mobile-first event ticketing for Tunisia.
-   Target: **poster to paid in under 90 seconds** for a returning user.
+1. **V1 positioning:** discovery-led, trust-engineered, mobile-first event ticketing for Tunisia.
+  Target: **poster to paid in under 90 seconds** for a returning user. **Company north star:** a
+  global event network where people discover events, attend with confidence and connect safely
+  around the experience. Tunisia is the launch market, not the permanent market boundary.
 2. **Design weight: 70 % participant / 25 % organizer / 5 % admin.**
-3. **Confirmed non-goals for V1** — do not design IA for them: recommendations/personalised feed,
+3. **Confirmed non-goals for V1 only** — do not design IA for them: recommendations/personalised feed,
    favourites, reviews or ratings, social graph, seat maps, promo codes, waitlists, resale market,
-   multi-image galleries, push notifications, full app-wide dark theme.
+  multi-image galleries, push notifications, full app-wide dark theme. Matching and Event Spaces
+  remain explicit post-V1 horizons; they are not rejected product directions.
 4. **French-first (`fr-TN`)**, all strings externalised from day one; Arabic is a planned locale and
-   the type stack already accommodates it.
+  the type stack already accommodates it. English and multi-market localisation follow as Tickr
+  expands market by market.
+
+**Roadmap guardrail:** V1 design and implementation must not fabricate future social capabilities,
+but neither may they create avoidable barriers to them. Keep identity, localisation, currency,
+payment-provider and event-policy boundaries explicit; do not couple the reliable ticketing path to
+future matching or Event Space availability.
 
 ### M.2 Visual language
 
