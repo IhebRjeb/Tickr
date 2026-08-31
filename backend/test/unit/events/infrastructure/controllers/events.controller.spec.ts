@@ -14,6 +14,7 @@ import {
   UpdateTicketTypeHandler,
   RemoveTicketTypeHandler,
   UploadEventImageHandler,
+  SetEventCommissionOverrideHandler,
   GetEventByIdHandler,
   GetPublishedEventsHandler,
   SearchEventsHandler,
@@ -69,6 +70,7 @@ describe('EventsController', () => {
   let updateTicketTypeHandler: ReturnType<typeof createMockHandler>;
   let removeTicketTypeHandler: ReturnType<typeof createMockHandler>;
   let uploadEventImageHandler: ReturnType<typeof createMockHandler>;
+  let setEventCommissionOverrideHandler: ReturnType<typeof createMockHandler>;
   let getEventByIdHandler: ReturnType<typeof createMockHandler>;
   let getPublishedEventsHandler: ReturnType<typeof createMockHandler>;
   let searchEventsHandler: ReturnType<typeof createMockHandler>;
@@ -116,6 +118,7 @@ describe('EventsController', () => {
     updateTicketTypeHandler = createMockHandler();
     removeTicketTypeHandler = createMockHandler();
     uploadEventImageHandler = createMockHandler();
+    setEventCommissionOverrideHandler = createMockHandler();
     getEventByIdHandler = createMockHandler();
     getPublishedEventsHandler = createMockHandler();
     searchEventsHandler = createMockHandler();
@@ -135,6 +138,10 @@ describe('EventsController', () => {
         { provide: UpdateTicketTypeHandler, useValue: updateTicketTypeHandler },
         { provide: RemoveTicketTypeHandler, useValue: removeTicketTypeHandler },
         { provide: UploadEventImageHandler, useValue: uploadEventImageHandler },
+        {
+          provide: SetEventCommissionOverrideHandler,
+          useValue: setEventCommissionOverrideHandler,
+        },
         { provide: GetEventByIdHandler, useValue: getEventByIdHandler },
         { provide: GetPublishedEventsHandler, useValue: getPublishedEventsHandler },
         { provide: SearchEventsHandler, useValue: searchEventsHandler },
@@ -151,6 +158,29 @@ describe('EventsController', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('setEventCommissionOverride', () => {
+    it('should configure an event commission override', async () => {
+      const response = {
+        eventId: '550e8400-e29b-41d4-a716-446655440001',
+        commissionRateOverride: 0.03,
+        effectiveCommissionRate: 0.03,
+        usesGlobalRate: false,
+      };
+      setEventCommissionOverrideHandler.execute.mockResolvedValue(
+        Result.ok(response),
+      );
+
+      const result = await controller.setEventCommissionOverride(
+        response.eventId,
+        { ...mockUser, role: 'ADMIN' },
+        { commissionRate: 0.03 },
+      );
+
+      expect(result).toEqual(response);
+      expect(setEventCommissionOverrideHandler.execute).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('getPublishedEvents', () => {

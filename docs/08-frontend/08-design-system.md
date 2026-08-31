@@ -47,7 +47,7 @@ into **tokens that a developer pastes into a file**, plus the rules that stop th
 | [9](#9-iconography) | Iconography | Heroicons rules and the category glyph map |
 | [10](#10-accessibility-checklist) | Accessibility checklist | The AA obligations, per surface |
 | [11](#11-token-governance) | Token governance | How a token is added, and the CI guard |
-| [12](#12-backend-reality-checks-that-touch-this-document) | Backend reality checks | Including **⚠ `GET /config/public` is NOT IMPLEMENTED** |
+| [12](#12-backend-reality-checks-that-touch-this-document) | Backend reality checks | Including global and event-specific commission config |
 | [13](#13-inherited-defects-to-fix-when-this-lands) | Inherited defects | Four concrete fixes in existing frontend files |
 
 ### Where the tokens live
@@ -60,7 +60,7 @@ frontend/src/
 ├── lib/
 │   ├── utils.ts             ← §8.1: cn()
 │   ├── format/money.ts      ← §3.4: formatTnd(), the TND rules
-│   └── constants/pricing.ts ← §12.1: the interim commission constant
+│   └── api/config.ts         ← §12.1: global/effective commission query
 └── components/ui/
     └── button.tsx           ← §8.2: the reference implementation
 ```
@@ -760,9 +760,10 @@ export function PriceDisplay({
 (`currency`, `size`, `from`); the code above fixes only what the token system owns — the formatter,
 `tabular-nums`, and the spoken form.
 
-The order-summary block that consumes it — note the **conditional** `paymentFees` line
-(`OrderEntity.setPaymentFees()` exists and can rewrite the total, so the line must already be there)
-and `ink-700`, never `ink-500`, because the block sits on `surface-2`:
+The order-summary block that consumes it keeps a **conditional** `paymentFees` line for API
+compatibility. V1 leaves it at zero: it is a reserved buyer surcharge, not an estimate of Tickr's
+untracked processor cost. Supporting text uses `ink-700`, never `ink-500`, because the block sits on
+`surface-2`:
 
 ```tsx
 <dl className="rounded-lg bg-surface-2 p-4 text-body-sm text-ink-700">
@@ -1298,7 +1299,7 @@ Removing a token requires only that nothing references it. Prefer removal.
 | `opacity-50` for a disabled state | `aria-disabled` + `surface-2` + `ink-500` |
 | A `style={{ }}` colour | A token class, or a CSS variable if it is genuinely dynamic |
 | A second icon library | Heroicons |
-| A hard-coded `« 6 % »` string | The constant in [§12.1](#121--get-configpublic-does-not-exist) |
+| A hard-coded `« 6 % »` string | The formatted `effectiveCommissionRate` from [§12.1](#121-get-configpublic-commission-contract) |
 
 ### 11.3 The CI guard
 
@@ -1396,54 +1397,21 @@ describe('Tickr palette — WCAG 2.1 AA', () => {
 
 Verified against `backend/src`. Three of these contradict [GitHub issue #64](01-frontend-plan-and-design-direction.md).
 
-### 12.1 ⚠ `GET /config/public` **does not exist**
+### 12.1 `GET /config/public` commission contract
 
-> **⚠ NOT IMPLEMENTED.** There is no config controller anywhere in the backend —
-> `backend/src/config/` contains `*.config.ts` files only. The rate reaches an order through exactly
-> one live read — `PLATFORM_COMMISSION_RATE`, default `0.06`, at `create-order.handler.ts:41` — and is
-> never exposed over HTTP. `config/payments.config.ts:6` declares a second, **divergent** `0.04`
-> fallback, but that file is absent from `ConfigModule.forRoot({ load: [...] })` (`app.module.ts:32`),
-> so nothing reads it: 4 % is dead config, not a real default.
-> `docs/02-technique/05-configuration-management.md` still specifies the endpoint (controller sketch
-> at `:239`, frontend fetch at `:278`); the Epic and this folder's `README.md` already flag it as
-> missing. **It is a required backend task, not an available call.** No component may fetch it.
+The endpoint returns global commission, effective commission, TND currency and reservation TTL.
+With `eventId`, the effective rate uses the event override when present. Admin may set 0–20 % or
+clear the override with `PATCH /events/:id/commission`.
 
 The design system is affected because [Phase 1 §E.3](02-product-design-brief.md) requires the service
 fee to be disclosed **the instant a quantity exists** — which is *before* an order exists, and
 therefore before `platformFee` is available from the API.
 
-**Interim: one constant module, one label, one place to fix.**
-
-```ts
-// frontend/src/lib/constants/pricing.ts
-/**
- * ⚠ INTERIM — build-time mirror of the backend's PLATFORM_COMMISSION_RATE.
- *
- * There is no endpoint exposing this value: `GET /config/public` is documented
- * but NOT IMPLEMENTED (no config controller exists in backend/src). This constant
- * WILL silently drift the day ops changes the backend env var.
- *
- * Remove this file the moment the endpoint ships; replace with a React Query
- * fetch on a long staleTime. Tracked as gap #1 in
- * docs/08-frontend/02-product-design-brief.md §L.
- */
-export const PLATFORM_COMMISSION_RATE = Number(
-  process.env.NEXT_PUBLIC_PLATFORM_COMMISSION_RATE ?? '0.06',
-);
-
-/** Reservation / order hold, minutes. Server truth is `order.expiresAt` —
- *  this value is for pre-order copy only, never for a countdown. */
-export const HOLD_MINUTES = 15;
-
-/** Every pre-order fee figure must be labelled an estimate. */
-export const ESTIMATE_SUFFIX = ' (estimation)';
-```
-
 Rules that follow, and they are absolute:
 
 | Context | Source of the fee | Presentation |
 |---|---|---|
-| Before `POST /orders` (ticket sheet, quantity selection) | `PLATFORM_COMMISSION_RATE` constant | **Labelled an estimate**: « Frais de service (6 %) — 6,000 DT *(estimation)* » |
+| Before `POST /orders` (ticket sheet, quantity selection) | `GET /config/public?eventId=…` → `effectiveCommissionRate` | Labelled as a preview until the order freezes the amount |
 | After `POST /orders` (checkout, order detail, receipt) | `order.platformFee` / `order.total` **verbatim** | No estimate label. Never recomputed client-side |
 
 A hard-coded `« 6 % »` string in a component is a lint failure ([§11.2](#112-what-is-forbidden-in-a-component-file)).
@@ -1457,7 +1425,7 @@ A hard-coded `« 6 % »` string in a component is a lint failure ([§11.2](#112-
 | Error envelope | `{ statusCode, code, message, details, timestamp, path, method }` — **no machine-readable `code`** | — | Status token selection ([§2.4](#24-status--token-mapping)) must key off endpoint context, not an error code. `RATE_LIMITED` arrives as **403**, `INSUFFICIENT_AVAILABILITY` as **400** |
 | Currency | TND, symbol `DT`, **3 decimals** (`currency.vo.ts:35-41`) | — | [§3.3](#33-the-money-rules), [§3.4](#34-formattnd--the-implementation) |
 | Commission | Default **0.06** (`create-order.handler.ts:41`), **added on top**: `total = subtotal + platformFee` (`order.entity.ts:192`) | — | Estimate labelling above; a refund pays back `subtotal + paymentFees` only (`request-refund.handler.ts:56`) |
-| `paymentFees` | Field exists; `setPaymentFees()` (`order.entity.ts:563`) can rewrite the total; **nothing calls it today** | — | The summary renders it as a **conditional** line so switching gateway fees on is not a redesign |
+| `paymentFees` | Reserved buyer-surcharge field; `setPaymentFees()` can rewrite the total, but **nothing calls it today** and no adapter exposes merchant processing cost | — | Keep the row conditional and hidden in V1. Track actual gateway costs separately; never populate it from an estimate |
 | Hold | 15 min (`ORDER_EXPIRATION_MINUTES`, `create-order.handler.ts:42`); the order carries `expiresAt` | — | Countdowns are driven by `expiresAt`, never by a client `setTimeout` |
 | Notification channels | **EMAIL and SMS only** — `PUSH` is in the enum but not in `SUPPORTED_CHANNELS` (`notification-channel.vo.ts:18`) | — | Copy says « email » / « SMS », never « notification » |
 
@@ -1488,12 +1456,12 @@ Recorded here because each one touches a file this document rewrites.
 - [x] Component density fixed for mobile and desktop — [§7](#7-component-density)
 - [x] A reference component proves the tokens in real use — [§8.2](#82-the-button-reference-implementation)
 - [x] Governance rules and a CI guard specified — [§11](#11-token-governance)
-- [x] `GET /config/public` marked **⚠ NOT IMPLEMENTED** with a single-module interim — [§12.1](#121--get-configpublic-does-not-exist)
+- [x] `GET /config/public` and event override behavior documented — [§12.1](#121-get-configpublic-commission-contract)
 - [ ] Contrast regression test and token guard **wired into CI** — the code exists in [§11.3](#113-the-ci-guard) / [§11.4](#114-contrast-regression-test); wiring is a repo change owned by [Phase 11](11-frontend-architecture.md)
 - [ ] Keyboard traversal and axe-core pass verified on every route — requires built screens ([Phase 9–10](10-hifi-and-responsive.md))
 - [ ] Figma library published and kept in sync with these tokens — requires external design tooling
 - [ ] Design sign-off recorded by the Epic owner — requires external sign-off
-- [ ] `GET /config/public` implemented, the interim constant deleted — requires a **backend change**
+- [x] `GET /config/public` implemented; no frontend commission env mirror required
 
 ---
 

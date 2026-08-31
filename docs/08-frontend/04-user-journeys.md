@@ -23,7 +23,7 @@ Four statements that circulate in the Epic, the README and the Phase 2 scaffold 
 | 1 | API base is `/v1` (GitHub issue #64) | Base is **`https://api.tickr.tn/api`**. The global prefix is `api` and nothing else. Dev: `http://localhost:3000/api` | `main.ts:17`, `config/app.config.ts` (`API_PREFIX \|\| 'api'`) |
 | 2 | Pagination is `{ data, meta: { … } }` | Pagination is **flat**, and the field set differs per module: events and tickets return `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`; orders stop at `totalPages`; notifications stop at `limit`. Derive « page suivante » from `page < totalPages`, never from `hasNextPage` alone | `PaginatedEventListDto`, `PaginatedTicketListDto`, `PaginatedOrdersDto` (`order.dto.ts:38-44`), `PaginatedNotificationsDto` (`notification.dto.ts:180-192`) |
 | 3 | The purchase flow is `POST /tickets/reserve` **then** `POST /orders` | **`POST /orders` reserves the tickets internally.** Calling `/tickets/reserve` from the participant flow creates a second, orphaned hold | `create-order.handler.ts` step 5 → `ticketReservation.reserveTickets()` |
-| 4 | `GET /config/public` supplies the commission rate | **The endpoint does not exist.** There is no config controller in the codebase | `backend/src/config/` contains only `*.config.ts` files; `PLATFORM_COMMISSION_RATE` is read inside `create-order.handler.ts:41` |
+| 4 | `GET /config/public` supplies the commission rate | **Implemented.** Add `?eventId=<uuid>` to resolve an event-specific Admin override; `null` inherits global | `public-config.controller.ts`, `set-event-commission-override.handler.ts` |
 
 Two more, smaller, but they change screens:
 
@@ -173,24 +173,16 @@ Rules that fall out of it, and that the journeys assume:
 - **Reaching zero never navigates on its own.** It swaps the checkout into the expired blocking state ([§11.1](#111-reservation--order-expired)).
 - Referenced from step tables as **M2**.
 
-### 1.4 Money, and the commission constant
+### 1.4 Money and effective commission
 
-**⚠ NOT IMPLEMENTED — `GET /config/public` does not exist.** The Epic, this folder's README and the Phase 2 scaffold all reference it for `commissionRate`. There is no config controller in the backend. **Do not call it, do not write a hook for it, do not stub it in MSW as if it were real.**
+`GET /config/public` returns the global rate. The event page calls
+`GET /config/public?eventId=<uuid>` when ticket selection opens and uses
+`effectiveCommissionRate`, which is the Admin override when present and the global rate otherwise.
+An override of `null` means inheritance; existing orders are never repriced.
 
-Interim: one build-time constant module, imported everywhere, with a single comment naming the day it must be deleted.
-
-```ts
-// src/lib/config/platform.ts
-// ⚠ INTERIM. The rate is authoritative ONLY inside the backend (create-order.handler.ts:41).
-// Delete this file the day GET /config/public ships — see docs/08-frontend/04-user-journeys.md §12.
-export const PLATFORM_COMMISSION_RATE = Number(
-  process.env.NEXT_PUBLIC_PLATFORM_COMMISSION_RATE ?? '0.06',
-);
-export const RESERVATION_TTL_MINUTES = 15;
-export const CURRENCY = 'TND' as const;
-```
-
-**The constant is used for exactly one thing: the pre-order estimate** at [A7](#21-step-table). The instant an order exists, **every figure on screen comes from `OrderDto`** — `subtotal`, `platformFee`, `paymentFees`, `total` — and never from arithmetic in the client. This is what keeps the drift risk bounded to a single, clearly-labelled estimate.
+The instant an order exists, **every figure on screen comes from the order API** — `subtotal`,
+`platformFee`, `paymentFees`, `total` — and never from cached config arithmetic. If the Admin changes
+the rate between the config read and `POST /orders`, the returned amount is displayed before payment.
 
 **Formatting** (locked in [Phase 1 §M.2](02-product-design-brief.md)): TND, symbol `DT`, **3 decimals** (millimes), comma as decimal separator, non-breaking space before `DT`, `tabular-nums` on every figure.
 
@@ -200,7 +192,11 @@ export const CURRENCY = 'TND' as const;
 | Any figure with non-zero millimes | Always show all three | `52,500 DT` |
 | Order summary, totals, receipts, refunds | Always show all three | `106,000 DT` |
 
-**Commission arithmetic** (`order.entity.ts:192`): `total = subtotal + subtotal × rate`. The fee is **added on top** — the participant pays it. `paymentFees` exists on `OrderDto` and `OrderEntity.setPaymentFees()` can rewrite the total, but **nothing calls it today**, so it is always `0`. The `OrderSummary` component still renders it as a **conditional** line (`paymentFees > 0`), so the day it is wired the UI is already correct.
+**Commission arithmetic** (`order.entity.ts:192`): `total = subtotal + subtotal × rate`. The fee is
+**added on top** — the participant pays it. `paymentFees` exists on `OrderDto`, but no production
+path populates it, so it is always `0`. It is a reserved buyer-surcharge field, not an estimate of
+Tickr's processor cost. `OrderSummary` keeps it conditional (`paymentFees > 0`) for contract
+compatibility; a future non-zero value requires approved policy and disclosure before payment.
 
 Referenced from step tables as **M3**.
 
@@ -233,7 +229,7 @@ Therefore: **remaining counts can go up**, and **sold-out is not terminal**. (�
 | **A4** | `/categories/[category]` (SSR) | Taps a category rail | `GET /events/category/:category` | Category listing. ⚠ **No endpoint exposes a French label** — `displayNameFr` lives in `event-category.vo.ts:40` and is never serialised into a DTO. The 10-value enum → French map is owned by the frontend and must mirror that file | `404` on an unknown segment → [§11.5](#115-404-not-found). `0` results → « Rien de prévu en Théâtre pour l'instant » + « Voir tous les événements » |
 | **A5** | `/events/[id]` (SSR) | Opens an event | `GET /events/:id` | Poster → title → facts → price → ticket types → description → organizer name. Sticky purchase bar appears past the price block. `EventDto.ticketTypes[]` gives `availableQuantity`, `isSoldOut`, `isOnSale` per tier (**M4**) | `404` → [§11.5](#115-404-not-found). **`403` → the event is `DRAFT` or `CANCELLED` and you are not its organizer** (`get-event-by-id.handler.ts:74`). On this public route it renders as « Cet événement n'est plus disponible », **never as « Accès refusé »** — see [§11.9](#119-event-cancelled) ⚠ BACKEND TASK. `status === 'CANCELLED'` on an owner view → cancelled banner |
 | **A6** | `/events/[id]` — sheet | Taps « Choisir mes billets » | — | Bottom sheet opens (Headless UI `Dialog`, focus-trapped, `Esc` + swipe to close). **One ticket type at a time in V1** | — |
-| **A7** | `/events/[id]` — sheet | Sets quantity | — | Stepper bounded by two real limits, **the binding one always named**: tier `availableQuantity`, and **10 tickets/event/user** (`fraud-detection.service.ts:40-42`). ⚠ `CreateOrderRequestDto` puts **no ceiling on `holders[]`** — `@ArrayMaxSize(10)` belongs to `ReserveTicketsDto`, a contract this flow never uses — so the fraud limit is the only server-side stop and the client enforces it. Breakdown appears at qty ≥ 1, labelled « Estimation » (**M3**) | Requested qty > available → stepper clamps + « Il ne reste que 2 billets Standard ». Qty would exceed the per-event limit → « Vous pouvez acheter au maximum 10 billets pour cet événement » |
+| **A7** | `/events/[id]` — sheet | Sets quantity | `GET /config/public?eventId=:id` on sheet open | Stepper bounded by tier `availableQuantity` and **10 tickets/event/user**. Breakdown appears at qty ≥ 1 using `effectiveCommissionRate` (**M3**); the order response remains final | Requested qty > available → stepper clamps + « Il ne reste que 2 billets Standard ». Qty would exceed the per-event limit → « Vous pouvez acheter au maximum 10 billets pour cet événement » |
 | **A8** | `/events/[id]` — sheet | Fills holder details | — | Buyer block (`firstName`, `lastName`, `email`) pre-filled from `GET /users/me` when authenticated. « Les billets sont à mon nom » **checked by default** collapses tickets 2..n; unchecking reveals `{ name, email }` per ticket. Primary button reads « Continuer · 106,000 DT » | zod: invalid email inline at blur; the button stays enabled and focuses the first error on submit |
 | **A9** | `/login` or `/register` | Signs in (**only if anonymous**) | `POST /auth/login` | **Selection is persisted first** (zustand + `sessionStorage`), the user returns to the sheet exactly as they left it. **No login is ever required to see a price** ([Phase 1 §E.1](02-product-design-brief.md)) | See [Journey C](#4-journey-c--participant-login--token-refresh). `403` here means **email not verified** — [§11.6](#116-403--an-overloaded-status) |
 | **A10** | `/events/[id]` — sheet | Taps « Continuer » | **`POST /orders`** — creates the order **and reserves the tickets** | `201` → **`CreateOrderResult`, not an `OrderDto`**: `{ orderId, subtotal, platformFee, total, currency, expiresAt }` — no `status`, no `items[]`, no `paymentFees`. Client persists `tickr.pendingOrderId`, then `router.replace('/checkout/{id}')` — **`replace`, so Back cannot re-post**. The full order is read at A11 | `404` `EVENT_NOT_FOUND` / `TICKET_TYPE_NOT_FOUND` → [§11.5](#115-404-not-found). **`400`** covers `EVENT_NOT_PUBLISHED`, `INSUFFICIENT_AVAILABILITY`, `TICKET_LIMIT_EXCEEDED`, `VALIDATION_ERROR` → [§11.7](#117-sold-out-during-checkout). **`403` = `RATE_LIMITED`, not a role failure** → [§11.6](#116-403--an-overloaded-status) |
@@ -547,7 +543,11 @@ Two tickets at 50 DT: `subtotal = 100,000 DT`, `platformFee = 6,000 DT` (6 % add
 
 **Two constraints that must be visible on these screens:**
 
-- **All revenue is gross.** `totalRevenue` is what buyers paid; **no payout model exists in the code** and the economic documents contradict each other ([Phase 1 §L gap 8](02-product-design-brief.md)). Every revenue figure is labelled « Ventes brutes », and **no « vous recevrez X » figure is displayed anywhere** until the payout model is settled.
+- **The current code records gross ticket sales, not organizer payout.** New `REVENUE` metrics use
+  `OrderPaidEvent.subtotalAmount` and carry `ticketCount`; the service fee is excluded. Label the
+  value « Ventes de billets brutes » and qualify it « avant remboursements et ajustements ».
+  Pre-fix append-only metrics require a backfill, and **no « revenu net » or « vous recevrez X »
+  figure is displayed** until a settlement ledger exists.
 - **Analytics are not real-time, and the lag is knowable.** The materialised views are rebuilt by a cron every **10 minutes** (`analytics-refresh.service.ts:21`) and each response is cached **5 minutes** (`CACHE_TTL = 300`), so a figure can be a quarter of an hour old. `lastUpdated` sits next to the headline numbers; client refresh is manual (`refetchOnWindowFocus`) and never polled — polling cannot make the number fresher.
 
 ---
@@ -807,7 +807,7 @@ Ordered by what blocks the most journey surface. **Item 0 outranks every other l
 | **1** | **Send the verification email.** `POST /auth/register` never creates an `EMAIL_VERIFICATION` token (`// TODO` in `auth.controller.ts`), so no valid `/verify-email?token=` link can exist — and login rejects unverified accounts with `403` | **Journey B entirely**, and therefore every authenticated journey for a new user | None possible. Accounts must be verified out-of-band until this ships |
 | **2** | **Per-order gateway return URL.** `PAYMENT_SUCCESS_URL` / `PAYMENT_FAIL_URL` (Konnect) and `return_url` (Paymee) are static and carry no order id | **A15**, the whole return leg of Journey A | `"pending"` sentinel + `tickr.pendingOrderId` — [§2.3](#23-payment-sequence-with-webhook-and-polling) |
 | **3** | **Ownership check on refund.** `RequestRefundHandler` ignores `command.userId` — any authenticated user can refund any order id (**security**) | Journey D's integrity | Only offer refunds on orders from `GET /orders`. Not a defence |
-| **4** | **Implement `GET /config/public`** returning `{ commissionRate, currency, reservationTtlMinutes }`. **⚠ NOT IMPLEMENTED** today, despite the Epic, the README and `docs/02-technique/05-configuration-management.md` | The fee estimate at **A7** silently lies the day ops changes the rate | `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE` in one constants module — [§1.4](#14-money-and-the-commission-constant) |
+| **4 — Done** | `GET /config/public` returns global/effective commission and supports `eventId`; Admin override uses `PATCH /events/:id/commission` | A7 reads the current backend rate; `POST /orders` freezes the final amount | Refresh config when the ticket sheet opens — [§1.4](#14-money-and-effective-commission) |
 | **5** | **Add `POST /auth/resend-verification`** | The only recovery for an expired verification link | « Contacter le support » |
 | **6** | **Role management** — an organizer application flow, or an admin endpoint to promote a user. Registration hard-codes `PARTICIPANT` and no endpoint changes a role | **Journeys F–H have no supported way to acquire an actor**; `/admin/users` is read-only | Database write |
 | **7** | **`ADMIN` bypass in `IsEventOwnerGuard`** + `'ADMIN'` in `@Roles` on moderation routes | **I7** — `/admin/moderation` cannot moderate | Ship `/admin/moderation` read-only |
@@ -821,7 +821,7 @@ Ordered by what blocks the most journey surface. **Item 0 outranks every other l
 | **15** | **Fix `?status=` pagination** on `GET /events/organizer/:organizerId` (filters after paginating) | **F1** counts are wrong | Never send `status`; tab client-side |
 | **16** | **`holderName` on transfer** — the recipient's pass keeps the sender's name | **Journey E** at the door | Warn in the transfer dialog |
 | **17** | **Ticket PDF delivery.** `GET /tickets/:id/pdf` is `Bearer`-only yet answers a `302`, so no navigation can open it; and it `404`s while `pdfUrl` is null with no way to know when the file will exist. Return `200 { url }` instead | **A19** | Authenticated `fetch` + blob, needing bucket CORS. PDF stays a labelled backup; the QR is the primary |
-| **18** | **Settle the organizer payout model** ([Phase 1 §L gap 8](02-product-design-brief.md)) | Journey G shows **gross sales only** and no « vous recevrez X » | Label every figure « Ventes brutes » |
+| **18** | **Backfill organizer revenue analytics and implement settlement** ([Phase 1 §L gap 8](02-product-design-brief.md)): rewrite pre-fix metrics to subtotal, aggregate platform fees, then add balances and payouts | New metrics are correct; historical data and payable balances are not | Label « Ventes de billets brutes · avant remboursements et ajustements »; never show « vous recevrez X » |
 | **19** | **Read-back for refunds.** `POST /orders/:id/refund` returns `RefundStatus` once; `OrderDto` carries only `refundedAt` / `refundReason`, and no endpoint reads a refund | **D5** on any second visit or second device | Persist the D4 status client-side against the order id |
 | **20** | **Scope checks on analytics.** `GET /analytics/events/:id` performs no ownership check, and `GET /analytics/revenue-report` / `POST /analytics/export` declare an `ACCESS_DENIED` branch their handlers never return, with no `@Roles('ADMIN')` above them (**security**) | **G2**, **I2–I3** — any authenticated user can read any organizer's figures and generate a platform report | None. The UI simply never links to another organizer's ids |
 | **21** | **`byType` on `GET /tickets/event/:eventId/stats`** — the array is hard-coded `[]` (`// TODO`), and `ticketTypeName` in `CheckInResponseDto` is the constant `'General Admission'` | **G4**'s per-tier table, the tier line on the **H3** success screen | Render headline counters only; do not print a tier |
@@ -917,6 +917,6 @@ Every state named in this document is a screen or a screen state that [Phase 4](
 - [x] Contract errors in the Epic (`/v1`, `meta` pagination, reserve-then-order, `GET /config/public`) are flagged and corrected — [§0.1](#01-contract-corrections--read-this-before-anything-else)
 - [x] Every dependency on an unimplemented endpoint is marked and given an interim — [§12](#12-backend-tasks-this-phase-depends-on)
 - [ ] Backend tasks 0–3 resolved (ticket-reservation adapter · verification email · per-order return URL · refund ownership check) — **requires backend change**
-- [ ] `GET /config/public` implemented and the interim constants module deleted — **requires backend change**
+- [x] `GET /config/public` implemented with event-specific resolution; no frontend commission env mirror
 - [ ] Journey copy reviewed by a native `fr-TN` speaker — **requires external sign-off**
 - [ ] Journeys walked through against hi-fi screens in Phase 9 — **requires Figma**

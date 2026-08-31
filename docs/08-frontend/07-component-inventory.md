@@ -57,7 +57,7 @@ frontend/src/
 │  ├─ api/               # client.ts, endpoint modules, mapApiError()
 │  ├─ format/            # money.ts, date.ts — pure, unit-tested, no React
 │  ├─ hooks/             # useCountdown, useOrderPolling, useMediaQuery
-│  └─ constants.ts       # ⚠ the single home of NEXT_PUBLIC_PLATFORM_COMMISSION_RATE
+│  └─ config.ts          # public config query types and effective-rate hook
 └─ types/
    ├─ api.ts             # hand-written mirrors of backend DTOs
    └─ ui.ts              # shared UI unions (Tone, ControlSize, …)
@@ -99,7 +99,7 @@ the shape it does.
 | --- | --- | --- | --- |
 | **1** | Base URL is `https://api.tickr.tn/v1` | Global prefix is **`api`** — `main.ts:17`, `config/app.config.ts` (`API_PREFIX \|\| 'api'`). The base URL is **`https://api.tickr.tn/api`**; Swagger is at `/api/docs`. **There is no `/v1`.** | Every endpoint quoted below is relative to `/api`. `NEXT_PUBLIC_API_URL` must end in `/api`. |
 | **2** | Paginated responses are `{ data, meta: { … } }` | Pagination is **flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` (`PaginatedEventListDto`, `PaginatedTicketListDto`). Two envelopes are shorter — `PaginatedOrdersDto` stops at `totalPages`, `PaginatedNotificationsDto` at `limit`. | No `meta` anywhere. `Pagination` (§4) reads `hasNextPage`/`hasPreviousPage` where they exist and derives them from `page < Math.ceil(total / limit)` on the orders and notifications lists. |
-| **3** | `GET /config/public` supplies the commission rate | **⚠ NOT IMPLEMENTED.** No config controller exists anywhere (`backend/src/config` contains only `*.config.ts`). `PLATFORM_COMMISSION_RATE` is read **only** inside `create-order.handler.ts:41`. | `PriceDisplay`, `OrderSummary` and `TicketTypeSelector` take the pre-order rate from a **build-time constant** — `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE`, whose single home is `lib/constants.ts` ([§0.2](#02-file-layout)) — and label every pre-order figure an estimate. |
+| **3** | `GET /config/public` supplies the commission rate | **Implemented.** `?eventId=<uuid>` resolves an event override or global fallback. | `OrderSummary` and `TicketTypeSelector` use `effectiveCommissionRate`; no build-time commission constant. |
 | **4** | Errors carry a machine-readable code | The envelope is `{ statusCode, code, message, details, timestamp, path, method }`; validation adds `{ errors }`. **No domain code reaches the client** — `INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED` collapse into an HTTP status and an English `message` at the controller boundary (`orders.controller.ts:86-93`). | `ErrorState` consumes a `MappedError` union produced by a **single** `mapApiError(status, endpoint, message)` shim — the one place message-sniffing is permitted. |
 | **5** | Sold-out is `409`, rate-limit is `429` | `INSUFFICIENT_AVAILABILITY`, `EVENT_NOT_PUBLISHED`, `TICKET_LIMIT_EXCEEDED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`, `GATEWAY_ERROR` → **400**. `RATE_LIMITED` on `POST /orders` → **403** (`ForbiddenException`, `orders.controller.ts:91`), *not* 429 — the route's own Swagger annotation advertising 429 (`orders.controller.ts:62`) is wrong. The 429 that does exist is the global throttler (3 req/s, 20 req/10 s, `users.module.ts:131`). | `mapApiError` **must** key on endpoint context: a 403 from `POST /orders` is « limite de 5 commandes par heure ». The seven other meanings of 403 are catalogued in [Phase 2 §5.3](03-information-architecture.md#53-the-eight-meanings-of-403), which this document defers to. |
 | **6** | An organizer has a public profile | `GET /events/organizer/:organizerId` is **`@Roles('ORGANIZER','ADMIN')`** (`events.controller.ts:407`), and the handler additionally rejects any `organizerId` but the caller's own unless the caller is `ADMIN` (`events.controller.ts:426`). There is no public organizer endpoint. | `EventCard` and the event hero render `organizer.displayName` as **plain text, never a link**. There is no `OrganizerLink` component in V1. |
@@ -223,22 +223,23 @@ has a value or is not rendered.
 export interface OrderSummaryProps {
   subtotal: number;
   platformFee: number;
-  /** Always render conditionally — 0 today, but setPaymentFees() can change the total. */
+  /** Reserved buyer surcharge; always conditional and 0 in V1. */
   paymentFees?: number;
   total: number;
   currency: string;
   items: Array<{ id: string; ticketTypeName: string; quantity: number; lineTotal: number }>;
-  /** Pre-order estimate from the interim constant; adds the « estimation » caveat. */
-  isEstimate?: boolean;
-  /** Displayed rate. Comes from the interim constant — `GET /config/public` is ⚠ NOT IMPLEMENTED. */
+  /** True until POST /orders confirms the final frozen amounts. */
+  isPreview?: boolean;
+  /** Displayed effective rate from GET /config/public?eventId=. */
   commissionRate: number;
 }
 ```
 
 **Non-negotiables.** Values are rendered **verbatim from the API** — never `× 1.06` on the client.
-The `paymentFees` line is **conditional** (`paymentFees > 0`), because `OrderEntity.setPaymentFees()`
-(`order.entity.ts:563`) can add a fourth line once gateway fees are wired. The total is the visually
-heaviest number. Inside the `surface-2` block, supporting text is **`ink-700`, never `ink-500`**
+The `paymentFees` line is **conditional** (`paymentFees > 0`) for API compatibility, but it is not a
+merchant-cost estimate: no production path populates it and V1 keeps it at zero. Actual processor
+costs are separate settlement expenses. The total is the visually heaviest number. Inside the
+`surface-2` block, supporting text is **`ink-700`, never `ink-500`**
 (4.21:1 fails AA). Used unchanged on the P-03 ticket sheet, U-01 `/checkout/[orderId]` and the U-02 return screen.
 
 ### 3.3 `ReservationCountdown` ⭐
@@ -415,8 +416,9 @@ reference. See [Phase 4 §7](05-screen-inventory.md#7-other-contract-gaps-that-s
 | `EventForm` | `POST /events` · `PUT /events/:id` · `POST /events/:id/publish`, with live buyer-price arithmetic | draft · saving · validation errors · published |
 | `TicketTypeForm` | Tier CRUD — `POST /events/:id/ticket-types`, `PUT`/`DELETE .../:typeId` | create · edit (price and sales window lock once `soldQuantity > 0`, i.e. at the first **hold** — `ticket-type.entity.ts:209`) · delete guard (`event.entity.ts:548`) |
 | `ImageUploader` | `POST /events/:id/image`, single image | idle · uploading · error · preview |
+| `CommissionRateEditor` | Admin drawer using `GET /config/public?eventId=` and `PATCH /events/:id/commission`; shows global, override, effective rate and buyer-price preview | loading · inherited · overridden · dirty · saving · saved · invalid · error |
 | `AnalyticsChart` / `SalesTimelineChart` | `GET /analytics/events/:id` · `GET /analytics/events/:id/sales-timeline` | loading · empty · error |
-| `RevenueStat` / `StatTile` | KPI tiles — **gross sales only**, labelled | loading · value · unavailable |
+| `RevenueStat` / `StatTile` | KPI tiles — gross ticket subtotal before refunds and adjustments, explicitly labelled; net/payable earnings unavailable | loading · value · unavailable |
 | `NotificationList` | `GET /notifications/me`; composes `NotificationRow` per item | loading · empty · paginated |
 | `NotificationPreferencesForm` | `GET`/`PUT /notifications/preferences/me` — **EMAIL and SMS only**, no PUSH (`notification-channel.vo.ts:26`) | loading · dirty · saving · saved |
 

@@ -46,11 +46,11 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 > | # | Gap | Evidence | Consequence |
 > |---|---|---|---|
 > | 1 | **Ticket reservation is a stub** | `TICKET_RESERVATION_PORT` → `TicketReservationAdapter`, whose `reserveTickets()` logs `[STUB]` and returns mock IDs (`payments.module.ts`) | `POST /orders` creates no ticket rows and moves no `soldQuantity`. **No purchase completes end to end** |
-> | 2 | **Events/Tickets/Notifications use a guard that never verifies a JWT** | `shared/.../jwt-auth.guard.ts` only checks `request.user`; nothing populates it and no `APP_GUARD` is registered | Every authenticated route on those three controllers appears to `401` — the ticket wallet, organizer creation and notifications are unreachable |
+> | 2 — Resolved | **The shared Events/Tickets/Notifications guard now verifies JWTs** | It extends Passport `AuthGuard('jwt')`, preserves `@Public()`, and rejects missing/invalid tokens | Protected Events lifecycle is E2E-validated; Tickets and Notifications use the same guard |
 > | 3 | **Registration never mints a verification token** | the token issuance is commented out in `auth.controller.ts`; `POST /auth/login` returns `403` for an unverified e-mail, and no resend endpoint exists | A new account can never log in |
 >
 > **The frontend design is unaffected and remains correct** — build to the documented contracts.
-> But the Epic's Definition of Done cannot be honestly closed until these three are wired, and no
+> But the Epic's Definition of Done cannot be honestly closed until the remaining stubs are wired, and no
 > money-path screen can be verified against real data before then.
 
 > ### ⚠️ Contract corrections verified against source (2026-08-20)
@@ -62,13 +62,13 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 > | Epic originally said | Verified reality | Source |
 > |---|---|---|
 > | Base path `/v1` | **`/api`** — `setGlobalPrefix(apiPrefix)`, `API_PREFIX \|\| 'api'` | `main.ts:17`, `config/app.config.ts:6` |
-> | Commission fetched via `GET /config/public` | **That endpoint does not exist.** No config controller is implemented anywhere; the rate is read only inside the order handler | `create-order.handler.ts:41`; no `*config*.controller.ts` in the tree |
+> | Commission fetched via `GET /config/public` | **Implemented.** Without `eventId` it returns the global default; with `?eventId=<uuid>` it resolves the event override or falls back to global | `public-config.controller.ts`; `event-query.adapter.ts` |
 > | Pagination `{ data, meta: { … } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | `event-list.dto.ts`, `order.dto.ts` |
 > | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, code, message, details, timestamp, path, method }`; only *validation* errors carry `errors[]` | `http-exception.filter.ts`, `validation-exception.filter.ts` |
 > | Sold out → `409`, rate limited → `429` | Sold out returns **`400`** (`INSUFFICIENT_AVAILABILITY`); order-creation rate limiting returns **`403`** (`RATE_LIMITED` → `ForbiddenException`) | `tickets.controller.ts`, `orders.controller.ts:90` |
 >
-> Two of these are **backend work items**, not documentation fixes: implementing `GET /config/public`,
-> and adding a machine-readable `code` to the error envelope so the UI can tell "sold out" from
+> One remaining item is a **backend work item**, not a documentation fix: adding a machine-readable
+> `code` to the error envelope so the UI can tell "sold out" from
 > "bad input" (the validation filter already emits `code: 'VALIDATION_ERROR'`; `http-exception.filter.ts`
 > emits none). Both are tracked in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend).
 
@@ -269,7 +269,7 @@ frontend/src/
 
 Must specify:
 - **API layer:** single axios instance, base URL `/api`, request/response interceptors, **automatic token refresh on `401`**, error normalization to the backend error envelope.
-- **Data layer:** react-query key conventions, cache/stale times (once `GET /config/public` exists it is cached ~1h with a 6% fallback; **until then** a build-time `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE` constant is the single source), flat pagination handling.
+- **Data layer:** react-query key conventions, cache/stale times (`GET /config/public` global config cached ~1h; event-specific config refreshed when ticket selection opens), flat pagination handling.
 - **State management:** what lives in zustand (auth/session, reservation timer, UI) vs. react-query (server data).
 - **Routing & auth:** role-based route protection (`PARTICIPANT`/`ORGANIZER`/`ADMIN`), redirect rules.
 - **Design tokens** wired into Tailwind config.
@@ -300,13 +300,13 @@ Must specify:
 
 > Verified against controllers in `backend/src/modules/**`. All paths are relative to `/api`.
 
-**Config** — `GET /config/public` ⚠️ **NOT IMPLEMENTED — required backend work.** No config controller exists in `backend/src`.
+**Config** — `GET /config/public`, optionally `?eventId=<uuid>`, returns global and effective commission, currency and reservation TTL.
 
 **Auth** (`/auth`) — `POST /register`, `POST /login`, `POST /verify-email`, `POST /request-reset`, `POST /reset-password`, `POST /refresh-token`
 
 **Users** (`/users`) — `GET /me`, `PUT /me`, `PATCH /me/password`, `DELETE /me`, `GET /:id`, `GET /` (paginated user list — **ADMIN only**)
 
-**Events** (`/events`) — `GET /` (**PUBLISHED events only**), `GET /search`, `GET /category/:category`, `GET /upcoming`, `GET /:id`, `GET /organizer/:organizerId` (**ORGANIZER/ADMIN only** — there is no public organizer profile), `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/publish`, `POST /:id/ticket-types`, `PUT /:id/ticket-types/:typeId`, `DELETE /:id/ticket-types/:typeId`, `POST /:id/image`
+**Events** (`/events`) — `GET /` (**PUBLISHED events only**), `GET /search`, `GET /category/:category`, `GET /upcoming`, `GET /:id`, `GET /organizer/:organizerId` (**ORGANIZER/ADMIN only** — there is no public organizer profile), `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/publish`, `POST /:id/ticket-types`, `PUT /:id/ticket-types/:typeId`, `DELETE /:id/ticket-types/:typeId`, `POST /:id/image`, `PATCH /:id/commission` (**ADMIN only**; decimal override or `null` to restore global)
 
 **Tickets** (`/tickets`) — `GET /` (own tickets, paginated, `?status=`), `GET /:id`, `GET /:id/pdf`, `POST /:id/transfer`, `POST /cancel`, `POST /check-in`, `GET /event/:eventId/stats` · `POST /reserve` and `POST /confirm` exist but are **never called by the UI**: reservation happens inside `POST /orders`, confirmation inside the payment webhook flow
 

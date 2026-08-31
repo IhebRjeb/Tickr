@@ -477,5 +477,10 @@ export const generateTestToken = (
   jwtService: JwtService,
   payload: { sub: string; email: string; role: string },
 ) => {
-  return jwtService.sign(payload);
+  return jwtService.sign({
+    userId: payload.sub,
+    email: payload.email,
+    role: payload.role,
+    type: 'access',
+  });
 };

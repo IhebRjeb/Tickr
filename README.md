@@ -685,18 +685,21 @@ GitHub Actions Dashboard:
 
 ## 💰 Modèle Économique
 
-- **Commission plateforme :** 6% par billet vendu (payé par l'organisateur)
-- **Frais de transaction :** Absorbés par la plateforme
+- **Frais de service plateforme :** 6% ajoutés au prix facial et payés par le participant
+- **Frais gateway :** Absorbés par Tickr selon la politique V1; coûts réels à rapprocher hors commande
 - **Remboursements :** Politique configurable par organisateur
-- **Configuration :** Taux de commission configurable via variable d'environnement (`PLATFORM_COMMISSION_RATE`)
+- **Configuration :** Taux global configurable via `PLATFORM_COMMISSION_RATE` (6% par défaut); override 0–20% par événement réservé à l'Admin
 
 **Exemple :**
 ```
 Billet à 50 TND
 → Participant paie : 53 TND
-→ Organisateur reçoit : 47 TND (50 - 6%)
-→ Tickr reçoit : 3 TND
+→ Brut organisateur recommandé : 50 TND
+→ Tickr reçoit brut avant coûts : 3 TND
 ```
+
+Le reversement organisateur et les frais marchands des prestataires ne sont pas encore implémentés
+dans un ledger de règlement.
 
 **📖 Plus de détails :** [Modèle Économique](docs/02-technique/04-modele-economique.md)
 

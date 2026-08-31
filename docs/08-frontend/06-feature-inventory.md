@@ -70,7 +70,7 @@ verified behaviour instead. They are listed first because every downstream table
 | --- | --- | --- | --- |
 | 1 | Base URL is `/v1` | **`https://api.tickr.tn/api`** — global prefix is `api` (`main.ts:17`, `config/app.config.ts`). Swagger at `/api/docs` | Every request. `NEXT_PUBLIC_API_URL` must end in `/api` |
 | 2 | Paginated responses are `{ data, meta: { … } }` | **Flat — but not uniform.** Events and tickets return all seven fields `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` (`event-list.dto.ts:179-215`, `ticket.dto.ts:97-121`); orders stop at `totalPages` (`order.dto.ts:38-44`); notifications stop at `limit` (`notification.dto.ts:182-191`); **`GET /users` alone is nested** — `{ data, meta: { … } }` (`users.controller.ts:56-66`) | `Pagination` takes flat props, derives what a module omits, and the users list goes through an adapter |
-| 3 | `GET /config/public` supplies the commission rate | **⚠ NOT IMPLEMENTED.** No config controller exists anywhere in `backend/src`. The rate reaches the API as an env var read at `create-order.handler.ts:41` — and, dead, in the unregistered `payments.config.ts` ([§3.6](#36-the-commission-rate---not-implemented)) | Fee disclosure before an order exists — see [§3.6](#36-the-commission-rate---not-implemented) |
+| 3 | `GET /config/public` supplies the commission rate | **Implemented.** Optional `eventId` resolves the Admin override or global fallback ([§3.6](#36-effective-commission-rate)) | Fee disclosure before an order exists |
 | 4 | Errors carry a machine-readable `code` | Envelope is `{ statusCode, code, message, details, timestamp, path, method }` only. Domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`) are **discarded at the controller boundary** | Every error state; forces the `mapApiError()` shim — see [§3.5](#35-error-mapping) |
 | 5 | Sold out → `409`, rate limit → `429` | Sold out and `TICKET_LIMIT_EXCEEDED` → **`400`**; `RATE_LIMITED` on `POST /orders` → **`403`**. **No controller emits `409`** | Checkout error states |
 | 6 | Checkout calls `POST /tickets/reserve` then `POST /orders` | **`POST /orders` reserves internally** (`create-order.handler.ts:137`, step 5). Calling reserve first creates an orphaned second hold | The single most important rule in the participant flow |
@@ -295,38 +295,19 @@ onto react-hook-form via `setError`. The global `ValidationPipe` runs
 `whitelist + forbidNonWhitelisted + transform`, so **any extra property in a request body is a
 `400`**: request payloads are built from explicit objects, never by spreading form state.
 
-### 3.6 The commission rate — ⚠ NOT IMPLEMENTED
+### 3.6 Effective commission rate
 
-`GET /config/public` **does not exist**. Until it does:
-
-```ts
-// src/lib/constants/platform.ts — the ONLY place this value may appear
-export const PLATFORM_COMMISSION_RATE = Number(
-  process.env.NEXT_PUBLIC_PLATFORM_COMMISSION_RATE ?? '0.06',
-);
-export const RESERVATION_TTL_MINUTES = 15; // reserve-tickets.handler.ts:24
-export const CURRENCY = 'TND' as const;    // symbol DT, 3 decimals
-export const MAX_TICKETS_PER_ORDER = 10;   // client mirror; POST /orders sets no array cap
-export const MAX_TICKETS_PER_EVENT = 10;   // fraud-detection.service.ts:40-43 (inline fallback)
-export const MAX_ORDERS_PER_HOUR = 5;      // fraud-detection.service.ts:36-39 (inline fallback)
-export const MAX_TICKET_TRANSFERS = 3;     // ticket.entity.ts:100
-```
-
-Rules, enforced in review:
-
-- The constant produces **estimates only**, and every estimate is labelled: « Estimation · le
-  montant exact s'affiche à l'étape suivante ».
+- `GET /config/public` returns global commission, currency and reservation TTL.
+- `GET /config/public?eventId=:id` returns `commissionRateOverride` and
+  `effectiveCommissionRate`; `null` means global inheritance.
+- Admin writes 0–20 % or clears the override through `PATCH /events/:id/commission`.
+- Event-specific config is refreshed when ticket selection opens. The global response may use a
+  one-hour stale time.
 - **The instant an order exists, the API's `subtotal` / `platformFee` / `paymentFees` / `total` are
-  authoritative** and are rendered verbatim. No component ever multiplies by a rate.
-- A hard-coded `6 %` string anywhere outside this module is a review failure.
-- ⚠ **Ignore `config/payments.config.ts`.** It declares `payments.commission.rate` with a `0.04`
-  fallback, but the file is **not in `ConfigModule.forRoot({ load: [...] })`** (`app.module.ts:32`),
-  so that namespace never resolves: the live rate is the `0.06` fallback in
-  `create-order.handler.ts:41`, and the fraud limits fall back to `5` and `10` inline
-  (`fraud-detection.service.ts:36-43`). Never quote `4 %` from that file (§10).
+  authoritative** and are rendered verbatim.
 - `paymentFees` is rendered as a **conditional** line, shown only when non-zero.
-  `OrderEntity.setPaymentFees()` exists but nothing calls it, so it is `0` today — designing a
-  three-line breakdown would break the day gateway fees are switched on.
+  `OrderEntity.setPaymentFees()` exists but nothing calls it, so it is `0` today. It remains a
+  reserved buyer surcharge and must never be populated from an estimated merchant cost.
 
 ### 3.7 Event resolution for tickets and orders
 
@@ -375,7 +356,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 | `TicketCard` | **`TicketCard`** (list) + **`TicketPass`** (detail) | Two different objects: a 72 px list row and the dark `ink-950` pass |
 | `NotificationItem` | **`NotificationList`** | And it has **no read/unread state** — see correction below |
 | `Pagination` "matches API `meta`" | `Pagination` takes **flat** props | Correction #2 |
-| `OrderSummary` "order + 6 % commission" | `OrderSummary` renders **API values verbatim** | It never computes; see [§3.6](#36-the-commission-rate---not-implemented) |
+| `OrderSummary` "order + commission" | `OrderSummary` renders **API values verbatim** | Preview uses effective config; created order values always win — see [§3.6](#36-effective-commission-rate) |
 | `PaymentMethodPicker` "Konnect/Paymee/Stripe" | unchanged, but **local-first order** and two distinct mechanisms | Konnect/Paymee → `paymentUrl` redirect; Stripe → `clientSecret` in-page |
 
 ---
@@ -396,7 +377,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 - Category grid built from the ten `EventCategory` values using `displayNameFr`, `icon` and `color` from `EVENT_CATEGORY_METADATA`; each tile is a **link** to `/categories/[category]`, never a fetch — this caps SSR fan-out at three requests ([§3.1](#31-rendering-and-data-policy)).
 - Persistent secondary search affordance in the header, opening `/search`.
 - Every card shows poster, title, day + time, venue + city, « À partir de {minPrice} DT » and a scarcity badge — all from `EventListDto.ticketSummary`, with **no per-card follow-up request**.
-- Service-fee footnote under the first price block: « Frais de service de 6 % en sus » — **estimate, sourced from the interim constant** ([§3.6](#36-the-commission-rate---not-implemented)).
+- Service-fee footnote under the first price block: « Des frais de service s'appliquent; le montant exact s'affiche avant confirmation. » No fixed rate appears on the multi-event landing surface.
 - Footer with the three `/legal/*` links and the support address.
 
 **Components consumed** — `PageShell`, `TopNav`, `BottomNav`, `Footer`, `HeroRail`, `EventCard`, `EventPoster`, `AvailabilityBadge`, `PriceDisplay`, `CityChipRow`, `DateWindowChips`, `CategoryChip`, `SearchBar`, `Skeleton`, `EmptyState`, `ErrorState`, `LocaleDate`
@@ -774,7 +755,7 @@ The Phase 6 draft must adopt the names used here. Three renames and three correc
 - Three statically-generated MDX documents; **no endpoint, no data fetching, no client JS beyond the shell**.
 - Anchored table of contents, deep-linkable headings, print stylesheet.
 - « Dernière mise à jour » date rendered from front-matter.
-- The refund page is **content-critical**, not boilerplate: it must state, in the same arithmetic the UI shows, that **the 6 % service fee is not refunded** — `refund = subtotal + paymentFees` (`request-refund.handler.ts:56`). The wording here and the wording in `RefundBreakdown` come from the same locale keys so they can never drift.
+- The refund page is **content-critical**, not boilerplate: it must state that **the service fee shown on this order is not refunded** — `refund = subtotal + paymentFees` (`request-refund.handler.ts:56`). Do not hard-code 6 %, because the order may use an event override.
 - `/legal/terms` (« Conditions générales d'utilisation ») states the 15-minute hold, the 10-tickets-per-event limit and the 5-orders-per-hour limit in plain French.
 
 **Components consumed** — `PageShell`, `Footer`, `TableOfContents`, `LocaleDate`
@@ -1171,11 +1152,12 @@ stateDiagram-v2
 
 ## 6. Organizer zone — 9 routes
 
-> **Zone-wide constraint — organiser payout is undefined.** The buyer pays `subtotal + 6 %`; what
-> the organiser *nets* is contradicted between `docs/04-modele-economique.md` and the code, and **no
-> payout or organiser-side deduction exists in `backend/src`**. Every organiser surface therefore
-> shows **gross sales only**, labelled « Ventes brutes », and no screen displays « vous recevrez X ».
-> This is Phase 1 [§L] gap 8 and is repeated here because it constrains four screens.
+> **Zone-wide constraint — organizer settlement is not implemented.** The buyer pays
+> `subtotal + platformFee`, and the corrected policy attributes the subtotal to the organizer, but
+> no balance or payout ledger exists. New event analytics records ticket subtotal and ticket count,
+> excluding Tickr's fee. Every organizer surface therefore labels that API value « Ventes de billets
+> brutes · avant remboursements et ajustements » and never displays « revenu net » or « vous
+> recevrez X ». Pre-fix append-only metrics require backfill. This is Phase 1 [§L] gap 8.
 >
 > **Zone-wide constraint — `ADMIN` is not an organiser.** `POST/PUT/DELETE /events*` are
 > `@Roles('ORGANIZER')` only. An admin reaching these screens sees them **read-only**: mutating
@@ -1187,7 +1169,7 @@ stateDiagram-v2
 
 **Features & interactions**
 
-- Headline stat tiles from `OrganizerDashboardDto`: `totalRevenue` (labelled « Ventes brutes »), `totalEvents`, `totalTicketsSold`, `averageCheckInRate`.
+- Headline stat tiles from `OrganizerDashboardDto`: `totalRevenue` (labelled « Ventes de billets brutes · avant remboursements et ajustements »), `totalEvents`, `totalTicketsSold`, `averageCheckInRate`.
 - Revenue timeline chart from `revenueTimeline: TimeSeriesDto[]`.
 - Time-range selector — `7d` / `30d` / `90d`, the only three values `DashboardQueryDto` accepts; the control offers exactly those and nothing else.
 - Per-event performance list from the embedded `events: EventAnalyticsDto[]`, paginated with the DTO's own `page` / `limit` / `total`.
@@ -1369,7 +1351,7 @@ stateDiagram-v2
 - Table of tiers from `GET /events/:id` → `ticketTypes[]`: name, price, `quantity`, `soldQuantity`, `availableQuantity`, sales window, `isActive`, plus the derived `isOnSale` / `isSoldOut`.
 - Create a tier — `name` (1–100), `description` (≤ 500), `price` (> 0), `currency` (`TND`), `quantity` (integer ≥ 1), `salesStartDate`, `salesEndDate`, `isActive` (default true). All except description are **required** by `AddTicketTypeDto`.
 - Price input in dinars with millimes, validated against the 3-decimal TND rule and echoed back through `PriceDisplay` so the organiser sees exactly the string a buyer will see.
-- **Buyer-price preview per tier**: « Le participant paiera 53,000 DT (dont 3,000 DT de frais de service) » — explicitly labelled **⚠ estimate**, derived from the interim `PLATFORM_COMMISSION_RATE` constant because **`GET /config/public` is NOT IMPLEMENTED** ([§3.6](#36-the-commission-rate---not-implemented)).
+- **Buyer-price preview per tier** from `GET /config/public?eventId=:id`: « Le participant paiera 53,000 DT (dont 3,000 DT de frais de service) ». If Admin configured 3 %, the same 50 DT tier shows 51,500 DT instead.
 - Sales window defaults: start = now, end = event start. Both are required, so the form pre-fills rather than leaving the organiser to guess.
 - Edit a tier — `PUT /events/:id/ticket-types/:typeId`. Reducing `quantity` below `soldQuantity` is blocked client-side with the real number: « 12 billets sont déjà vendus, la quantité ne peut pas descendre en dessous. » **Price and sales window lock after the first sale** (`ticket-type.entity.ts:208`, `:279` → `CANNOT_MODIFY_AFTER_SALES`), so both fields render read-only with the reason once `soldQuantity > 0` rather than failing on save.
 - Delete a tier — `DELETE /events/:id/ticket-types/:typeId`, behind a confirmation that names the sold count. Two server rules gate it: the event must still be `DRAFT` (`remove-ticket-type.handler.ts:94-98`) and the tier must have no sales, so on a published event the delete control is replaced by « Désactiver » outright.
@@ -1438,7 +1420,7 @@ stateDiagram-v2
 
 **Features & interactions**
 
-- Headline tiles from `EventAnalyticsDto`: `totalRevenue` (« Ventes brutes »), `totalTicketsSold` / `totalCapacity`, `checkInCount` + `checkInRate`, `conversionRate`, `averageTicketPrice`, `topSellingTicketType`.
+- Headline tiles from `EventAnalyticsDto`: `totalRevenue` (« Ventes de billets brutes · avant remboursements et ajustements »), `totalTicketsSold` / `totalCapacity`, `checkInCount` + `checkInRate`, `conversionRate`, `averageTicketPrice`, `topSellingTicketType`.
 - Sales-by-day chart from `salesByDay: TimeSeriesDto[]`, check-ins-by-hour chart from `checkInsByHour`.
 - Sales timeline with a granularity switch — **`hour` or `day` only**, the two values `SalesTimelineQueryDto` accepts.
 - **`startDate` and `endDate` are required** on the timeline endpoint (`@IsDateString()`, not optional). The UI therefore always sends a range, defaulting to the event's own `createdAt` → `endDate`, and never issues a call with a missing bound.
@@ -1519,7 +1501,10 @@ stateDiagram-v2
 **Features & interactions**
 
 - Platform tiles from `PlatformAnalyticsDto`: `totalRevenue`, `platformCommission`, `totalEvents`, `totalTicketsSold`, `activeUsers`, `conversionRate`.
-- **`platformCommission` is the one place in the product where Tickr's own revenue is displayed** — labelled « Commission plateforme » and never mixed into « Ventes brutes ».
+- **`platformCommission` is not authoritative yet.** The refresh job derives it as
+  `totalRevenue * 0.06` instead of summing `OrderPaidEvent.platformFeeAmount`, and the event listener
+  does not record a platform-scoped revenue stream. Render it as unavailable until the backend
+  records exact service fees; never present this derived field as settled Tickr revenue.
 - Revenue-by-category breakdown from `revenueByCategory: CategoryRevenueDto[]`, rendered with the category `displayNameFr` and one bar per category, sorted by revenue.
 - Top events table from `topEvents: TopEventDto[]` — title, revenue, tickets sold, each linking to `/organizer/events/[id]/analytics`.
 - Period selector sending `startDate` / `endDate` (both optional on `PlatformAnalyticsQueryDto`), with presets « 7 jours », « 30 jours », « 90 jours », « Personnalisé ».
@@ -1587,16 +1572,22 @@ stateDiagram-v2
 - Browsable, filterable table of **published** events across the platform, reusing every `GET /events` lens: `category`, `city`, `country`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice`, `sortBy`, `sortOrder`, pagination. **No free-text box** — `EventFilterDto` has no `q`, and `?q=` is a `400`.
 - Each row: title, organiser `displayName`, category, city, dates, capacity, `soldTickets`, `salesProgress`, with links to the public page and to `/organizer/events/[id]/analytics`.
 - « Copier le lien » and « Ouvrir la page publique » for verification.
-- **⚠ Read-only in V1, stated on screen.** Two verified constraints make moderation actions impossible:
+- **Commission control:** opening a row fetches `GET /config/public?eventId=:id` and shows global,
+  override and effective rates. A percentage input accepts 0–20 % with up to four decimal places;
+  `PATCH /events/:id/commission` saves it. « Utiliser le taux global » sends `null`. A 50 DT
+  preview updates live, and the copy states that only new orders are affected.
+- **Event takedown remains read-only.** Two verified constraints keep removal unavailable:
   1. `GET /events` returns **`PUBLISHED` events only** (`get-published-events.handler.ts:76-78`), and `EventFilterDto` has no `status` field to ask with — so **drafts and cancelled events are invisible to admins**, and the queue an admin actually wants (« à vérifier ») cannot be built.
   2. `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` — an admin gets **`403` every time**. It is also a *cancellation* requiring a `{ reason }` body, not a delete.
-- The screen therefore ships **no take-down control** and shows a persistent notice with the escalation path (contact the organiser) rather than a button that cannot work. Both items are **P1 backend tasks** (§10).
+- The screen ships no take-down control, but commission configuration is fully functional.
 
-**Components consumed** — `PageShell`, `Sidebar`, `Table`, `EventFilters`, `EventStatusBadge`, `CopyLinkButton`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `RoleGate`
+**Components consumed** — `PageShell`, `Sidebar`, `Table`, `EventFilters`, `EventStatusBadge`, `CommissionRateEditor`, `PriceDisplay`, `Drawer`, `CopyLinkButton`, `Pagination`, `Skeleton`, `EmptyState`, `ErrorState`, `RoleGate`
 
 **API calls**
 
 - `GET /events?category=&city=&dateFrom=&dateTo=&page=&limit=20&sortBy=&sortOrder=`.
+- `GET /config/public?eventId=:id`.
+- `PATCH /events/:id/commission` with `{ commissionRate: number | null }`.
 - ~~`DELETE /events/:id`~~ — **not callable by an admin** (`403`). Not wired.
 
 **Permission gating** — `RoleGate` `ADMIN` for the screen; the listing endpoint itself is public.
@@ -1605,10 +1596,10 @@ stateDiagram-v2
 | --- | --- | --- |
 | **Loading** | first fetch | 8 skeleton table rows at 40 px |
 | **Empty** | `total: 0` | « Aucun événement ne correspond à ces filtres » · **[ Effacer les filtres ]** |
-| **Success** | `total > 0` | Table + filters + the read-only notice: « Modération en lecture seule — les retraits se font aujourd'hui via l'organisateur. » |
+| **Success** | `total > 0` | Table + filters; each row can open commission settings. Removal notice remains scoped to takedown only |
 | **Error** | `5xx` / network | `ErrorState` · **[ Réessayer ]** |
 | **Forbidden (403)** | role is not `ADMIN` | Standard admin access-denied |
-| **Conflict** | n/a — no mutation is wired | — |
+| **Conflict** | invalid rate | Inline 0–20 % validation; previous effective rate remains active |
 | **Rate limited (429)** | rapid filtering | Debounced; stale table retained |
 
 ---
@@ -1662,6 +1653,7 @@ Definition of Done requires: **no screen invents an endpoint, and every unwired 
 | `POST /auth/request-reset` | P-09 Forgot password |
 | `POST /auth/reset-password` | P-10 Reset password |
 | `POST /auth/refresh-token` | **Axios interceptor** — never a screen |
+| `GET /config/public[?eventId]` | P-03 Event detail · O-03 Create event · O-06 Ticket types · A-03 Moderation |
 | `GET /users/me` · `PUT /users/me` | U-07 Profile |
 | `PATCH /users/me/password` · `DELETE /users/me` | U-08 Settings |
 | `GET /users` · `GET /users/:id` | A-04 Users |
@@ -1675,6 +1667,7 @@ Definition of Done requires: **no screen invents an endpoint, and every unwired 
 | `POST /events/:id/image` | O-03 Create event · O-05 Edit event (replace) |
 | `PUT /events/:id` | O-05 Edit event |
 | `POST /events/:id/publish` | O-04 Event overview · O-05 Edit event |
+| `PATCH /events/:id/commission` | A-03 Moderation — Admin only; number sets override, `null` restores global |
 | `DELETE /events/:id` | O-05 Edit event — **a cancellation** requiring `{ reason }`, owner only. `@Roles('ORGANIZER')` + `IsEventOwnerGuard` grant no admin bypass, so A-03 cannot call it |
 | `POST\|PUT\|DELETE /events/:id/ticket-types[/:typeId]` | O-06 Ticket types |
 | `POST /orders` | P-03 (ticket selection sheet) |
@@ -1726,7 +1719,7 @@ reads as a decision rather than an oversight.
 | Public organizer profile | `GET /events/organizer/:organizerId` is role-guarded |
 | Full app-wide dark theme | Out of scope; only the ticket pass and scanner are dark surfaces |
 | Admin event takedown | Guards grant no admin bypass — see §8.1 |
-| Organizer net-payout figures | The payout model is contradicted between docs and code; organizer screens show **gross sales only** |
+| Organizer net-payout figures | No settlement ledger exists; new analytics shows gross ticket subtotal before refunds and adjustments, not payable earnings |
 
 ---
 
@@ -1738,9 +1731,9 @@ Every ⚠ marker in this document lands in exactly one row here. Priorities are 
 | # | P | Work item | What it unblocks |
 |---|---|---|---|
 | 1 | **P0** | **Machine-readable `code` in the error envelope.** `INSUFFICIENT_AVAILABILITY`, `TICKET_LIMIT_EXCEEDED`, `EVENT_NOT_PUBLISHED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED` and `GATEWAY_ERROR` all arrive as bare `400`s | Deletes the message-substring shim in `map-api-error.ts` and `mapCheckInError()` — [§3.5](#35-error-mapping), O-09 |
-| 2 | **P0** | **`GET /config/public`** returning `{ commissionRate, currency, reservationTtlMinutes }` | Authoritative pre-order pricing on P-03, O-03 and O-06; today an env constant labelled « estimation » ([§3.6](#36-the-commission-rate---not-implemented)) |
+| 2 | **Done** | `GET /config/public` plus event-specific resolution and Admin override | Authoritative pre-order pricing on P-03, O-03 and O-06 ([§3.6](#36-effective-commission-rate)) |
 | 3 | **P0** | **A way to grant the `ORGANIZER` role.** `RegisterUserDto` has no `role`, and no endpoint changes one | A-04 renders no promotion control; organiser onboarding is manual today |
-| 4 | **P0** | **Register `config/payments.config.ts` in `ConfigModule.forRoot({ load })` — or delete it.** It is absent from the load list (`app.module.ts:32`), so its `payments.commission.rate` fallback of `0.04` is dead and contradicts the live `0.06` (`create-order.handler.ts:41`); the fraud namespace is dead the same way (`fraud-detection.service.ts:36-43`) | Removes the only file in the repo that states a different commission rate |
+| 4 | **P0** | **Backfill pre-fix revenue metrics and aggregate exact platform fees.** New `OrderPaidEvent` data records subtotal and ticket count; older append-only metrics may still contain buyer totals, while platform analytics still derives commission rather than summing `platformFeeAmount` | Makes historical organizer sales and platform-fee metrics authoritative |
 | 5 | P1 | **`POST /auth/resend-verification`** | P-06 and P-08 currently offer a support address where « Renvoyer le lien » belongs; an unverified account has no self-service recovery |
 | 6 | P1 | **`emailVerified` on `UserProfileDto`** | U-07 cannot show verification status |
 | 7 | P1 | **An attendee roster per event** — `GET /tickets/event/:eventId` or `?include=holders`. `GET /tickets/event/:eventId/stats` is aggregate-only and `GET /tickets` is self-scoped | O-07, the largest organiser gap |
@@ -1751,7 +1744,7 @@ Every ⚠ marker in this document lands in exactly one row here. Priorities are 
 | 12 | P1 | **Event summary embedded on `TicketDto` / `OrderDto`**, or `?include=event` | Removes the fan-out and the whole `403` fallback in [§3.7](#37-event-resolution-for-tickets-and-orders) |
 | 13 | P1 | **Moderation capability for `ADMIN`** — a take-down endpoint plus a way to list non-published events. Neither `RolesGuard` nor `IsEventOwnerGuard` grants a bypass, and `EventFilterDto` has no `status` | A-03 ships read-only and says so |
 | 14 | P1 | **`status` filter on `GET /orders`; name/e-mail search on `GET /users`** | U-03 and A-04 filter one page at a time |
-| 15 | P1 | **Settle the organiser payout model** | Every organiser revenue surface shows « Ventes brutes » only ([§6](#6-organizer-zone--9-routes)) |
+| 15 | P1 | **Implement organizer balances, adjustments, gateway reconciliation and payouts** | Replaces buyer-collection labels with authoritative gross entitlement, deductions and « vous recevrez » values ([§6](#6-organizer-zone--9-routes)) |
 | 16 | P2 | **Confirm the QR string is stable for a ticket's lifetime.** It is already a plain string rendered offline (`ticket.dto.ts:33`, `qr-code.vo.ts`) | U-06 cache policy only — **not a blocker for any screen** |
 | 17 | P2 | **Exempt the SSR origin from the IP throttler** (`users.module.ts:131`) | SSR fan-out on `/`, `/events`, `/events/[id]`, `/categories/*` ([§3.1](#31-rendering-and-data-policy)) |
 | 18 | P2 | **One pagination envelope.** Orders omit `hasNextPage`/`hasPreviousPage`, notifications omit `totalPages` too, and `GET /users` is nested under `meta` | A single `Pagination` contract instead of three adapters (correction #2) |

@@ -55,7 +55,7 @@ corrected to agree ([sources in Epic §1](01-frontend-plan-and-design-direction.
 | Originally stated | Verified reality |
 | --- | --- |
 | Base path `/v1` | **`/api`** (`main.ts:17`) |
-| Commission via `GET /config/public` | **Endpoint does not exist** — no config controller is implemented |
+| Commission via `GET /config/public` | **Implemented** — optional `eventId` resolves Admin override or global fallback |
 | Pagination `{ data, meta: {…} }` | **Flat** — `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` |
 | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, code, message, details, timestamp, path, method }` — only *validation* failures add `errors[]` |
 | Sold out `409` · rate limited `429` | Sold out is **`400`**; order-creation rate limiting is **`403`** |
@@ -76,23 +76,19 @@ Three registers hold the full lists: [Phase 1 §L](02-product-design-brief.md#l-
    (`auth.controller.ts:154-156`) — while `POST /auth/login` returns `403` for
    `emailVerified === false` (`:188`). A new account therefore cannot log in, and nothing can
    resend the link.
-3. **Implement `GET /config/public`** (§L 1) — without it the commission rate cannot be shown
-   before an order exists, and the frontend must duplicate it in a build-time
-   `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE` that will drift the day ops changes the rate.
+3. **Commission configuration is implemented** (§L 1): global default from environment, public
+   effective-rate lookup, and Admin event override/clear. Frontend must not duplicate the rate.
 4. **Add a machine-readable `code` to the error envelope** (§L 2) — the UI cannot tell "sold out"
    from "bad input" (both `400`) without parsing a message string.
 5. **Align status-code semantics** (§L 3) — return `409` for business conflicts and `429` for rate
    limiting. Today they arrive as `400` and `403`; no code path emits `409` at all (the shared
    `ConflictException` exists but is never thrown).
-6. **Settle the organizer payout model** (§L 8) — `docs/02-technique/04-modele-economique.md`
-   shows the organizer netting 47 TND on a 50 TND ticket, but no payout logic exists in the code.
-   Organizer surfaces show **gross sales only** until this is resolved.
-7. **Resolve `config/payments.config.ts`** (§L 9) — it is absent from
-   `ConfigModule.forRoot({ load: [...] })` (`app.module.ts:32`), so its `payments.commission.rate`
-   fallback of **4 %** is dead config contradicting the **6 %** the order handler actually reads
-   from `PLATFORM_COMMISSION_RATE` (`create-order.handler.ts:41`). Register it or delete it — do
-   not leave both.
-8. **Let an `ADMIN` act on someone else's event.** `DELETE /events/:id` — a cancellation requiring
+6. **Implement organizer settlement and backfill historical analytics** (§L 8). New event
+   `REVENUE` metrics record the 50 DT ticket subtotal and ticket count, excluding Tickr's 3 DT fee.
+   Older append-only metrics may still contain the 53 DT buyer total, and no payout ledger exists.
+   The UI shows « Ventes de billets brutes · avant remboursements et ajustements », never payable
+   earnings.
+7. **Let an `ADMIN` act on someone else's event.** `DELETE /events/:id` — a cancellation requiring
    a `{ reason }` body, not a hard delete — is `@Roles('ORGANIZER')` plus `IsEventOwnerGuard`
    (`events.controller.ts:583-584`), and neither guard grants an admin bypass
    (`is-event-owner.guard.ts:78`), so it always `403`s for an admin. `/admin/moderation` ships
@@ -103,6 +99,7 @@ string, `v1-{uuid}-{checksum}` (`ticket.dto.ts:33`, `qr-code.vo.ts`), rendered c
 offline; it is regenerated **only** by a transfer (`ticket.entity.ts:461`), so the cache rule is to
 invalidate the stored pass when `POST /tickets/:id/transfer` succeeds.
 
-**§L 4, 6 and 7** need a confirmation of intent rather than code — `paymentFees` is exposed but
-`setPaymentFees()` is never called, `PUSH` is in `NotificationChannel` but rejected by
+**§L 4** is now explicit policy: `paymentFees` is reserved and remains zero in V1; actual gateway
+merchant costs are separate expenses that the current adapters do not expose. **§L 6 and 7** still
+need confirmation of intent — `PUSH` is in `NotificationChannel` but rejected by
 `isSupportedChannel`, and an event carries one image. The UI is already specified around all three.

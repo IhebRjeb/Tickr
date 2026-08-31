@@ -36,7 +36,7 @@ describe('OrderPaidAppHandler', () => {
     mockOrderRepository.findById.mockResolvedValue(mockOrder);
 
     const event = new OrderPaidEvent(
-      'order-123', 'user-1', 'event-1', 'txn_123', 100, 'TND', 4,
+      'order-123', 'user-1', 'event-1', 'txn_123', 100, 'TND', 4, 96, 2,
     );
 
     await handler.handle(event);
@@ -51,7 +51,7 @@ describe('OrderPaidAppHandler', () => {
     mockOrderRepository.findById.mockResolvedValue(null);
 
     const event = new OrderPaidEvent(
-      'order-missing', 'user-1', 'event-1', 'txn_123', 100, 'TND', 4,
+      'order-missing', 'user-1', 'event-1', 'txn_123', 100, 'TND', 4, 96, 2,
     );
 
     await expect(handler.handle(event)).resolves.toBeUndefined();
@@ -64,7 +64,7 @@ describe('OrderPaidAppHandler', () => {
     mockTicketReservation.confirmTickets.mockRejectedValue(new Error('Ticket service down'));
 
     const event = new OrderPaidEvent(
-      'order-123', 'user-1', 'event-1', 'txn_123', 100, 'TND', 4,
+      'order-123', 'user-1', 'event-1', 'txn_123', 100, 'TND', 4, 96, 1,
     );
 
     await expect(handler.handle(event)).resolves.toBeUndefined();

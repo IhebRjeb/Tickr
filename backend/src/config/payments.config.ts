@@ -2,8 +2,8 @@ import { registerAs } from '@nestjs/config';
 
 export default registerAs('payments', () => ({
   commission: {
-    /** Platform commission rate (0.04 = 4%) */
-    rate: parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0.04'),
+    /** Platform commission rate (0.06 = 6%) */
+    rate: parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0.06'),
     /** Minimum commission amount (in smallest currency unit) */
     minimumAmount: parseFloat(process.env.PLATFORM_COMMISSION_MIN || '0.5'),
   },

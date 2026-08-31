@@ -17,6 +17,8 @@ export {
   UpdateEventLocationDto,
 } from './update-event.dto';
 
+export { SetEventCommissionOverrideDto } from './set-event-commission.dto';
+
 // ============================================
 // Ticket Types
 // ============================================

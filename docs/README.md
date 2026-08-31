@@ -14,7 +14,7 @@ Documentation complète pour développer une plateforme de billetterie en ligne 
 ### Décisions Validées
 
 - **Architecture:** Monolithe Modulaire Hexagonal V1 → Migration Progressive V2/V3
-- **Commission:** 6% par billet vendu (payé par organisateur) - Configurable via `PLATFORM_COMMISSION_RATE`
+- **Frais de service:** 6% globaux par défaut via `PLATFORM_COMMISSION_RATE`, avec override Admin 0–20% par événement; ajoutés au prix facial et payés par le participant
 - **Paiements:** Stripe (international) + Konnect & Paymee (Tunisie)
 - **MVP Timeline:** 3 mois (20-40h/semaine)
 - **Budget AWS V1:** $80-100/mois

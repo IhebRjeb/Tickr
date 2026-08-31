@@ -37,7 +37,7 @@
 | Issue #64 stated | Verified reality | Architectural consequence |
 |---|---|---|
 | Base path `/v1` | **`/api`** (`main.ts:17`) | `NEXT_PUBLIC_API_URL` default must be `…/api` |
-| Commission via `GET /config/public` | **⚠ NOT IMPLEMENTED** | An interim constant module, isolated so it retires in one edit |
+| Commission via `GET /config/public` | **Implemented**, including `?eventId=<uuid>` effective-rate resolution | React Query owns global and event-specific config; no frontend commission env duplication |
 | Pagination `{ data, meta: {…} }` | **Flat**: `{ data, total, page, limit, totalPages }` everywhere, plus `hasNextPage` / `hasPreviousPage` on events, tickets and users but **not** on `GET /orders` (`get-orders-by-user.handler.ts:60-66`) | One `Paginated<T>` type with the two flags optional, no `meta` unwrapping |
 | Error envelope with `errors[]` | The only registered filter emits `{ statusCode, code, message, details, timestamp, path, method }` (`all-exceptions.filter.ts:53-61`). `code` is the HTTP reason phrase, not a domain code; validation arrives as `message: string[]` and `errors[]` never appears | `normalizeError()` reads field errors off `message[]` |
 | Sold out `409`, rate limit `429` | Sold out is **`400`**; order-creation rate limiting is **`403`**. Nothing emits `409` or `204`; a `DomainException` escaping a value object is **`422`** (`all-exceptions.filter.ts:45-46`) | `normalizeError()` keys off status **plus endpoint context** |
@@ -73,7 +73,7 @@ frontend/src/
 │   ├── api/  { client.ts, errors.ts, types.ts }
 │   ├── query/{ keys.ts, config.ts, pagination.ts }
 │   ├── auth/ { storage.ts, guards.ts }
-│   ├── config/commission.ts          # ⚠ interim — delete when GET /config/public ships
+│   ├── config/commission.ts          # query helpers for global/effective commission config
 │   ├── format/money.ts  format/date.ts
 │   └── utils.ts                      # cn()
 │
@@ -473,7 +473,8 @@ Filters are part of the key, so a URL change is a cache change — no manual inv
 | `tickets.*` | 60 s | **24 h** | Long `gcTime` deliberately — the pass must survive an offline load at the door |
 | `me` | 5 min | 30 min | Rarely changes |
 | `analytics.*` | 2 min | 10 min | Aggregates; `lastUpdated` (`event-analytics.dto.ts:20`) rendered verbatim rather than as « il y a N min » |
-| *config* | 1 h | ∞ | ⚠ Once `GET /config/public` exists. Until then, a build-time constant |
+| `config.global` | 1 h | 24 h | Global environment-backed commission and TTL change rarely |
+| `config.event(eventId)` | 0 | 5 min | Refetch when ticket selection opens; Admin overrides affect new orders only |
 
 This table governs React Query only; the per-route document strategy is
 [Phase 4 §1.4](05-screen-inventory.md#14-caching-and-revalidation), and the two agree — every
@@ -490,27 +491,35 @@ count can rise and sold-out is not terminal; `refetchOnWindowFocus` is enough, a
 re-rendered silently
 ([Phase 1 §E.2](02-product-design-brief.md#e2--availability-is-stated-in-words-and-numbers-never-implied-by-a-disabled-button)).
 
-### 3.3 The interim commission constant
+### 3.3 Effective commission query
 
 ```ts
-// lib/config/commission.ts
-//
-// ⚠ INTERIM — DELETE THIS MODULE when GET /config/public ships.
-// PLATFORM_COMMISSION_RATE lives only in the backend env and is not exposed by any endpoint,
-// so a pre-order price cannot be quoted authoritatively. Every figure derived from this constant
-// MUST be labelled an estimate; the authoritative value is `platformFee` on the created order.
-//
-// 0.06 is the live default (`create-order.handler.ts:41`), added ON TOP: total = subtotal +
-// platformFee. Ignore the rival 0.04 in config/payments.config.ts — that file is absent from
-// ConfigModule.forRoot({ load: […] }) (`app.module.ts:32`), so nothing reads it.
-export const INDICATIVE_COMMISSION_RATE = Number(
-  process.env.NEXT_PUBLIC_PLATFORM_COMMISSION_RATE ?? 0.06,
-);
+// features/orders/queries/use-public-config.ts
+export interface PublicConfig {
+  globalCommissionRate: number;
+  commissionRateOverride: number | null;
+  effectiveCommissionRate: number;
+  currency: 'TND';
+  reservationTtlMinutes: number;
+}
 
-export function indicativeFee(subtotal: number): number {
-  return subtotal * INDICATIVE_COMMISSION_RATE;
+export function usePublicConfig(eventId?: string) {
+  return useQuery({
+    queryKey: ['config', 'public', eventId ?? 'global'],
+    queryFn: () =>
+      apiClient
+        .get<PublicConfig>('/config/public', { params: { eventId } })
+        .then(({ data }) => data),
+    staleTime: eventId ? 0 : 60 * 60 * 1000,
+    gcTime: eventId ? 5 * 60 * 1000 : 24 * 60 * 60 * 1000,
+    refetchOnMount: eventId ? 'always' : true,
+  });
 }
 ```
+
+The ticket sheet uses `effectiveCommissionRate` for its preview. The order creation response always
+wins: if an Admin changes the override between config read and `POST /orders`, show the returned
+`platformFee` and `total` before payment. Existing orders never change retroactively.
 
 ### 3.4 Order polling after payment
 
@@ -766,14 +775,12 @@ rather than a permission error · `401` refresh-and-replay without losing checko
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `https://api.tickr.tn/api` | **Must end in `/api`** — not `/v1` |
 | `NEXT_PUBLIC_API_TIMEOUT` | `30000` | ms |
-| `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE` | `0.06` | ⚠ Interim; retires with `GET /config/public` |
 | `NEXT_PUBLIC_APP_ENV` | `development` | — |
 | `NEXT_PUBLIC_ENABLE_DEVTOOLS` | `true` | React Query devtools |
 | `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` | `pk_…` | Stripe in-page confirmation only |
 
 `frontend/.env.example` must be updated: `NEXT_PUBLIC_API_URL` is `http://localhost:3000`, missing the
-`/api` prefix, so every request 404s against a running backend; it carries no
-`NEXT_PUBLIC_PLATFORM_COMMISSION_RATE`; and it still carries a commented
+`/api` prefix, so every request 404s against a running backend; it still carries a commented
 `NEXT_PUBLIC_CLICTOPAY_PUBLIC_KEY`, a provider this platform does not use — the three gateways are
 Konnect, Paymee and Stripe.
 
@@ -791,7 +798,7 @@ tests are `*.test.tsx`.
 2. Only `lib/api/client.ts` may construct an axios instance.
 3. No literal hex colours outside `styles/` — tokens only.
 4. No `outline: none` without a replacement focus indicator.
-5. No hard-coded commission rate outside `lib/config/commission.ts`.
+5. No hard-coded commission rate in the frontend; all previews use `GET /config/public`.
 6. Only `lib/api/errors.ts` may branch on an HTTP status code — the eight meanings of `403` are
    resolved in one function or they are resolved wrongly.
 
@@ -809,7 +816,7 @@ tests are `*.test.tsx`.
 - [x] End-to-end worked example for event listing
 - [x] Testing strategy split across Vitest and Playwright, with mandatory failure-path E2E
 - [ ] **Reviewed against backend module boundaries by the Backend Lead**
-- [ ] `lib/config/commission.ts` deleted once `GET /config/public` ships
+- [x] Commission config uses `GET /config/public`; no duplicated frontend environment rate
 
 ---
 

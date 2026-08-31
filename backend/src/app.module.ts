@@ -10,11 +10,12 @@ import awsConfig from './config/aws.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import notificationConfig from './config/notification.config';
+import paymentsConfig from './config/payments.config';
 import redisConfig from './config/redis.config';
+import { AnalyticsModule } from './modules/analytics/infrastructure/analytics.module';
 import { EventsModule } from './modules/events/infrastructure/events.module';
 import { NotificationsModule } from './modules/notifications/infrastructure/notifications.module';
 import { PaymentsModule } from './modules/payments/infrastructure/payments.module';
-import { AnalyticsModule } from './modules/analytics/infrastructure/analytics.module';
 import { TicketsModule } from './modules/tickets/infrastructure/tickets.module';
 import { UsersModule } from './modules/users/infrastructure/users.module';
 import { CacheModule } from './shared/infrastructure/cache/cache.module';
@@ -29,7 +30,15 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
     // Global Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, awsConfig, databaseConfig, redisConfig, jwtConfig, notificationConfig],
+      load: [
+        appConfig,
+        awsConfig,
+        databaseConfig,
+        jwtConfig,
+        notificationConfig,
+        paymentsConfig,
+        redisConfig,
+      ],
       validationSchema: Joi.object({
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
@@ -52,6 +61,9 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
         JWT_SECRET: Joi.string().required(),
         JWT_ACCESS_EXPIRATION: Joi.string().default('15m'),
         JWT_REFRESH_EXPIRATION: Joi.string().default('7d'),
+
+        // Payments
+        PLATFORM_COMMISSION_RATE: Joi.number().min(0).max(0.2).default(0.06),
       }),
       validationOptions: {
         allowUnknown: true,

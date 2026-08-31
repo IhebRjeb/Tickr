@@ -24,7 +24,7 @@
 | **I** | [Responsive strategy](#i-responsive-strategy) | Mobile as the design target, not the fallback |
 | **J** | [Competitive inspiration](#j-competitive-inspiration) | Meetup · Fever · Eventbrite · DICE · Shotgun — one takeaway each |
 | **K** | [Design system foundations](#k-design-system-foundations) | The Tailwind 4 token set |
-| **L** | [Open contract questions](#l-open-contract-questions-for-the-backend) | Eleven gaps — **0a and 0b block P0 outright** |
+| **L** | [Open contract questions](#l-open-contract-questions-for-the-backend) | Gap 0a blocks P0; 0b and commission config are resolved |
 | **M** | [**Design Decisions Locked For Next Phase**](#m-design-decisions-locked-for-next-phase) | **What Phase 2 can safely build on** |
 | **N** | [Appendix — source references](#n-appendix--source-references) | Every backend claim, traced to a file |
 
@@ -283,13 +283,16 @@ as he types a price.
 
 > ⚠️ **What Karim is paid is not yet answerable, and this brief will not invent it.** The
 > buyer-facing half is unambiguous and implemented: `total = subtotal + subtotal × rate`
-> (`order.entity.ts:192`), so 50 DT becomes 53 DT. The organizer-facing half is not. The economic
-> model in `docs/02-technique/04-modele-economique.md` shows the organizer netting **47 TND** on a
-> 50 TND ticket — i.e. a *second* 6 % deducted from the organizer's side, which `docs/README.md`
-> describes as « payé par organisateur » — but **no payout or deduction logic exists anywhere in the
-> V1 codebase.** The organizer dashboard's revenue figures therefore cannot be designed until this
-> is settled; see [§L](#l-open-contract-questions-for-the-backend), gap 8. Until then, organizer
-> surfaces show **gross sales**, clearly labelled as such, and never imply a net payout.
+> (`order.entity.ts:192`), so 50 DT becomes 53 DT. No second 6 % organizer deduction exists in the
+> order code. The economic source documents now use **50 DT as the recommended gross organizer
+> entitlement** and **3 DT as Tickr's gross service fee**, but no payout ledger, organizer balance,
+> gateway settlement or transfer exists in V1. `OrderPaidEvent` now publishes `subtotalAmount` and
+> `ticketCount`, and new event `REVENUE` metrics record the 50 DT ticket subtotal rather than the
+> 53 DT buyer total. The UI may therefore label the value **« Ventes de billets brutes »**, with
+> « avant remboursements et ajustements ». It must still never say « revenu net » or « vous
+> recevrez » until [§L gap 8](#l-open-contract-questions-for-the-backend) provides a settlement
+> ledger. Metrics recorded before this correction require a backfill because analytics metrics are
+> append-only.
 
 **One rule the creation form must enforce:** price and availability information belongs in the
 *structured fields*, never in the description. Competitor research found real Meetup event pages
@@ -805,27 +808,24 @@ named service fee with its rate shown.
 this principle is actually built:
 
 1. **`platformFee` from the API is always authoritative.** `POST /orders` returns `subtotal`,
-   `platformFee`, `paymentFees` and `total`. Those values are rendered verbatim. The rate is
-   configurable and the domain applies a minimum-fee floor, so a client-side `× 1.06` will
-   eventually disagree with the actual charge.
-2. **⚠️ No endpoint currently exposes the commission rate.** `PLATFORM_COMMISSION_RATE` is read only
-   server-side — `create-order.handler.ts:41` (default `0.06`) and `config/payments.config.ts:6`,
-   whose divergent `0.04` fallback shows how easily an unpublished rate drifts; there is no
-   `GET /config/public` controller in the codebase despite one being described in
-   `docs/02-technique/05-configuration-management.md`. So **before an order exists, the frontend has
-   no authoritative rate to display.** The interim design: a build-time
-   `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE` supplies the *indicative* pre-order figure, every such
-   figure is explicitly labelled an estimate, and the value is read from a single constant module so
-   there is exactly one place to correct. This is a **known-drift compromise, not a good design** —
-   resolving it is the highest-priority item in [§L](#l-open-contract-questions-for-the-backend).
-3. **The total can legitimately gain a fourth line after provider selection.**
-   `OrderEntity.setPaymentFees()` (`order.entity.ts:563`) recomputes
-   `total = subtotal + platformFee + paymentFees`. Nothing calls it in V1, so `paymentFees` is
-   currently always 0 — but the aggregate is deliberately built to allow gateway fees to change the
-   total once a provider is chosen. **The summary component must therefore render `paymentFees` as a
-   conditional line that appears only when non-zero, and must re-read the order's `total` after
-   provider selection rather than caching the figure from order creation.** Designing for a
-   three-line breakdown today would break the first time gateway fees are switched on.
+  `platformFee` and `total`; `GET /orders/:id` additionally returns `paymentFees`. Those values are
+  rendered verbatim. The rate is configurable, so a client-side `× 1.06` can disagree with the
+  actual charge.
+2. **The public config endpoint resolves the effective rate.** `GET /config/public` returns the
+  global rate; `GET /config/public?eventId=<uuid>` returns
+  `commissionRateOverride` and `effectiveCommissionRate`. An Admin sets an event override with
+  `PATCH /events/:id/commission`; `null` restores global inheritance. The ticket sheet refreshes
+  event-specific config when it opens. `POST /orders` remains authoritative: if an Admin changes
+  the rate between preview and order creation, the UI must show the returned amount before payment.
+3. **`paymentFees` is a reserved customer-surcharge field, not a record of Tickr's gateway cost.**
+  `OrderEntity.setPaymentFees()` (`order.entity.ts:563`) can recompute
+  `total = subtotal + platformFee + paymentFees`, but no production path calls it. Konnect is sent
+  `addPaymentFeesToAmount: false`; Paymee and Stripe receive no separate surcharge; none of their
+  responses exposes the merchant processing cost. Therefore `paymentFees` is always 0 today and
+  provider costs must not be guessed into it. The summary keeps the row conditional for contract
+  compatibility, but V1 policy is that Tickr absorbs verified gateway costs in its service fee.
+  Any future buyer surcharge requires an explicit Product/Finance decision, an authoritative
+  provider-specific calculation before payment, and disclosure before confirmation.
 
 **What it forbids.** A fee that first appears on the payment screen. A « frais » line without an
 amount. A total that differs by even one millime from what the gateway charges. A hard-coded "6 %"
@@ -1563,7 +1563,7 @@ price on physical posters and Instagram flyers, so a card quoting 53 DT against 
 50 DT would read as *Tickr adding a markup*, which is the opposite of the intended effect. Tickr
 therefore takes **Fever's structure with DICE's discipline** — the face price in discovery, matching
 the poster, and the complete arithmetic from the first moment a quantity exists, per
-[E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step). If and when `GET /config/public` exists — it does not today ([§L](#l-open-contract-questions-for-the-backend), gap 1) — an
+[E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step). Because `GET /config/public?eventId=…` now exposes the effective rate, an
 all-in « frais inclus » quote in discovery becomes possible and should be A/B tested against the
 face-price form. Note also that DICE's waitlists, SMS on-sale reminders and resale have no backend
 equivalent and must not be designed in.
@@ -1806,24 +1806,26 @@ purchase path depends on:
 
 ## L. Open contract questions for the backend
 
-These are gaps found while grounding this brief against the actual API. **Gaps 0a and 0b block P0 outright, and together they mean the backend is not end-to-end complete for the purchase path.** Gap 8 blocks the organizer
+These are gaps found while grounding this brief against the actual API. **Gap 0a still blocks P0 outright. Gap 0b is resolved.** Gap 8 blocks the organizer
 revenue UI; none of the others blocks Phase 2, but each one forces the frontend into a workaround
 that should be removed rather than entrenched. They are listed in priority order.
 
 | # | Gap | Impact on the design | Proposed resolution |
 |---|---|---|---|
 | **0a** 🔴 | **Ticket reservation is an unwired stub, so no purchase completes end to end.** `TICKET_RESERVATION_PORT` binds to `TicketReservationAdapter` (`payments.module.ts`), whose `reserveTickets()` logs `[STUB] …` and returns **mock ticket IDs** — its own comment reads *"Stub: return mock ticket IDs until Tickets module is wired"*. `create-order.handler.ts` step 5 calls it in good faith | **The design in [§F](#f-core-purchase-experience) is unaffected and still correct** — the frontend should call `POST /orders` alone and never `POST /tickets/reserve`. But today that call creates **no ticket rows** and moves **no `soldQuantity`**, so nothing appears in `GET /tickets`, availability never decrements, and the 15-minute hold is notional. Every money-path screen can be built, but none can be tested against real data | Bind the real Tickets reservation path behind `TICKET_RESERVATION_PORT`. Until then, treat the whole purchase flow as **designed but unverifiable**, and do not read "V1 MVP complete" as covering it |
-| **0b** 🔴 | **The Events, Tickets and Notifications controllers are guarded by a `JwtAuthGuard` that never verifies a JWT.** `@shared/infrastructure/common/guards/jwt-auth.guard.ts` only checks `request.user` truthiness — it does not extend `AuthGuard('jwt')` and runs no Passport strategy. No `APP_GUARD` is registered (`app.module.ts` binds only `APP_FILTER` and two interceptors) and no middleware populates `request.user`. The Users, Orders and Analytics controllers import the **real** guard from `modules/users/infrastructure/guards/jwt-auth.guard.ts` | **This is the true P0 blocker.** Every authenticated route on those three controllers appears to reject unconditionally with `401`: `GET /tickets`, `GET /tickets/:id`, `GET /tickets/:id/pdf`, `POST /tickets/check-in`, `POST /tickets/:id/transfer`, all organizer event mutations, `GET /events/organizer/:organizerId`, and every notifications route. A participant could complete `POST /orders` and pay, then **never be able to open the ticket they bought** — U-05, U-06, O-02–O-07, O-09, U-08 and U-09 are all unreachable. Public discovery is unaffected (`@Public()`) | Point all three controllers at the Users-module `JwtAuthGuard`, or register the real guard globally as `APP_GUARD` and keep the shared one only for its `@Public()` bypass. **Confirm at runtime before planning around it** — this is a static reading, and one integration test against `GET /tickets` with a valid token settles it either way |
-| **1** | **The commission rate is not exposed by any endpoint.** `PLATFORM_COMMISSION_RATE` is read only server-side (`create-order.handler.ts:41`; `config/payments.config.ts:6` even carries a divergent `0.04` fallback); no `config` controller exists, although `docs/02-technique/05-configuration-management.md` specifies `GET /config/public` | [E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step) requires the fee to be shown *before* the order exists. The frontend must currently duplicate the rate in a build-time env var — which will silently lie to users the day ops changes it | **Implement the already-documented `GET /config/public`** returning at minimum `{ commissionRate, currency, reservationTtlMinutes }`. Cache it in React Query with a long stale time. This single endpoint removes the only known-drift compromise in the brief |
+| **0b — Resolved** | **The shared `JwtAuthGuard` now extends Passport `AuthGuard('jwt')`.** It validates bearer tokens through the registered strategy, attaches the user, preserves the `@Public()` bypass and returns 401 for invalid authentication | Events, Tickets and Notifications no longer depend on a pre-populated `request.user`. The protected Events lifecycle, including Admin commission, is E2E-validated | Keep one shared guard implementation and the Users JWT strategy; do not reintroduce controller-specific placeholders |
+| **1 — Resolved** | **The commission rate is publicly readable.** `GET /config/public` returns global config; `?eventId=<uuid>` resolves an event override. Admin writes use `PATCH /events/:id/commission` with 0–20 % or `null` | Pre-order arithmetic can use the backend rate instead of duplicating environment state. Existing orders remain unchanged after a rate update | Cache global config ~1 h; refresh event-specific config when opening ticket selection; reconcile against `POST /orders` before payment |
 | **2** | **The error envelope carries a `code`, but it is not the domain error type.** The registered global filter is `AllExceptionsFilter` (`app.module.ts:81`), emitting `{ statusCode, code, message, details, timestamp, path, method }` — note that `HttpExceptionFilter` and `ValidationExceptionFilter` exist but are **registered nowhere**. For a standard `BadRequestException`, `code` is populated from `exceptionResponse.error`, i.e. the HTTP reason phrase (`"Bad Request"`), so it cannot distinguish sold-out from bad input. The rich domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`, …) are discarded at the controller boundary | [G.2](#g2-http-and-business-error-mapping) needs to distinguish "sold out" from "bad input" — both are 400. The frontend must key off endpoint context and, in the worst case, parse a message string, which cannot be translated | **Add a stable `code` field** carrying the existing domain error type. Zero new logic — the handlers already produce these values |
 | **3** | **Status codes do not match their semantics.** `INSUFFICIENT_AVAILABILITY` → 400 (expected 409); `RATE_LIMITED` → 403 (expected 429) | A 403 that means "you have ordered 5 times this hour" cannot be told apart from a genuine role failure, so the generic 403 handler would show the wrong message on a checkout screen | Return **409** for availability/business conflicts and **429** for rate limiting. Resolving #2 makes this lower-priority but not unnecessary |
-| **4** | **`paymentFees` is exposed but never populated.** `OrderEntity.setPaymentFees()` exists and rewrites the total, but nothing calls it | The order summary must be built for a conditional fourth line that is always zero today — untestable against real data | Confirm the intent: either wire gateway fees in, or mark the field reserved. Either way the summary component stays conditional |
+| **4** | **`paymentFees` is a reserved buyer-surcharge field and is never populated.** `OrderEntity.setPaymentFees()` exists, but no production path calls it. Konnect explicitly disables adding payment fees; no adapter exposes the merchant fee charged to Tickr | Confusing merchant processing cost with `paymentFees` would either overcharge the buyer or corrupt Tickr's margin reporting. The conditional UI row is always hidden today | Keep `paymentFees = 0` for V1. Track actual gateway costs separately from provider settlement reports. Only populate this field after an explicit, disclosed buyer-surcharge policy is approved |
 | **5** | **The QR string's stability is unconfirmed** (Phase 4 verified the payload itself is a client-renderable string; only its lifetime is open). The API already returns the QR payload as a plain string (`ticket.dto.ts:33`, e.g. `v1-<uuid>-a1b2`) and `POST /tickets/check-in` accepts that same string — server-side image rendering exists only for the PDF path | [F.7](#f7-the-ticket) depends on rendering that string **offline** at the venue door, so it must be immutable for the ticket's lifetime and safe to cache — neither guarantee is documented | Confirm the string is the scannable payload, immutable once `CONFIRMED`, and that no server-rendered image will replace it. Keep the PDF as the separate backup path |
 | **6** | **`PUSH` exists in `NotificationChannel` but is unsupported** (`isSupportedChannel` allows only EMAIL and SMS) | Notification-preference UI must not offer a channel that silently does nothing | Hide `PUSH` in V1. All copy says « email » or « SMS », never « notification » |
 | **7** | **One image per event** (`POST /events/:id/image`) | No gallery is possible; the event page is designed around a single hero image, which is correct for V1 but should be a conscious choice | Confirm single-image is intended for V1 |
-| **8** | **Organizer payout is undefined — and the docs contradict each other.** `04-modele-economique.md` shows the organizer netting 47 TND on a 50 TND ticket (a second 6 % on the organizer side, echoed by « payé par organisateur » in `docs/README.md`), while the same document's own breakdown does not add up (6.00 TND to the platform, then 3.00 + 1.58 beneath it). **No payout or organizer-side deduction exists in the code** | The organizer dashboard cannot show revenue, and the event-creation form cannot show « vous recevrez X » — the two numbers an organizer most wants. This is the single largest blocked area in the organizer experience | **Settle the model, then implement it.** Decide whether the platform takes 6 % from the buyer only (code today) or 6 % from each side (the economic model), correct the losing document, and expose a payout/earnings figure. Until then organizer surfaces show gross sales only |
+| **8** | **Organizer settlement is not implemented.** New event analytics correctly records `OrderPaidEvent.subtotalAmount` and `ticketCount`, while retaining total and platform fee in metric dimensions. However, existing metrics are append-only and may use the former buyer-total basis; refunds are not subtracted from the event aggregate; no organizer balance or payout ledger exists | The dashboard can show « Ventes de billets brutes » only after historical backfill, with « avant remboursements et ajustements ». It cannot show « revenu net » or « vous recevrez X » | Backfill pre-fix revenue metrics; aggregate exact platform fees from stored event dimensions or a dedicated metric; then implement organizer balances, refunds/adjustments, gateway reconciliation and payouts |
 
-| **9** | **`config/payments.config.ts` is never registered, and it contradicts the live default.** The file declares `payments.commission.rate` with a **`0.04`** fallback and `payments.fraud.*` limits — but it is absent from `ConfigModule.forRoot({ load: [...] })` in `app.module.ts:32`, so **nothing reads it**. The order handler instead reads the raw env var directly: `configService.get('PLATFORM_COMMISSION_RATE', 0.06)` (`create-order.handler.ts:41`), and the fraud service falls back to its inline `5` / `10` literals | Two different documented defaults for the same setting (4 % vs 6 %). Today `.env.example` sets `0.06` so behaviour is correct, but any environment that omits the var gets 6 % from the handler while the config file claims 4 % — and a future reader may "fix" the wrong one | Either register `paymentsConfig` in `app.module.ts` and read `payments.commission.rate` everywhere, or delete the dead file. Do not leave both |
+**Resolved during this review:** `paymentsConfig` is registered, both configuration paths default to
+6 %, startup validates a rate between 0 and 20 %, and `CreateOrderHandler` reads
+`payments.commission.rate`. Deployment environments can still override the rate intentionally.
 
 **Also worth noting** — the frontend's current `src/lib/api/client.ts` hard-redirects to
 `/auth/login` and clears the token on **any** 401, with no refresh attempt, even though
@@ -1973,4 +1975,4 @@ Every backend claim in this document is traceable to source:
 | Rate limiting (3/s, 20/10s) | `backend/src/modules/users/infrastructure/users.module.ts:131` |
 | Notification channels and types | `notification-channel.vo.ts`, `notification-type.vo.ts` |
 | Commission model and 6 % rationale | `docs/02-technique/04-modele-economique.md`, `docs/02-technique/10-commission-rate-update.md` |
-| Organizer-payout contradiction (47 vs 50 TND) | `docs/02-technique/04-modele-economique.md:24-64` vs `order.entity.ts:192` — no payout code exists |
+| Organizer settlement and analytics | `OrderPaidEvent` now records subtotal-based event revenue; pre-fix metrics need backfill, and no payout code exists |

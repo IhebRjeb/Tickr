@@ -74,7 +74,7 @@ not the issue text.**
 | Stated in GitHub issue #64 / the old scaffolds | Verified in `backend/src` — what the frames draw |
 |---|---|
 | API base `/v1` | **`/api`** (`main.ts:17`, `config/app.config.ts` → `API_PREFIX \|\| 'api'`). Every `DATA` line below reads `https://api.tickr.tn/api/…`. Swagger at `/api/docs` |
-| `GET /config/public` supplies the commission rate | **⚠ NOT IMPLEMENTED.** No config controller exists. Frames that show a pre-order fee draw it as an **estimate** fed by the build-time `NEXT_PUBLIC_PLATFORM_COMMISSION_RATE`, kept in one module and matched to the handler default of `0.06` (`create-order.handler.ts:41`). ⚠ `config/payments.config.ts` is **not** loaded by `ConfigModule.forRoot` (`app.module.ts:32`), so its `0.04` fallback is dead — never quote it |
+| `GET /config/public` supplies the commission rate | **Implemented.** Ticket-selection frames use `?eventId=<uuid>` and `effectiveCommissionRate`; Admin overrides affect new orders only |
 | Pagination `{ data, meta: { … } }` | **Flat** — `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`. The « Charger plus » control in the discovery frame is driven by `hasNextPage`, and the count line by `total` |
 | The error envelope carries a machine-readable `code` | It does not: `{ statusCode, code, message, details, timestamp, path, method }`. Failure frames are therefore selected by **status + endpoint context**, which is why each failure is drawn as a **state of the screen that caused it** (§3.4–§3.6) rather than as one generic error component. Note that `403` alone carries eight distinct verified meanings — the full table is [Phase 2 §5.3](03-information-architecture.md#53-the-eight-meanings-of-403), and no other document may contradict it |
 | Sold out → `409`, rate limited → `429` | Sold out → **`400`**; order-creation rate limiting → **`403`** (`ForbiddenException`). The « limite de 5 commandes par heure » frame is a 403 state, not a 429 one |
@@ -265,7 +265,7 @@ No route is left without a frame to build from. Each row below states which arch
 | `/organizer/events/[id]/ticket-types` | 12 Create event, step 3 | Extracted as a standalone page; tiers read from `GET /events/:id` → `ticketTypes[]`, as there is no list endpoint. Deletion is refused unless the event is `DRAFT` **and** `soldQuantity === 0` (`event.entity.ts:535,548`), so the delete control is hidden on a published event, not disabled |
 | `/organizer/events/[id]/participants` | 13 Event analytics | Check-in progress + per-type breakdown only — ⚠ **no endpoint lists an event's ticket holders**, so no roster table may be drawn |
 | `/admin`, `/admin/reports` | 11 Organizer dashboard / 13 Analytics | Same stat and chart blocks, denser; `lastUpdated` drawn verbatim |
-| `/admin/moderation` | 02 Discovery | **Read-only.** ⚠ `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` with no admin bypass (`events.controller.ts:582-584`), so no takedown button may be drawn — the frame carries an explained « suppression indisponible » state instead |
+| `/admin/moderation` | 02 Discovery | Event rows add a commission drawer: global rate, optional override, effective rate, 50 DT buyer-price preview, save and « Utiliser le taux global ». Takedown remains unavailable and separately explained |
 | `/admin/users` | 08 My tickets | Desktop-first 40 px data table; on mobile it degrades to stacked cards, never a horizontally scrolling table |
 
 ### 2.3 The frame map of the money path
@@ -461,7 +461,7 @@ favour.
 
 Card content order is fixed and identical everywhere the card appears: poster → category → date/time
 → title → venue · city → price + availability. The price is the **face price** matching the poster
-the organizer printed, not an all-in figure; the 6 % service fee appears the moment a quantity
+the organizer printed, not an all-in figure; the event's effective service fee appears when a quantity
 exists ([§0.3](#03-contract-corrections-this-phase-inherits)).
 
 | # | Note |
@@ -505,7 +505,7 @@ PROVES   A buyer settles quand, où, combien and disponible before
 │    → Itinéraire                      │  only if lat/lng present
 ├──────────────────────────────────────┤
 │ À partir de 50 DT                    │
-│ + 6 % de frais de service            │  estimate — no /config/public (§0.3)
+│ + 6 % de frais de service            │  preview — effective API rate (§0.3)
 ├──────────────────────────────────────┤
 │ BILLETS                              │
 │ ┌──────────────────────────────────┐ │
@@ -567,7 +567,7 @@ PROVES   The complete arithmetic exists the instant a quantity does,
 │ Maximum 10 billets par événement     │  the BINDING limit is named
 ├──────────────────────────────────────┤
 │ 2 × Standard             100,000 DT  │  ← breakdown appears at qty ≥ 1
-│ Frais de service (6 %)     6,000 DT  │     (estimate — see §0.3)
+│ Frais de service (6 %)     6,000 DT  │     default-rate preview from API
 │ ─────────────────────────────────    │
 │ Total à payer            106,000 DT  │  heaviest number on screen
 ├──────────────────────────────────────┤
@@ -588,6 +588,7 @@ PROVES   The complete arithmetic exists the instant a quantity does,
 | 3 | « Les billets sont à mon nom » is checked by default; most purchases are 1–2 tickets, and unchecking reveals one `{ name, email }` pair per ticket |
 | 4 | The stepper names *which* limit is binding: the tier's `availableQuantity`, or the **10 tickets per event per user** cap (`TICKET_LIMIT_EXCEEDED` → 400). The third limit — **5 orders per hour** (`RATE_LIMITED` → 403) — is not a stepper bound and surfaces only on submit |
 | 5 | Logged-out users reach this screen and see the price. Auth is requested on **Continuer**, and the selection survives it |
+| 6 | A 3 % event-override variant shows 3,000 DT fees and 103,000 DT total for the same subtotal |
 
 **States to draw:** `default` · `qty-selected` · `limit-reached` — one frame per binding limit
 (`availableQuantity` · 10 billets par événement · the 403 « 5 commandes par heure » on submit) ·
@@ -648,7 +649,7 @@ PROVES   The only decisions left are provider and pay, with the
 |---|---|
 | 1 | The chrome is **stripped** — one wordmark, no navigation, nothing offering an exit mid-payment |
 | 2 | The countdown is stated in both forms, because only the absolute one survives the gateway round trip |
-| 3 | `paymentFees` is `0` for every gateway today, so its row is drawn **conditionally** — wiring a real gateway fee later is a data change, not a redesign |
+| 3 | `paymentFees` is `0` for every gateway today, so its row is drawn **conditionally**. It is a reserved buyer surcharge, not an estimate of Tickr's processor cost; any future non-zero value requires approved policy and disclosure before payment |
 | 4 | Three named providers as radio cards, local first — never a dropdown |
 | 5 | The redirect is announced before it occurs |
 
@@ -766,9 +767,9 @@ layouts are conventional and carry no money risk. The Figma frames are still req
 | **Order confirmation** | `/orders/[id]` | Success moment, but informational | `total` paid, the reference, the event, « e-mail en route », one dominant CTA « Voir mes billets ». The refund rule — remboursement = `subtotal` + `paymentFees`, **la commission n'est pas remboursée** — is stated here, before it matters |
 | **My tickets** | `/tickets` | Vertical list of `TicketCard` | Today's event promoted to the top; `status` unmistakable per row. ⚠ `GET /tickets` **accepts `?status` and silently ignores it** — the handler calls `findByUserId(userId, page, limit)` only (`get-user-tickets.handler.ts:32-36`), so upcoming/past tabs filter the **loaded pages** and must say so |
 | **Login** | `/login`, `/register` | Centred card, no nav | Returns to `?next=` exactly; never blocks a price view. ⚠ A `403` on `POST /auth/login` means the e-mail is unverified and nothing else (`auth.controller.ts:188`); a deactivated account is a `401` indistinguishable from bad credentials (`local.strategy.ts:73`). **No resend-verification endpoint exists**, so the 403 has no recovery to draw yet |
-| **Organizer dashboard** | `/organizer` | 3 KPI tiles + event list | **Gross sales only**, explicitly labelled — payout model unsettled |
+| **Organizer dashboard** | `/organizer` | 3 KPI tiles + event list | `totalRevenue` labelled **« Ventes de billets brutes · avant remboursements et ajustements »**; net/payable earnings unavailable |
 | **Create event** | `/organizer/events/new` | Poster → title → date → venue → tiers | Live participant-price arithmetic as the price is typed; DRAFT vs PUBLISHED unmistakable |
-| **Event analytics** | `/organizer/events/[id]/analytics` | Stat row + sales timeline | Empty state is a *first-run*, not an error; `lastUpdated` rendered verbatim; every figure labelled **brut**, never net |
+| **Event analytics** | `/organizer/events/[id]/analytics` | Stat row + sales timeline | Empty state is a *first-run*, not an error; `lastUpdated` rendered verbatim; gross ticket sales clearly distinguished from unavailable net/payable earnings |
 | **Scanner** | `/organizer/scanner` | Full-bleed camera, huge targets | Valid/invalid unambiguous at a glance, in the dark, one-handed; a duplicate scan reads differently from an invalid one. `POST /tickets/check-in` requires `qrCode`, `deviceId` and `locationGate`, so the setup step is mandatory and happens once per shift |
 
 ---

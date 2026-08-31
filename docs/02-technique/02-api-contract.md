@@ -83,30 +83,53 @@ GET /events?page=1&limit=12
 
 ### GET /config/public
 
-**Description:** Récupère la configuration publique de la plateforme (taux de commission, version)
+**Description:** Récupère le taux global ou le taux effectif d'un événement.
 
 **Authentification:** Non requise (public)
 
 **Response 200:**
 ```json
 {
-  "commission": {
-    "rate": 0.06,
-    "displayPercentage": "6.0%"
-  },
-  "version": "1.0.0"
+  "globalCommissionRate": 0.06,
+  "commissionRateOverride": 0.03,
+  "effectiveCommissionRate": 0.03,
+  "currency": "TND",
+  "reservationTtlMinutes": 15
 }
 ```
 
 **Utilisation Frontend:**
-- Cache recommandé: 1 heure
-- Fallback si échec: 6% par défaut
-- Utilisé pour afficher prix dynamiquement
+- Sans `eventId`: cache recommandé 1 heure
+- Avec `eventId`: rafraîchir à l'ouverture de la sélection de billets
+- Ne pas inventer un fallback à 6 % pour un événement; une surcharge peut s'appliquer
+- Les montants retournés par `POST /orders` restent autoritaires
 
 **Notes:**
 - ✅ Endpoint public (pas de token requis)
-- ✅ Réponse cachée côté serveur (5 min)
 - ✅ Permet changement commission sans redéployer frontend
+
+**Query optionnelle:** `eventId` (UUID). Un événement inconnu retourne `404`.
+
+### PATCH /events/:id/commission
+
+**Auth:** Required (`ADMIN` uniquement)
+
+**Body:**
+```json
+{ "commissionRate": 0.03 }
+```
+
+Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, maximum 4 décimales.
+
+**Response 200:**
+```json
+{
+  "eventId": "uuid",
+  "commissionRateOverride": 0.03,
+  "effectiveCommissionRate": 0.03,
+  "usesGlobalRate": false
+}
+```
 
 ---
 

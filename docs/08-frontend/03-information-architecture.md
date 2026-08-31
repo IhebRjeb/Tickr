@@ -60,7 +60,7 @@ five claims that do not match `backend/src`. **This document follows the code.**
 | Pagination `{ data, meta: { page, limit, total, totalPages } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`. There is no `meta` object | `event-list.dto.ts:174-215` (`PaginatedEventListDto`) |
 | Error envelope `{ statusCode, message, errors[], timestamp }` | The only globally registered filter is **`AllExceptionsFilter`**, which emits `{ statusCode, code, message, details, timestamp, path, method }`. `http-exception.filter.ts` and `validation-exception.filter.ts` exist but are wired to nothing, so their shapes are never returned. A `ValidationPipe` rejection arrives with `message` as a **string array**, not a string — the error renderer must handle both | `app.module.ts:80-83`, `all-exceptions.filter.ts:52-60` |
 | Sold out → `409`, rate limited → `429` | Sold out (`INSUFFICIENT_AVAILABILITY`) → **`400`** (`orders.controller.ts:93`); order-creation rate limiting (`RATE_LIMITED`) → **`403`** (`:91`). **No controller emits `409` or `204` at all** — the only path to `409` is a `ConflictException` nothing throws. The throttler limits that would produce `429` are configured but their guard is not registered ([§5.3](#53-the-eight-meanings-of-403)) | `orders.controller.ts:88-95`, `users.module.ts:131-146` |
-| Commission fetched at runtime via `GET /config/public` | **No such endpoint exists.** See [§0.3](#03--get-configpublic-does-not-exist) | — |
+| Commission fetched at runtime via `GET /config/public` | **Implemented**, including event-specific resolution through `?eventId=<uuid>` | `public-config.controller.ts` |
 
 The envelope's `code` is **not** a machine-readable domain code: for anything a controller throws it
 is the HTTP reason phrase — `'Bad Request'`, `'Forbidden'`, `'Not Found'`. The domain error types
@@ -70,56 +70,17 @@ Every route that must distinguish two errors behind one status code therefore do
 **status + endpoint context**, isolated in a single `mapApiError()` module — see
 [Phase 1 §G.2](02-product-design-brief.md#g2-http-and-business-error-mapping).
 
-### 0.3 ⚠ `GET /config/public` DOES NOT EXIST
+### 0.3 `GET /config/public` and event commission resolution
 
-`ls backend/src/config` returns `*.config.ts` files only — there is **no config controller anywhere
-in the codebase**. `PLATFORM_COMMISSION_RATE` is read in exactly one place, inside
-`create-order.handler.ts:41`, and is never exposed over HTTP.
+`GET /config/public` returns `globalCommissionRate`, `effectiveCommissionRate`, `currency` and
+`reservationTtlMinutes`. With `?eventId=<uuid>`, it also returns `commissionRateOverride`; `null`
+means the event inherits the global rate. An Admin can set 0–20 % or clear the override through
+`PATCH /events/:id/commission` with `{ "commissionRate": 0.03 }` or `null`.
 
-⚠ **Do not read the rate out of `config/payments.config.ts`.** That file declares
-`payments.commission.rate` with a fallback of `0.04`, but it is **not in `ConfigModule.forRoot`'s
-`load[]`** (`app.module.ts:32`), so the `payments.*` namespace never resolves and the value is dead.
-The live rate is the `0.06` inline fallback at `create-order.handler.ts:41`, and the fraud limits
-below come from the inline fallbacks at `fraud-detection.service.ts:36-43` for the same reason.
-
-The Epic body and `docs/02-technique/05-configuration-management.md:278` both reference
-`GET /config/public`. **Both references are aspirational.** Treat it as a required backend task,
-never as an available call.
-
-**Where the frontend would have used it, and what it does instead:**
-
-| Surface | What it needs | Interim source |
-|---|---|---|
-| `/events/[id]` — ticket sheet, before an order exists | Commission rate, to satisfy [Phase 1 §E.3](02-product-design-brief.md#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step) (fee disclosed the instant a quantity exists) | `PLATFORM_COMMISSION_RATE` constant, **labelled « estimation »** |
-| `/organizer/events/new`, `/organizer/events/[id]/edit` | Live « votre billet à 50 DT coûtera 53 DT à l'acheteur » arithmetic | Same constant |
-| `/checkout/[orderId]` — pre-order copy « réservés pendant 15 minutes » | `reservationTtlMinutes` | `RESERVATION_TTL_MINUTES` constant. **The live countdown is driven by the order's own `expiresAt`, never by this constant** |
-| `/legal/refunds` | The rate quoted in the refund policy | Same constant, reviewed at publication |
-
-**Interim implementation — exactly one module, `frontend/src/lib/config/platform.ts`:**
-
-```ts
-// ⚠ INTERIM. Every value here duplicates backend state that no endpoint exposes.
-// Delete this module the day GET /config/public ships. See docs/08-frontend/03-information-architecture.md §0.3
-export const PLATFORM_COMMISSION_RATE = Number(
-  process.env.NEXT_PUBLIC_PLATFORM_COMMISSION_RATE ?? '0.06',
-);                                   // create-order.handler.ts:41
-export const RESERVATION_TTL_MINUTES = 15;   // reserve-tickets.handler.ts:24
-export const ORDER_EXPIRATION_MINUTES = 15;  // create-order.handler.ts:42
-export const MAX_TICKETS_PER_EVENT = 10;     // fraud-detection.service.ts:40-43
-export const MAX_ORDERS_PER_HOUR = 5;        // fraud-detection.service.ts:36-39
-export const CURRENCY = 'TND';               // currency.vo.ts
-export const CURRENCY_SYMBOL = 'DT';
-export const CURRENCY_DECIMALS = 3;          // millimes
-```
-
-**Three hard rules that keep the drift survivable:**
-
-1. **No component reads `process.env` directly.** One module, one place to correct.
-2. **Any figure derived from `PLATFORM_COMMISSION_RATE` is labelled an estimate** in the UI and is
-   discarded the instant an order exists. Once `POST /orders` has returned, `subtotal`,
-   `platformFee`, `paymentFees` and `total` come from the API verbatim and are never recomputed.
-3. **`CURRENCY`, `CURRENCY_SYMBOL` and `CURRENCY_DECIMALS` are not drift risks** — they are fixed in
-   `currency.vo.ts` and will not change. Only the rate and the TTLs are compromises.
+The global query may be cached for about one hour. Event-specific config is refreshed whenever the
+ticket sheet opens because an Admin change affects **new orders only**. Once `POST /orders` returns,
+its `subtotal`, `platformFee`, `paymentFees` and `total` replace every preview value and are shown
+before payment.
 
 ### 0.4 Nine further gaps found while building this tree
 
@@ -169,7 +130,7 @@ can show, so each is recorded here rather than being discovered during implement
 | `/unsubscribe/[token]/[category]` | Email unsubscribe | — | `CSR` | `GET /notifications/unsubscribe/:token/:category` | `category` is constrained to **`marketing`** or **`event_reminders`** (any other value → 400). ⚠ The endpoint is a **`GET` with a side effect**, so it must fire on an explicit « Confirmer la désinscription » press, never on page load — email scanners and link prefetchers would otherwise unsubscribe users silently |
 | `/legal/terms` | CGU | — | `SSG` | *(static)* | Label « Conditions générales d'utilisation » |
 | `/legal/privacy` | Privacy policy | — | `SSG` | *(static)* | Label « Politique de confidentialité » |
-| `/legal/refunds` | Refund policy | — | `SSG` | *(static)* | Must state that **the 6 % service fee is not refunded** (`request-refund.handler.ts:56`). Linked from `/events/[id]` and `/orders/[id]` — this page does real work in the purchase flow |
+| `/legal/refunds` | Refund policy | — | `SSG` | *(static)* | Must state that **the service fee displayed on the order is not refunded** (`request-refund.handler.ts:56`). It must not hard-code the global default because an event override may apply |
 
 ### 1.3 Participant zone — any authenticated user
 
@@ -199,14 +160,14 @@ edit, publish, delete and ticket-type controls are hidden, not disabled-and-fail
 
 | Route | Screen | Role | Rendering | Primary endpoint(s) | Notes |
 |---|---|---|---|---|---|
-| `/organizer` | Dashboard | `ORGANIZER` · `ADMIN` (read-only) | `CSR` | `GET /analytics/dashboard` | Accepts `timeRange` (`7d` · `30d` · `90d`, default `30d`). ⚠ Shows **gross sales only**. The organizer payout model is contradicted between `04-modele-economique.md` and the code, and no payout logic exists ([Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-backend) gap 8). Never imply a net figure |
+| `/organizer` | Dashboard | `ORGANIZER` · `ADMIN` (read-only) | `CSR` | `GET /analytics/dashboard` | Accepts `timeRange` (`7d` · `30d` · `90d`, default `30d`). New metrics sum ticket subtotal and may be labelled **« Ventes de billets brutes »**, qualified « avant remboursements et ajustements ». Pre-fix metrics need backfill; no payout logic exists, so never imply a net or payable figure |
 | `/organizer/events` | My events | `ORGANIZER` · `ADMIN` | `CSR` | `GET /events/organizer/:organizerId` | `organizerId` comes from `GET /users/me`, **never from the URL** — an organizer passing any other id gets 403. Accepts `status` (`EventStatus`), `page`, `limit`. ⚠ `status` is applied **after** the page is fetched and `total` is overwritten with the filtered page length (`get-organizer-events.handler.ts:82-90`), so a filtered view must not print a count or trust `totalPages`. Default view splits `DRAFT` / `PUBLISHED` / past. `DRAFT` must be unmistakable |
-| `/organizer/events/new` | Create event | `ORGANIZER` only | `CSR` | `POST /events`, then `POST /events/:id/image` | Two steps: the event is created first, the image is uploaded against the returned id. **One image per event** — no gallery. ⚠ The result is a `DRAFT` and therefore not re-openable by id (gap 6), so hold the created event in memory for the rest of the session. Shows the live buyer-price arithmetic from the ⚠ interim constant ([§0.3](#03--get-configpublic-does-not-exist)) |
+| `/organizer/events/new` | Create event | `ORGANIZER` only | `CSR` | `GET /config/public`, `POST /events`, then `POST /events/:id/image` | Two steps: the event is created first, the image is uploaded against the returned id. **One image per event** — no gallery. The new event inherits the global commission and the form previews the buyer price from public config |
 | `/organizer/events/[id]` | Event overview (owner view) | `ORGANIZER` (owner) | `CSR` | `GET /events/:id` | Same endpoint as the public page, and it ignores the bearer token. ⚠ **A `DRAFT` is a 403 here even for its owner** (gap 6), so until the backend accepts optional auth this screen — and `/edit` and `/ticket-types`, which read the same endpoint — can only render events that are already `PUBLISHED`. Unknown id → 404 |
 | `/organizer/events/[id]/edit` | Edit · publish · delete | `ORGANIZER` (owner) | `CSR` | `PUT /events/:id`, `POST /events/:id/publish`, `DELETE /events/:id`, `POST /events/:id/image` | All four carry `IsEventOwnerGuard`. `DRAFT → PUBLISHED` is one-way in practice — publish is a confirmation step, not a toggle. Delete lives in a danger section |
 | `/organizer/events/[id]/ticket-types` | Ticket types | `ORGANIZER` (owner) | `CSR` | `POST /events/:id/ticket-types`, `PUT /events/:id/ticket-types/:typeId`, `DELETE /events/:id/ticket-types/:typeId` | Reads the current tiers from `GET /events/:id` (`ticketTypes[]`) — there is no separate list endpoint. Each row shows `soldQuantity` / `availableQuantity` / `isSoldOut` / `isOnSale` as returned |
 | `/organizer/events/[id]/participants` | Participants & check-in stats | `ORGANIZER` (owner) · `ADMIN` | `CSR` | `GET /tickets/event/:eventId/stats` | ⚠ **This is an aggregate stats endpoint, not a participant list.** No endpoint returns per-attendee rows for an event, so the screen is a stats board with a check-in entry point, not a table of names. Flagged in [§8](#8-open-items-handed-to-other-phases) |
-| `/organizer/events/[id]/analytics` | Event analytics | `ORGANIZER` (owner) · `ADMIN` | `CSR` | `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline` | Gross sales only, as above |
+| `/organizer/events/[id]/analytics` | Event analytics | `ORGANIZER` (owner) · `ADMIN` | `CSR` | `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline` | Gross ticket sales before refunds and adjustments, labelled as above; not a payable organizer balance |
 | `/organizer/scanner` | Check-in scanner | `ORGANIZER` · `ADMIN` | `CSR` | `POST /tickets/check-in` | Dark surface, huge targets, unambiguous valid/invalid, usable at a venue door at night ([Phase 1 §D.2](02-product-design-brief.md#d2-colour)). Body is `{ qrCode, deviceId (≤ 100), locationGate (≤ 50) }` — all three **required** (`check-in.dto.ts`), so the device id and gate are chosen once per shift, not per scan. Not event-scoped in the URL — the scanned ticket carries its own event, and ⚠ the API checks the role but **not** that the operator owns that event. Must degrade to manual reference entry when the camera is unavailable |
 
 ### 1.5 Admin zone — `ADMIN`
@@ -215,7 +176,7 @@ edit, publish, delete and ticket-type controls are hidden, not disabled-and-fail
 |---|---|---|---|---|---|
 | `/admin` | Platform overview | `ADMIN` | `CSR` | `GET /analytics/platform` | The only endpoint carrying `@Roles('ADMIN')` in the analytics controller |
 | `/admin/reports` | Revenue reports & export | `ADMIN` | `CSR` | `GET /analytics/revenue-report`, `POST /analytics/export` | ⚠ Both are **`JwtAuthGuard` only at the guard level**; the admin scope is applied *inside* the handler (`user.role === 'ADMIN'` is passed as a flag, and a non-admin can get `ACCESS_DENIED` → 403). The UI still restricts the route to `ADMIN` — but do not assume the API does. `revenue-report` requires `startDate` and `endDate`; `NO_DATA` returns **404**, which must render as an empty state, not an error |
-| `/admin/moderation` | Event moderation | `ADMIN` | `CSR` | `GET /events` | ⚠ **Read-only in V1.** `DELETE /events/:id` is `@Roles('ORGANIZER')` + `IsEventOwnerGuard` with no admin bypass (gap 5), so an admin **cannot** take an event down. `GET /events` also returns `PUBLISHED` only, so the list is not a moderation queue. The screen lists those events with a visible, explained « suppression indisponible » state and **no contact-the-organizer action** — no reporting endpoint exists, and gap 2 leaves the organizer nameless. Do not ship a delete button that always 403s |
+| `/admin/moderation` | Event moderation | `ADMIN` | `CSR` | `GET /events`, `GET /config/public?eventId=:id`, `PATCH /events/:id/commission` | Admin can configure or clear an event commission override. Event takedown remains unavailable: `DELETE /events/:id` still requires the owning organizer, and the list contains published events only |
 | `/admin/users` | User directory | `ADMIN` | `CSR` | `GET /users`, `GET /users/:id` | Both are `@Roles('ADMIN')`. `GET /users` also takes a server-side **`role`** filter and defaults to **`limit=10`** (max 100) — unlike every other list in this document (`users.controller.ts:49-52`, `:336-337`). The detail view is a **slide-over on this route**, not a separate URL — `GET /users/:id` has no route of its own. 40 px data-table rows, desktop-first ([Phase 1 §D.9](02-product-design-brief.md#d9-spacing-and-density)) |
 
 ### 1.6 Route count reconciliation
@@ -1104,13 +1065,13 @@ in [Phase 1 §L](02-product-design-brief.md#l-open-contract-questions-for-the-ba
 |---|---|---|
 | **1** | **Send the two transactional e-mails.** `POST /auth/register` never issues a verification token (`auth.controller.ts:154-155`) while `POST /auth/login` returns 403 for `emailVerified === false` (`:187-192`), and `POST /auth/request-reset` never sends its link (`:282`). A resend-verification endpoint is needed too, or the 403 has no recovery | The entire `/register → /verify-email → /login → /checkout` path, and `/forgot-password → /reset-password`. The highest-priority backend item in the whole Epic |
 | **2** | **Make `GET /events/:id` resolve an optional bearer token** — apply `JwtAuthGuard` with a passthrough for `@Public()`, or add an owner-scoped `GET /events/:id` under `JwtAuthGuard`. Today the route resolves no user, so `requestingUserId` is always `undefined` and every `DRAFT` is a 403 (gap 6) | The whole organizer create → edit → publish loop. `/organizer/events/[id]`, `/edit` and `/ticket-types` can only open events that are already `PUBLISHED`, so a draft cannot be reopened after a reload |
-| **3** | **Implement `GET /config/public`** returning at least `{ commissionRate, currency, reservationTtlMinutes }` | Removes the interim constant module in [§0.3](#03--get-configpublic-does-not-exist) and the « estimation » labels on `/events/[id]` and `/organizer/events/new` |
+| **3 — Done** | `GET /config/public`, event-specific resolution, and Admin override/clear | Removes frontend commission duplication and supports per-event commercial rates |
 | **4** | **Add a machine-readable `code` to the error envelope**, carrying the domain error types the handlers already produce | Collapses [§5.3](#53-the-eight-meanings-of-403) from context-guessing to a switch statement |
 | **5** | **Allow `ADMIN` on `DELETE /events/:id`** (and give `IsEventOwnerGuard` an admin bypass) | `/admin/moderation` ships read-only until this lands |
 | **6** | **Make `GET /events/search` accept `EventFilterDto`**, or add `q` to `GET /events` | Collapses `/search` and `/events` into one composable surface and removes the note in [§6.3](#63-search--a-separate-non-composable-surface) |
 | **7** | **Add a per-event participant list endpoint.** `GET /tickets/event/:eventId/stats` returns aggregates only | `/organizer/events/[id]/participants` is a stats board, not a list, until this exists |
 | **8** | **Populate `organizer.displayName`** from the Users module — all six event query handlers return the literal `'Event Organizer'` | Any organizer attribution on cards or `/events/[id]` |
-| **9** | **Settle the organizer payout model** | All organizer revenue UI; surfaces show **gross sales only** meanwhile |
+| **9** | **Backfill historical event revenue metrics, aggregate exact platform fees, then implement organizer settlement** | New metrics are subtotal-based, but existing data may include service fees and no payable balance exists |
 | **10** | **Register `ThrottlerGuard` as an `APP_GUARD`** — the limits in `users.module.ts:131-146` and the `@Throttle()` decorators on the auth routes are configured but unenforced | Nothing in the UI, which handles 429 regardless; listed so the gap is not mistaken for a frontend omission |
 
 **Closed by this re-verification:** the QR payload is *not* an open question. `TicketDto.qrCode` is a
@@ -1155,10 +1116,10 @@ invalidate the stored pass when `POST /tickets/:id/transfer` succeeds. Nothing h
 - [x] Route protection matrix defined, with **401 and 403 handled by different code paths** and all eight sources of 403 enumerated — [§5](#5-route-protection-matrix)
 - [x] URL and query-parameter contract fixed for `/events`, `/search`, `/categories/[category]` and every protected list, including timezone and decimal-separator rules — [§6](#6-url-and-query-parameter-conventions)
 - [x] French vs English path segments decided and justified, with the single exception documented and given a decision deadline — [§7](#7-french-vs-english-path-segments)
-- [x] Every reference to `GET /config/public` flagged **⚠ NOT IMPLEMENTED** with the interim constant approach specified — [§0.3](#03--get-configpublic-does-not-exist)
+- [x] `GET /config/public` and event-specific effective-rate resolution documented — [§0.3](#03-get-configpublic-and-event-commission-resolution)
 - [x] The five incorrect claims in the Epic body corrected against `backend/src` — [§0.2](#02-five-corrections-to-the-epic-text)
 - [x] **Reconciled with the Screen Inventory** — [Phase 4 §3](05-screen-inventory.md#3-count-and-reconciliation-with-phase-2) maps the same 33 routes to 33 screens, with no orphan in either direction
-- [ ] **`GET /config/public` implemented** — backend change; until then the interim constant stands
+- [x] **`GET /config/public` implemented**, with optional `eventId` and Admin override endpoint
 - [ ] **`POST /auth/register` issues a verification token, and `POST /auth/request-reset` sends its mail** — backend change; `/register → /login` and `/forgot-password → /reset-password` are both broken end-to-end without it
 - [ ] **`GET /events/:id` resolves an optional bearer token** — backend change; without it no `DRAFT` is reachable by id and the organizer zone can only open published events ([§8](#8-open-items-handed-to-other-phases), item 2)
 - [ ] **`/admin/moderation` delete capability** — backend change; the route ships read-only

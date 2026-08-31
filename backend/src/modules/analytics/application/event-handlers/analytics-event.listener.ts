@@ -32,6 +32,8 @@ export class AnalyticsEventListener {
     eventId: string;
     userId: string;
     totalAmount: number;
+    subtotalAmount: number;
+    platformFeeAmount: number;
     currency: string;
     ticketCount: number;
   }): Promise<void> {
@@ -43,9 +45,14 @@ export class AnalyticsEventListener {
         MetricType.REVENUE,
         payload.eventId,
         EntityType.EVENT,
-        payload.totalAmount,
+        payload.subtotalAmount,
         payload.currency,
-        { orderId: payload.orderId, userId: payload.userId },
+        {
+          orderId: payload.orderId,
+          userId: payload.userId,
+          totalAmount: payload.totalAmount,
+          platformFeeAmount: payload.platformFeeAmount,
+        },
       ),
     );
 
