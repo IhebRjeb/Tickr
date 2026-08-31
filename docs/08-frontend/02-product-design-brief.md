@@ -277,9 +277,16 @@ door in the dark — that screen is a scanning tool, not a dashboard: enormous t
 unambiguous valid/invalid response, and readable in one glance.
 
 **What Karim must understand without asking:** that the commission is added on top of his ticket
-price, so his 50 DT ticket costs the buyer **53 DT** — and that if he wants the buyer to pay a round
-number, he prices the ticket accordingly. The event-creation form should show this arithmetic live
-as he types a price.
+price, so his 50 DT ticket costs the buyer **53 DT** at the default 6 % rate. In V1, Karim edits the
+face price only; the effective rate, service fee and buyer total are read-only preview values. The
+form must not offer a hidden inverse-pricing mode or imply that a buyer total is guaranteed after an
+Admin commission change.
+
+If Karim wants an approximately round buyer total, the interface may explain the relationship but
+does not calculate and submit a second price mode. At 6 %, a 50 DT target corresponds
+mathematically to `50 / 1.06 = 47.169811…`, or 47.170 DT at TND precision. This is guidance only,
+not a V1 API capability. A future target-total mode requires a backend-owned pricing contract,
+millime-safe solving and an explicit policy for later commission changes.
 
 > ⚠️ **What Karim is paid is not yet answerable, and this brief will not invent it.** The
 > buyer-facing half is unambiguous and implemented: `total = subtotal + subtotal × rate`
@@ -1855,6 +1862,10 @@ Anything **not** on this list is still open.
 4. **French-first (`fr-TN`)**, all strings externalised from day one; Arabic is a planned locale and
   the type stack already accommodates it. English and multi-market localisation follow as Tickr
   expands market by market.
+
+**V1 pricing mode is locked:** organizers enter the ticket face price only. The effective
+commission, service fee and buyer total are read-only previews. No `pricingMode`, target-total input
+or inverse-price calculation belongs in the V1 frontend.
 
 **Roadmap guardrail:** V1 design and implementation must not fabricate future social capabilities,
 but neither may they create avoidable barriers to them. Keep identity, localisation, currency,

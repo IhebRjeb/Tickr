@@ -1350,7 +1350,7 @@ stateDiagram-v2
 
 - Table of tiers from `GET /events/:id` → `ticketTypes[]`: name, price, `quantity`, `soldQuantity`, `availableQuantity`, sales window, `isActive`, plus the derived `isOnSale` / `isSoldOut`.
 - Create a tier — `name` (1–100), `description` (≤ 500), `price` (> 0), `currency` (`TND`), `quantity` (integer ≥ 1), `salesStartDate`, `salesEndDate`, `isActive` (default true). All except description are **required** by `AddTicketTypeDto`.
-- Price input in dinars with millimes, validated against the 3-decimal TND rule and echoed back through `PriceDisplay` so the organiser sees exactly the string a buyer will see.
+- Face-price input in dinars with millimes, validated against the 3-decimal TND rule. It is shown separately from the read-only service fee and buyer-total preview; the buyer does not see the face price as the final amount.
 - **Buyer-price preview per tier** from `GET /config/public?eventId=:id`: « Le participant paiera 53,000 DT (dont 3,000 DT de frais de service) ». If Admin configured 3 %, the same 50 DT tier shows 51,500 DT instead.
 - Sales window defaults: start = now, end = event start. Both are required, so the form pre-fills rather than leaving the organiser to guess.
 - Edit a tier — `PUT /events/:id/ticket-types/:typeId`. Reducing `quantity` below `soldQuantity` is blocked client-side with the real number: « 12 billets sont déjà vendus, la quantité ne peut pas descendre en dessous. » **Price and sales window lock after the first sale** (`ticket-type.entity.ts:208`, `:279` → `CANNOT_MODIFY_AFTER_SALES`), so both fields render read-only with the reason once `soldQuantity > 0` rather than failing on save.
@@ -1711,6 +1711,7 @@ reads as a decision rather than an oversight.
 | Personalised / "for you" feed | No recommendation engine. V1 curation is **editorial and filter-driven** |
 | Social graph, friends, "N friends going" | No data. Fabricating it would violate [Phase 1 §C.2](02-product-design-brief.md#c2-the-seven-attributes-made-operational) |
 | Seat maps / assigned seating | Ticket types are quantity-based; no seat inventory exists |
+| Target buyer-total pricing mode | V1 `price` is always the organizer face price. No `pricingMode` or `targetBuyerTotal` contract exists; extra fields are rejected by the API |
 | Promo / discount codes | No endpoint |
 | Waitlists | No endpoint. A sold-out tier offers a re-check instead ([Phase 1 §E.2](02-product-design-brief.md#e2--availability-is-stated-in-words-and-numbers-never-implied-by-a-disabled-button)) |
 | Resale marketplace | `POST /tickets/:id/transfer` is a peer-to-peer courtesy with no pricing or escrow |

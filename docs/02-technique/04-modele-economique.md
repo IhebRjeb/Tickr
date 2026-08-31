@@ -55,6 +55,38 @@ Frais de paiement refacturés au participant (`paymentFees`): 0 TND actuellement
 Pour le même billet à 50 TND avec une surcharge événement à 3 %, le participant paie 51.500 TND,
 dont 1.500 TND de frais de service. L'organisateur conserve le même prix facial brut de 50 TND.
 
+### Décision tarifaire V1: prix facial comme entrée canonique
+
+Le backend accepte uniquement le prix facial dans `AddTicketTypeDto.price` et
+`UpdateTicketTypeDto.price`. Il stocke cette valeur dans `ticket_types.price_amount`; aucun mode de
+tarification ni total participant cible n'est stocké.
+
+```text
+Entrée organisateur: prix facial P
+Taux effectif: r = override événement ?? taux global
+Frais Tickr: round_TND(P × r)
+Total participant: P + frais Tickr
+```
+
+Le formulaire V1 montre les trois valeurs, mais l'organisateur ne modifie que `P`. Cela rend la
+source comptable non ambiguë et reste cohérent si l'Admin change la commission: le prix facial reste
+stable, tandis que le total des nouvelles commandes suit le nouveau taux.
+
+#### Mode futur « total participant cible »
+
+Ce mode n'est **pas implémenté**. Le calcul indicatif pour une cible `T` serait `P = T / (1 + r)`;
+ainsi `50 / 1.06 = 47.169811…`, soit 47.170 TND après arrondi. Toutefois, une implémentation fiable
+doit appartenir au backend et:
+
+1. introduire un contrat explicite (`pricingMode`, `targetBuyerTotal`), sans surcharger le sens de
+  `price`;
+2. résoudre et vérifier le résultat au millime avec les mêmes règles `Money` que la commande;
+3. décider si un changement de commission conserve le prix facial ou la cible participant;
+4. interdire toute re-tarification rétroactive des commandes existantes;
+5. définir le comportement après la première vente, quand le prix facial est verrouillé.
+
+Jusqu'à ces décisions, le frontend ne propose ni toggle ni champ « total participant cible ».
+
 Le backend implémente `total = subtotal + platformFee + paymentFees`. À la création d'une commande,
 `paymentFees` vaut toujours `0` et aucun flux de production n'appelle `setPaymentFees()`. Le code ne
 retire donc **pas** une seconde commission de 6% à l'organisateur. En revanche, aucun ledger de

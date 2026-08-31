@@ -481,21 +481,24 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```json
 {
   "name": "Early Bird",
-  "price": 35.00,
+  "description": "Prix réduit pour les premiers",
+  "price": 35.000,
+  "currency": "TND",
   "quantity": 200,
-  "description": "Prix réduit pour les premiers"
+  "salesStartDate": "2026-06-01T00:00:00Z",
+  "salesEndDate": "2026-07-14T23:59:59Z",
+  "isActive": true
 }
 ```
+
+`price` est le **prix facial organisateur hors frais de service**, pas un total participant cible.
+Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 
 **Response 201:**
 ```json
 {
-  "id": "uuid",
-  "name": "Early Bird",
-  "price": 35.00,
-  "quantity": 200,
-  "sold": 0,
-  "available": 200
+  "ticketTypeId": "uuid",
+  "message": "Ticket type added successfully"
 }
 ```
 

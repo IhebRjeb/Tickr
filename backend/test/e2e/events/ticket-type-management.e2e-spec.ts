@@ -308,6 +308,19 @@ describe('E2E: Ticket Type Management', () => {
         .expect(HttpStatus.BAD_REQUEST);
     });
 
+    it('should reject unsupported target buyer total pricing fields', async () => {
+      const invalidDto = createTestTicketTypeDto({
+        pricingMode: 'BUYER_TOTAL',
+        targetBuyerTotal: 50,
+      });
+
+      await request(app.getHttpServer())
+        .post(`/api/events/${eventId}/ticket-types`)
+        .set('Authorization', `Bearer ${organizerToken}`)
+        .send(invalidDto)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
     it('should reject adding ticket type with zero quantity', async () => {
       const invalidDto = createTestTicketTypeDto({ quantity: 0 });
 

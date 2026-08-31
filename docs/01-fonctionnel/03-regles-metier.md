@@ -118,6 +118,22 @@ Tickr reçoit brut avant coûts: 3 TND
 Avec un taux événement de 3%, le même billet coûte 51.500 TND au participant: 50 TND de billet et
 1.500 TND de frais de service.
 
+### Contrat de saisie du prix V1
+
+- `price` / `priceAmount` désigne toujours le **prix facial organisateur**, hors frais Tickr.
+- L'organisateur saisit une seule valeur; le frontend affiche le taux effectif, les frais et le
+  total participant en lecture seule.
+- Le total participant est calculé par le backend lors de `POST /orders` et n'est jamais stocké
+  comme objectif sur le type de billet.
+- Un changement Admin de commission modifie le total des **nouvelles** commandes, mais ne modifie ni
+  le prix facial ni les commandes déjà créées.
+- Le mode « je fixe le total participant » est hors scope V1. Aucun champ `pricingMode`,
+  `targetBuyerTotal` ou calcul inverse n'existe dans le backend.
+
+**Exemple mathématique uniquement:** pour viser 50 TND avec un taux de 6%, le prix théorique est
+`50 / 1.06 = 47.169811…`, arrondi à `47.170 TND`. Après arrondi des frais au millime, le total vaut
+50.000 TND dans cet exemple. Cette formule n'est pas un contrat API V1.
+
 **Paiement organisateur:**
 - Politique cible proposée: J+7 après événement, par virement bancaire
 - Le backend V1 ne contient encore ni ledger de reversement, ni RIB organisateur, ni payout
