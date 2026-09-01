@@ -6,9 +6,10 @@ import type { CheckInStatsDto } from '../../dtos/check-in-stats.dto';
 // Types for GetEventCheckInStats operation
 // ============================================
 
-export type GetEventCheckInStatsErrorQuery =
-  | { type: 'EVENT_NOT_FOUND'; message: string }
-  | { type: 'ACCESS_DENIED'; message: string };
+export type GetEventCheckInStatsErrorQuery = {
+  type: 'ACCESS_DENIED';
+  message: string;
+};
 
 export type GetEventCheckInStatsResultQuery = CheckInStatsDto;
 
@@ -20,7 +21,7 @@ export type GetEventCheckInStatsResultQuery = CheckInStatsDto;
 export class GetEventCheckInStatsQuery extends BaseQuery<GetEventCheckInStatsResultQuery> {
   constructor(
     public readonly eventId: string,
-    public readonly organizerId: string,
+    public readonly actorId: string,
   ) {
     super();
     Object.freeze(this);

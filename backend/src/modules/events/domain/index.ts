@@ -2,6 +2,7 @@
 
 // Entities
 export * from './entities/event.entity';
+export * from './entities/event-check-in-staff-assignment.entity';
 export * from './entities/ticket-type.entity';
 
 // Value Objects
@@ -37,3 +38,4 @@ export * from './exceptions/duplicate-ticket-type-name.exception';
 export * from './exceptions/invalid-sales-period.exception';
 export * from './exceptions/invalid-ticket-type.exception';
 export * from './exceptions/invalid-event.exception';
+export * from './exceptions/invalid-event-check-in-staff-assignment.exception';

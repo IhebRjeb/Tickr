@@ -23,10 +23,9 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '@shared/infrastructure/common/decorators/current-user.decorator';
-import { Roles } from '@shared/infrastructure/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@shared/infrastructure/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@shared/infrastructure/common/guards/roles.guard';
 
 import {
   // Commands
@@ -436,14 +435,17 @@ export class TicketsController {
    * Check in a ticket at venue entrance
    *
    * Validates QR code, checks time window, and records check-in.
-   * Requires ORGANIZER role. Duplicate check-in attempts emit
-   * a security alert.
+  * Requires event ownership, current admin access, or an active event staff
+  * assignment. Duplicate check-in attempts emit a security alert.
    *
    * @route POST /api/tickets/check-in
    */
   @Post('check-in')
-  @UseGuards(RolesGuard)
-  @Roles('ORGANIZER', 'ADMIN')
+  @Throttle({
+    short: { ttl: 1000, limit: 10 },
+    medium: { ttl: 10000, limit: 80 },
+    long: { ttl: 60000, limit: 300 },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Check in a ticket at venue entrance' })
@@ -451,13 +453,14 @@ export class TicketsController {
   @ApiResponse({ status: 200, description: 'Check-in result', type: CheckInResponseDto })
   @ApiResponse({ status: 400, description: 'Check-in failed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Requires ORGANIZER role' })
+  @ApiResponse({ status: 403, description: 'No check-in access for this event' })
   @ApiResponse({ status: 404, description: 'Ticket not found' })
   async checkInTicket(
     @Body() dto: CheckInDto,
     @CurrentUser() user: RequestUser,
   ): Promise<CheckInResponseDto> {
     const command = new CheckInTicketCommand(
+      dto.eventId,
       dto.qrCode,
       user.userId,
       dto.deviceId,
@@ -469,12 +472,13 @@ export class TicketsController {
     if (result.isFailure) {
       const error = result.error!;
       switch (error.type) {
+        case 'CHECK_IN_FORBIDDEN':
+          throw new ForbiddenException(error.message);
         case 'INVALID_QR_CODE':
         case 'CHECK_IN_OUTSIDE_WINDOW':
         case 'CHECK_IN_FAILED':
           throw new BadRequestException(error.message);
         case 'TICKET_NOT_FOUND':
-        case 'EVENT_NOT_FOUND':
           throw new NotFoundException(error.message);
         default:
           throw new BadRequestException(error.message);
@@ -496,21 +500,19 @@ export class TicketsController {
    * Get check-in statistics for an event
    *
    * Returns aggregated check-in data for organizer dashboard.
-   * Requires ORGANIZER role and event ownership.
+  * Requires event ownership, current admin access, or an active event staff
+  * assignment.
    *
    * @route GET /api/tickets/event/:eventId/stats
    */
   @Get('event/:eventId/stats')
-  @UseGuards(RolesGuard)
-  @Roles('ORGANIZER', 'ADMIN')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get check-in statistics for an event' })
   @ApiParam({ name: 'eventId', description: 'Event UUID' })
   @ApiResponse({ status: 200, description: 'Check-in statistics', type: CheckInStatsDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Requires ORGANIZER role' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiResponse({ status: 403, description: 'No statistics access for this event' })
   async getEventCheckInStats(
     @Param('eventId', ParseUUIDPipe) eventId: string,
     @CurrentUser() user: RequestUser,
@@ -520,13 +522,7 @@ export class TicketsController {
     const result = await this.getEventCheckInStatsHandler.execute(query);
 
     if (result.isFailure) {
-      const error = result.error!;
-      switch (error.type) {
-        case 'EVENT_NOT_FOUND':
-          throw new NotFoundException(error.message);
-        case 'ACCESS_DENIED':
-          throw new ForbiddenException(error.message);
-      }
+      throw new ForbiddenException(result.error.message);
     }
 
     return result.value!;

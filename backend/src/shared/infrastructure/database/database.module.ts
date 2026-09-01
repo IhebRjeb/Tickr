@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Import all entities explicitly for reliability
+import { EventCheckInStaffAssignmentOrmEntity } from '../../../modules/events/infrastructure/persistence/entities/event-check-in-staff-assignment.orm-entity';
 import { EventOrmEntity } from '../../../modules/events/infrastructure/persistence/entities/event.orm-entity';
 import { TicketTypeOrmEntity } from '../../../modules/events/infrastructure/persistence/entities/ticket-type.orm-entity';
 import { CheckInOrmEntity } from '../../../modules/tickets/infrastructure/persistence/entities/check-in.orm-entity';
@@ -29,6 +30,7 @@ import { VerificationTokenEntity } from '../../../modules/users/infrastructure/p
           VerificationTokenEntity,
           // Events module entities
           EventOrmEntity,
+          EventCheckInStaffAssignmentOrmEntity,
           TicketTypeOrmEntity,
           // Tickets module entities
           TicketOrmEntity,

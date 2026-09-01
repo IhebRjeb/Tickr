@@ -5,12 +5,13 @@ import type { EventRepositoryPort } from '@modules/events/application/ports/even
 import { TicketTypeOrmEntity } from '@modules/events/infrastructure/persistence/entities/ticket-type.orm-entity';
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import type {
   EventQueryPort,
   EventInfo,
   TicketTypeAvailability,
+  TicketTypeInfo,
 } from '../../application/ports/event-query.port';
 
 /**
@@ -70,6 +71,22 @@ export class EventQueryAdapter implements EventQueryPort {
       currency: ticketType.priceCurrency,
       name: ticketType.name,
     };
+  }
+
+  async getTicketTypesByIds(ticketTypeIds: string[]): Promise<TicketTypeInfo[]> {
+    if (ticketTypeIds.length === 0) {
+      return [];
+    }
+
+    const ticketTypes = await this.ticketTypeOrmRepository.find({
+      where: { id: In(ticketTypeIds) },
+      select: { id: true, name: true },
+    });
+
+    return ticketTypes.map((ticketType) => ({
+      id: ticketType.id,
+      name: ticketType.name,
+    }));
   }
 
   async decrementTicketTypeAvailability(

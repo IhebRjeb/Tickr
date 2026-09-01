@@ -11,7 +11,9 @@ import { ExpireTicketsHandler } from '@modules/tickets/application/commands/expi
 import { ReserveTicketsHandler } from '@modules/tickets/application/commands/reserve-tickets/reserve-tickets.handler';
 import { TransferTicketHandler } from '@modules/tickets/application/commands/transfer-ticket/transfer-ticket.handler';
 import { CHECK_IN_REPOSITORY } from '@modules/tickets/application/ports/check-in.repository.port';
+import { EVENT_CHECK_IN_ACCESS_PORT } from '@modules/tickets/application/ports/event-check-in-access.port';
 import { EVENT_QUERY_PORT } from '@modules/tickets/application/ports/event-query.port';
+import { TICKET_CHECK_IN_PERSISTENCE_PORT } from '@modules/tickets/application/ports/ticket-check-in-persistence.port';
 import { TICKET_REPOSITORY } from '@modules/tickets/application/ports/ticket.repository.port';
 import { USER_QUERY_PORT } from '@modules/tickets/application/ports/user-query.port';
 import { GetEventCheckInStatsHandler } from '@modules/tickets/application/queries/get-event-check-in-stats/get-event-check-in-stats.handler';
@@ -35,6 +37,8 @@ import request from 'supertest';
 import {
   InMemoryTicketRepository,
   InMemoryCheckInRepository,
+  InMemoryTicketCheckInPersistence,
+  MockEventCheckInAccessAdapter,
   MockEventQueryAdapter,
   MockUserQueryAdapter,
   MockDomainEventPublisher,
@@ -49,6 +53,8 @@ describe('Ticket Check-In E2E', () => {
   let jwtService: JwtService;
   let ticketRepository: InMemoryTicketRepository;
   let checkInRepository: InMemoryCheckInRepository;
+  let checkInPersistence: InMemoryTicketCheckInPersistence;
+  let eventCheckInAccess: MockEventCheckInAccessAdapter;
   let eventQueryAdapter: MockEventQueryAdapter;
   let organizerToken: string;
   let participantToken: string;
@@ -57,6 +63,11 @@ describe('Ticket Check-In E2E', () => {
     ticketRepository = new InMemoryTicketRepository();
     checkInRepository = new InMemoryCheckInRepository();
     eventQueryAdapter = new MockEventQueryAdapter();
+    eventCheckInAccess = new MockEventCheckInAccessAdapter(eventQueryAdapter);
+    checkInPersistence = new InMemoryTicketCheckInPersistence(
+      ticketRepository,
+      checkInRepository,
+    );
     const userQueryAdapter = new MockUserQueryAdapter();
     const eventPublisher = new MockDomainEventPublisher();
 
@@ -69,7 +80,12 @@ describe('Ticket Check-In E2E', () => {
       providers: [
         { provide: TICKET_REPOSITORY, useValue: ticketRepository },
         { provide: CHECK_IN_REPOSITORY, useValue: checkInRepository },
+        { provide: EVENT_CHECK_IN_ACCESS_PORT, useValue: eventCheckInAccess },
         { provide: EVENT_QUERY_PORT, useValue: eventQueryAdapter },
+        {
+          provide: TICKET_CHECK_IN_PERSISTENCE_PORT,
+          useValue: checkInPersistence,
+        },
         { provide: USER_QUERY_PORT, useValue: userQueryAdapter },
         { provide: DOMAIN_EVENT_PUBLISHER, useValue: eventPublisher },
         { provide: TicketS3StorageService, useValue: new MockTicketS3StorageService() },
@@ -121,12 +137,16 @@ describe('Ticket Check-In E2E', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   beforeEach(() => {
     ticketRepository.clear();
     checkInRepository.clear();
+    checkInPersistence.clear();
+    eventCheckInAccess.clear();
     eventQueryAdapter.clear();
   });
 
@@ -153,6 +173,7 @@ describe('Ticket Check-In E2E', () => {
         .post('/api/tickets/check-in')
         .set('Authorization', `Bearer ${organizerToken}`)
         .send({
+          eventId: TEST_EVENT_IDS.published,
           qrCode: ticket.qrCode.value,
           deviceId: 'scanner-gate-a',
           locationGate: 'Gate A',
@@ -170,6 +191,7 @@ describe('Ticket Check-In E2E', () => {
         .post('/api/tickets/check-in')
         .set('Authorization', `Bearer ${organizerToken}`)
         .send({
+          eventId: TEST_EVENT_IDS.published,
           qrCode: 'invalid-qr-code',
           deviceId: 'scanner-gate-a',
           locationGate: 'Gate A',
@@ -182,6 +204,7 @@ describe('Ticket Check-In E2E', () => {
         .post('/api/tickets/check-in')
         .set('Authorization', `Bearer ${organizerToken}`)
         .send({
+          eventId: TEST_EVENT_IDS.published,
           qrCode: 'v1-99999999-0000-4000-8000-000000000099-abcd',
           deviceId: 'scanner-gate-a',
           locationGate: 'Gate A',
@@ -200,6 +223,7 @@ describe('Ticket Check-In E2E', () => {
         .post('/api/tickets/check-in')
         .set('Authorization', `Bearer ${organizerToken}`)
         .send({
+          eventId: TEST_EVENT_IDS.published,
           qrCode: ticket.qrCode.value,
           deviceId: 'scanner-gate-a',
           locationGate: 'Gate A',
@@ -211,6 +235,7 @@ describe('Ticket Check-In E2E', () => {
         .post('/api/tickets/check-in')
         .set('Authorization', `Bearer ${organizerToken}`)
         .send({
+          eventId: TEST_EVENT_IDS.published,
           qrCode: ticket.qrCode.value,
           deviceId: 'scanner-gate-a',
           locationGate: 'Gate A',
@@ -218,7 +243,7 @@ describe('Ticket Check-In E2E', () => {
         .expect(HttpStatus.BAD_REQUEST);
     });
 
-    it('should reject check-in without ORGANIZER role', async () => {
+    it('should reject an unassigned participant', async () => {
       const ticket = ticketRepository.seedTicket({
         status: TicketStatus.CONFIRMED,
       });
@@ -227,11 +252,35 @@ describe('Ticket Check-In E2E', () => {
         .post('/api/tickets/check-in')
         .set('Authorization', `Bearer ${participantToken}`)
         .send({
+          eventId: TEST_EVENT_IDS.published,
           qrCode: ticket.qrCode.value,
           deviceId: 'scanner-gate-a',
           locationGate: 'Gate A',
         })
         .expect(HttpStatus.FORBIDDEN);
+    });
+
+    it('should allow a participant assigned to the event', async () => {
+      const ticket = ticketRepository.seedTicket({
+        status: TicketStatus.CONFIRMED,
+      });
+      eventCheckInAccess.assign(
+        TEST_EVENT_IDS.published,
+        TEST_USER_IDS.participant,
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/tickets/check-in')
+        .set('Authorization', `Bearer ${participantToken}`)
+        .send({
+          eventId: TEST_EVENT_IDS.published,
+          qrCode: ticket.qrCode.value,
+          deviceId: 'scanner-gate-a',
+          locationGate: 'Gate A',
+        })
+        .expect(HttpStatus.OK);
+
+      expect(response.body.isValid).toBe(true);
     });
   });
 
@@ -260,11 +309,11 @@ describe('Ticket Check-In E2E', () => {
       expect(response.body.checkInRate).toBe(50);
     });
 
-    it('should fail for non-existent event', async () => {
+    it('should deny statistics when no event access can be resolved', async () => {
       await request(app.getHttpServer())
         .get('/api/tickets/event/99999999-0000-4000-8000-000000000099/stats')
         .set('Authorization', `Bearer ${organizerToken}`)
-        .expect(HttpStatus.NOT_FOUND);
+        .expect(HttpStatus.FORBIDDEN);
     });
   });
 });

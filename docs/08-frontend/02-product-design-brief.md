@@ -11,22 +11,22 @@
 
 ## Contents
 
-| | Section | What it fixes |
-|---|---|---|
-| **A** | [Product positioning](#a-product-positioning) | The V1 market gap, six commitments and global product horizon |
-| **B** | [Target users](#b-target-users) | Participant, organizer, admin — and the 70/25/5 design weighting |
-| **C** | [Brand personality](#c-brand-personality) | Seven attributes made operational, voice, and anti-patterns |
-| **D** | [Visual direction](#d-visual-direction) | Colour, type, shape, imagery, spacing — all contrast-validated |
-| **E** | [UX principles](#e-ux-principles) | Five testable rules every screen must pass |
-| **F** | [Core purchase experience](#f-core-purchase-experience) | Discovery → ticket → payment → QR, step by step |
-| **G** | [Error and edge-case UX](#g-error-and-edge-case-ux) | Three failure shapes, the full status mapping, five money-critical states |
-| **H** | [Accessibility](#h-accessibility) | WCAG 2.1 AA as concrete build obligations |
-| **I** | [Responsive strategy](#i-responsive-strategy) | Mobile as the design target, not the fallback |
-| **J** | [Competitive inspiration](#j-competitive-inspiration) | Meetup · Fever · Eventbrite · DICE · Shotgun — one takeaway each |
-| **K** | [Design system foundations](#k-design-system-foundations) | The Tailwind 4 token set |
-| **L** | [Open contract questions](#l-open-contract-questions-for-the-backend) | Gap 0a blocks P0; 0b and commission config are resolved |
-| **M** | [**Design Decisions Locked For Next Phase**](#m-design-decisions-locked-for-next-phase) | **What Phase 2 can safely build on** |
-| **N** | [Appendix — source references](#n-appendix--source-references) | Every backend claim, traced to a file |
+|       | Section                                                                                 | What it fixes                                                             |
+| ----- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **A** | [Product positioning](#a-product-positioning)                                           | The V1 market gap, six commitments and global product horizon             |
+| **B** | [Target users](#b-target-users)                                                         | Participant, organizer, admin — and the 70/25/5 design weighting          |
+| **C** | [Brand personality](#c-brand-personality)                                               | Seven attributes made operational, voice, and anti-patterns               |
+| **D** | [Visual direction](#d-visual-direction)                                                 | Colour, type, shape, imagery, spacing — all contrast-validated            |
+| **E** | [UX principles](#e-ux-principles)                                                       | Five testable rules every screen must pass                                |
+| **F** | [Core purchase experience](#f-core-purchase-experience)                                 | Discovery → ticket → payment → QR, step by step                           |
+| **G** | [Error and edge-case UX](#g-error-and-edge-case-ux)                                     | Three failure shapes, the full status mapping, five money-critical states |
+| **H** | [Accessibility](#h-accessibility)                                                       | WCAG 2.1 AA as concrete build obligations                                 |
+| **I** | [Responsive strategy](#i-responsive-strategy)                                           | Mobile as the design target, not the fallback                             |
+| **J** | [Competitive inspiration](#j-competitive-inspiration)                                   | Meetup · Fever · Eventbrite · DICE · Shotgun — one takeaway each          |
+| **K** | [Design system foundations](#k-design-system-foundations)                               | The Tailwind 4 token set                                                  |
+| **L** | [Open contract questions](#l-open-contract-questions-for-the-backend)                   | Gap 0a blocks P0; 0b and commission config are resolved                   |
+| **M** | [**Design Decisions Locked For Next Phase**](#m-design-decisions-locked-for-next-phase) | **What Phase 2 can safely build on**                                      |
+| **N** | [Appendix — source references](#n-appendix--source-references)                          | Every backend claim, traced to a file                                     |
 
 ---
 
@@ -44,19 +44,20 @@ than quietly designed in. Where the current API contract is ambiguous for the UI
 
 **Backend facts this document is built on** (verified against source, not assumed):
 
-| Fact | Value | Source |
-|---|---|---|
-| Reservation hold | **15 minutes** | `reserve-tickets.handler.ts:24` (`RESERVATION_TTL_MINUTES = 15`) |
-| Order expiry | **15 minutes**, configurable | `create-order.handler.ts:42` (`ORDER_EXPIRATION_MINUTES`) |
-| Platform commission | **6 %**, configurable, **added on top** of the ticket price | `create-order.handler.ts:41` (`PLATFORM_COMMISSION_RATE=0.06`); `order.entity.ts:192` (`total = subtotal + subtotal × rate`) |
-| Currency | **TND**, symbol `DT`, **3 decimals** (millimes) | `shared/domain/value-objects/currency.vo.ts` |
-| Payment providers | `STRIPE` · `KONNECT` · `PAYMEE` | `payment-method.vo.ts` |
-| Payment hand-off | `paymentUrl` (redirect) **or** `clientSecret` (Stripe, in-page) | `payment-provider.types.ts` |
-| Purchase limits | **5 orders/hour/user**, **10 tickets/event/user** | `fraud-detection.service.ts:36-43` |
-| Reservation size | **1–10 holders** per reservation call | `reserve-tickets.dto.ts` (`@ArrayMaxSize(10)`) |
-| Refund rule | Refund = subtotal + payment fees — **commission is non-refundable** | `request-refund.handler.ts:56` |
-| Notification channels | **EMAIL and SMS only** (`PUSH` exists in the enum but is unsupported) | `notification-channel.vo.ts` |
-| Roles | `PARTICIPANT` · `ORGANIZER` · `ADMIN` | `user-role.vo.ts` |
+| Fact                  | Value                                                                                   | Source                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Reservation hold      | **15 minutes**                                                                          | `reserve-tickets.handler.ts:24` (`RESERVATION_TTL_MINUTES = 15`)                                                             |
+| Order expiry          | **15 minutes**, configurable                                                            | `create-order.handler.ts:42` (`ORDER_EXPIRATION_MINUTES`)                                                                    |
+| Platform commission   | **6 %**, configurable, **added on top** of the ticket price                             | `create-order.handler.ts:41` (`PLATFORM_COMMISSION_RATE=0.06`); `order.entity.ts:192` (`total = subtotal + subtotal × rate`) |
+| Currency              | **TND**, symbol `DT`, **3 decimals** (millimes)                                         | `shared/domain/value-objects/currency.vo.ts`                                                                                 |
+| Payment providers     | `STRIPE` · `KONNECT` · `PAYMEE`                                                         | `payment-method.vo.ts`                                                                                                       |
+| Payment hand-off      | `paymentUrl` (redirect) **or** `clientSecret` (Stripe, in-page)                         | `payment-provider.types.ts`                                                                                                  |
+| Purchase limits       | **5 orders/hour/user**, **10 tickets/event/user**                                       | `fraud-detection.service.ts:36-43`                                                                                           |
+| Reservation size      | **1–10 holders** per reservation call                                                   | `reserve-tickets.dto.ts` (`@ArrayMaxSize(10)`)                                                                               |
+| Refund rule           | Refund = subtotal + payment fees — **commission is non-refundable**                     | `request-refund.handler.ts:56`                                                                                               |
+| Notification channels | **EMAIL and SMS only** (`PUSH` exists in the enum but is unsupported)                   | `notification-channel.vo.ts`                                                                                                 |
+| Roles                 | `PARTICIPANT` · `ORGANIZER` · `ADMIN`                                                   | `user-role.vo.ts`                                                                                                            |
+| Door staff            | Event-scoped assignment on an existing active, verified account; no global `STAFF` role | Events check-in staff assignment + Tickets access port                                                                       |
 
 ---
 
@@ -77,8 +78,8 @@ community around it before, during and after it.
 
 Event ticketing in Tunisia today is fragmented across Facebook event pages, WhatsApp numbers,
 physical box offices, and a small number of local platforms. The result for a would-be attendee is
-a familiar sequence of friction: *find a poster on social media → screenshot it → message a number
-→ negotiate a transfer or drive somewhere with cash → hope the ticket is real.*
+a familiar sequence of friction: _find a poster on social media → screenshot it → message a number
+→ negotiate a transfer or drive somewhere with cash → hope the ticket is real._
 
 Tickr's opportunity is **not** to have more events than anyone else on day one. It is to be the
 place where the last three steps of that sequence collapse into one screen. Everything in this
@@ -91,8 +92,8 @@ Each commitment is stated as a design obligation, not an aspiration.
 **1. Discovery is the product, not a search box.**
 The home screen is a curated, browsable surface of event imagery — not an empty search field
 waiting for a query the user cannot phrase. The backend supports filtering on `q`, `category`,
-`city`, `country`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice`. Those become *visible, tappable
-lenses* (category rails, city chips, a date scrubber, a price ceiling) rather than a hidden
+`city`, `country`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice`. Those become _visible, tappable
+lenses_ (category rails, city chips, a date scrubber, a price ceiling) rather than a hidden
 "advanced filters" panel. A user who does not know what they want must still be able to leave the
 home screen with something to click.
 
@@ -110,8 +111,8 @@ price breakdown, a named provider, an always-visible countdown, an order referen
 quote — never a badge that says "100 % Secure".
 
 **4. Fast checkout means fewer decisions, not smaller buttons.**
-Tickr's checkout asks for exactly four things: *which ticket type, how many, who is attending, how
-you want to pay.* Nothing else. There is no upsell, no newsletter checkbox, no address form, no
+Tickr's checkout asks for exactly four things: _which ticket type, how many, who is attending, how
+you want to pay._ Nothing else. There is no upsell, no newsletter checkbox, no address form, no
 account creation wall placed before the user has seen the price.
 
 **5. Mobile-first is the default case, not the degraded one.**
@@ -133,14 +134,14 @@ future capability belongs in the roadmap only after the ticketing core is depend
 required identity, consent, privacy, safety and moderation foundations exist. Until its contract is
 implemented, it must not appear as inactive or fabricated UI in V1.
 
-| Not this | Why |
-|---|---|
-| A public organizer profile page | `GET /events/organizer/:organizerId` requires the `ORGANIZER` or `ADMIN` role — an anonymous visitor cannot list an organizer's events. |
-| A social network for events **in V1** | Event-based connection is part of the long-term direction, but no social graph, matching, conversation or attendance-visibility contract exists in the current API. Designing it now would create dead UI. |
-| An algorithmic "for you" feed **in V1** | Matching and recommendations are roadmap capabilities. Curation in V1 is **editorial and filter-driven**, and must look intentional rather than broken. |
-| A seat-map / assigned-seating product | Ticket types are quantity-based (`quantity` / `soldQuantity`). No seat inventory exists. |
-| A resale marketplace | A ticket `transfer` endpoint exists (peer-to-peer), but there is no pricing, listing or escrow. Transfer is a *courtesy*, not a market. |
-| A generic corporate SaaS dashboard | Even the organizer console is an event product: poster-led, warm, legible on a phone at a venue door. |
+| Not this                                | Why                                                                                                                                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A public organizer profile page         | `GET /events/organizer/:organizerId` requires the `ORGANIZER` or `ADMIN` role — an anonymous visitor cannot list an organizer's events.                                                                    |
+| A social network for events **in V1**   | Event-based connection is part of the long-term direction, but no social graph, matching, conversation or attendance-visibility contract exists in the current API. Designing it now would create dead UI. |
+| An algorithmic "for you" feed **in V1** | Matching and recommendations are roadmap capabilities. Curation in V1 is **editorial and filter-driven**, and must look intentional rather than broken.                                                    |
+| A seat-map / assigned-seating product   | Ticket types are quantity-based (`quantity` / `soldQuantity`). No seat inventory exists.                                                                                                                   |
+| A resale marketplace                    | A ticket `transfer` endpoint exists (peer-to-peer), but there is no pricing, listing or escrow. Transfer is a _courtesy_, not a market.                                                                    |
+| A generic corporate SaaS dashboard      | Even the organizer console is an event product: poster-led, warm, legible on a phone at a venue door.                                                                                                      |
 
 ### A.5 Product horizon — from Tunisian ticketing to a global event network
 
@@ -218,36 +219,36 @@ is allocated roughly **70 / 25 / 5**.
 
 **What she is actually doing, and what the interface owes her at each moment:**
 
-**1. Discovering.** She arrives with *no query in mind*. She is browsing for a feeling — "something
-Friday", "something not expensive", "something in Tunis". → *The home screen must be answerable by
-thumb, not by keyboard.* Category rails (the API's ten categories, each with a defined
+**1. Discovering.** She arrives with _no query in mind_. She is browsing for a feeling — "something
+Friday", "something not expensive", "something in Tunis". → _The home screen must be answerable by
+thumb, not by keyboard._ Category rails (the API's ten categories, each with a defined
 `displayNameFr`, icon and colour already in `event-category.vo.ts`), a city chip row, and a
 date-window shortcut carry the discovery load. Search is present but is not the primary affordance.
 
 **2. Comparing.** She has three candidate events open in her head. She is comparing on four axes and
-four only: **when**, **where**, **how much**, **is it still available**. → *Every event card must
-carry all four without a tap.* A card that shows a beautiful poster and a title but forces a tap to
+four only: **when**, **where**, **how much**, **is it still available**. → _Every event card must
+carry all four without a tap._ A card that shows a beautiful poster and a title but forces a tap to
 learn the price has failed her.
 
 **3. Checking the information.** Before spending money she wants to confirm the practical facts —
 the exact start time, the venue and how to get there, what the ticket tiers actually differ on, and
-whether the organizer looks real. → *The event page's first screenful is facts over prose.* The
+whether the organizer looks real. → _The event page's first screenful is facts over prose._ The
 long description is important but sits below the decision-critical block.
 
 **4. Selecting tickets.** She usually buys **2** — for herself and one friend. Occasionally 4–6 for
 a group. She needs to know, before she commits, how many are left and what she will actually pay.
-→ *Quantity selection and the all-in price must be in the same visual unit.* The backend caps her
+→ _Quantity selection and the all-in price must be in the same visual unit._ The backend caps her
 at 10 tickets per event and 1–10 holders per reservation; those limits must be shown as guidance
-*before* they are hit, never discovered through an error.
+_before_ they are hit, never discovered through an error.
 
 **5. Paying quickly.** Her anxiety peak is the payment step. She wants to recognise the payment
 brand, know she is leaving the site and coming back, and never wonder whether she has been charged
-twice. → *Provider choice is explicit and named; the redirect is announced before it happens; the
-return is handled with patience rather than a premature failure message.*
+twice. → _Provider choice is explicit and named; the redirect is announced before it happens; the
+return is handled with patience rather than a premature failure message._
 
 **6. Getting and using the ticket.** At the venue door, at night, on a phone with 4 % battery and no
-signal. → *The QR must be reachable in one tap from the app's home surface, render at maximum
-practical size, force screen brightness up, and survive an offline load.* This is the single most
+signal. → _The QR must be reachable in one tap from the app's home surface, render at maximum
+practical size, force screen brightness up, and survive an offline load._ This is the single most
 unforgiving context in the product.
 
 **Failure modes that would lose her permanently:** a price that grows between the event page and
@@ -269,8 +270,8 @@ event card** as he types — because that card is what determines whether anyone
 `DRAFT → PUBLISHED` distinction to be unmistakable: a draft is invisible to the world, and he must
 never be in doubt about which state he is in.
 
-**Operating mode (phone, urgent, during sale and on the night).** He wants three numbers: *how many
-sold, how much revenue, how many are through the door.* The API gives him
+**Operating mode (phone, urgent, during sale and on the night).** He wants three numbers: _how many
+sold, how much revenue, how many are through the door._ The API gives him
 `GET /analytics/events/:id`, `GET /analytics/dashboard`, `GET /analytics/events/:id/sales-timeline`
 and `GET /tickets/event/:eventId/stats`. Check-in (`POST /tickets/check-in`) happens standing at a
 door in the dark — that screen is a scanning tool, not a dashboard: enormous target areas, an
@@ -302,7 +303,7 @@ millime-safe solving and an explicit policy for later commission changes.
 > append-only.
 
 **One rule the creation form must enforce:** price and availability information belongs in the
-*structured fields*, never in the description. Competitor research found real Meetup event pages
+_structured fields_, never in the description. Competitor research found real Meetup event pages
 announcing "There's a $10 reservation fee" in the middle of the prose body, far below the fold and
 invisible to every card, filter and sort. Tickr's description field should actively discourage this
 — the form makes the structured price prominent enough that prose pricing feels redundant, because
@@ -335,15 +336,15 @@ compromised into a bland middle. They are separated by surface.
 
 ### C.2 The seven attributes, made operational
 
-| Attribute | What it means concretely | How it shows up | Where it must stop |
-|---|---|---|---|
-| **Modern** | Contemporary type, generous negative space, no skeuomorphism, no gradients-as-decoration | Flat surfaces, one accent, editorial layout | Never trend-chasing: no glassmorphism, no neon glow, no 3D |
-| **Energetic** | Imagery is loud, motion is quick and purposeful | Full-bleed posters, 120–200 ms transitions, saturated accent | Never in checkout — the money path is still and calm |
-| **Premium** | Restraint, precision, and craft in the details | Tight optical alignment, tabular figures, consistent radii, real photography | Never luxury-coded: no gold, no serif italics, no "exclusive" tone |
-| **Trustworthy** | The user always knows what they will pay, what they've bought, and what happens next | Persistent price breakdown, visible timer, named providers, order references | Never performed via badges, padlock icons or "100 % secure" copy |
-| **Social** | Events feel attended, not listed | Attendance and scarcity signals, shareable event pages, group-buy phrasing ("Combien de billets ?") | Never fabricated social proof — no invented "12 friends going" |
-| **Simple** | One decision per screen; a clear default on every choice | Single primary action per view, sensible pre-selection | Never simple-by-omission — the fee is never hidden to look simpler |
-| **Young, not childish** | Confident, direct, informal French; no corporate hedging | "Tu" is avoided; the tone is warm "vous" — direct, short sentences | No emoji in the product chrome, no exclamation marks in system copy, no mascot |
+| Attribute               | What it means concretely                                                                 | How it shows up                                                                                     | Where it must stop                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Modern**              | Contemporary type, generous negative space, no skeuomorphism, no gradients-as-decoration | Flat surfaces, one accent, editorial layout                                                         | Never trend-chasing: no glassmorphism, no neon glow, no 3D                     |
+| **Energetic**           | Imagery is loud, motion is quick and purposeful                                          | Full-bleed posters, 120–200 ms transitions, saturated accent                                        | Never in checkout — the money path is still and calm                           |
+| **Premium**             | Restraint, precision, and craft in the details                                           | Tight optical alignment, tabular figures, consistent radii, real photography                        | Never luxury-coded: no gold, no serif italics, no "exclusive" tone             |
+| **Trustworthy**         | The user always knows what they will pay, what they've bought, and what happens next     | Persistent price breakdown, visible timer, named providers, order references                        | Never performed via badges, padlock icons or "100 % secure" copy               |
+| **Social**              | Events feel attended, not listed                                                         | Attendance and scarcity signals, shareable event pages, group-buy phrasing ("Combien de billets ?") | Never fabricated social proof — no invented "12 friends going"                 |
+| **Simple**              | One decision per screen; a clear default on every choice                                 | Single primary action per view, sensible pre-selection                                              | Never simple-by-omission — the fee is never hidden to look simpler             |
+| **Young, not childish** | Confident, direct, informal French; no corporate hedging                                 | "Tu" is avoided; the tone is warm "vous" — direct, short sentences                                  | No emoji in the product chrome, no exclamation marks in system copy, no mascot |
 
 ### C.3 Voice and tone
 
@@ -355,19 +356,19 @@ terms ("Il reste 4 billets"), never in the system's (`INSUFFICIENT_AVAILABILITY`
 
 **Three tone modes:**
 
-| Mode | Where | Example |
-|---|---|---|
-| **Editorial** — energetic, evocative, brief | Discovery, event pages, marketing surfaces | *« Vendredi soir à Tunis »* · *« Plus que quelques places »* |
-| **Transactional** — precise, neutral, arithmetic | Checkout, order summary, payment | *« Frais de service (6 %) — 3,000 DT »* · *« Total à payer — 53,000 DT »* |
-| **Reassuring** — calm, specific, actionable | Errors, expiry, payment failure | *« Le paiement n'a pas abouti. Aucun montant n'a été débité. Vos billets sont encore réservés pendant 6 minutes. »* |
+| Mode                                             | Where                                      | Example                                                                                                             |
+| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Editorial** — energetic, evocative, brief      | Discovery, event pages, marketing surfaces | _« Vendredi soir à Tunis »_ · _« Plus que quelques places »_                                                        |
+| **Transactional** — precise, neutral, arithmetic | Checkout, order summary, payment           | _« Frais de service (6 %) — 3,000 DT »_ · _« Total à payer — 53,000 DT »_                                           |
+| **Reassuring** — calm, specific, actionable      | Errors, expiry, payment failure            | _« Le paiement n'a pas abouti. Aucun montant n'a été débité. Vos billets sont encore réservés pendant 6 minutes. »_ |
 
 **Copy rules that are non-negotiable:**
 
 1. Never apologise for a system state the user caused or that is normal ("Oups !" is banned).
 2. Never use a technical term in user-facing copy — no "erreur 409", no "token", no "payload".
 3. Money is always written with its currency and never abbreviated away.
-4. Every error sentence answers three questions in order: *what happened · what it means for my
-   money · what I do now.*
+4. Every error sentence answers three questions in order: _what happened · what it means for my
+   money · what I do now._
 5. Never promise what the backend cannot deliver — notifications are **email and SMS**, so never
    write "vous recevrez une notification" when you mean an email.
 
@@ -378,7 +379,7 @@ terms ("Il reste 4 billets"), never in the system's (`INSUFFICIENT_AVAILABILITY`
 - **A bank portal.** Trust must not be bought with corporate navy, stock photography of handshakes,
   or dense legal type.
 - **A discount aggregator.** No countdown-pressure marketing, no strikethrough fake pricing, no
-  red "URGENT" banners. The only countdown in the product is the *real* 15-minute reservation hold.
+  red "URGENT" banners. The only countdown in the product is the _real_ 15-minute reservation hold.
 - **A Facebook event clone.** No blue-on-white social chrome, no engagement metrics as decoration.
 
 ---
@@ -413,17 +414,17 @@ and at `#2E3DE8` it clears **7.12 : 1** against white, so white-on-cobalt button
 at any size.
 
 Cobalt has exactly one job: **action and interactive identity.** Primary buttons, links, active
-tabs, selected states, focus rings, the quantity stepper's active state. It is *not* a background
+tabs, selected states, focus rings, the quantity stepper's active state. It is _not_ a background
 colour, not a header fill, and not decoration. On a screen with no available action, cobalt should
 be absent.
 
-| Token | Hex | Use | Verified contrast |
-|---|---|---|---|
-| `cobalt-700` | `#2430C9` | Pressed / active button state | white on it — **8.97 : 1** ✅ AAA |
-| `cobalt-600` | `#2E3DE8` | **Primary action**, links, focus ring | white on it — **7.12 : 1** ✅ AAA · on white — **7.12 : 1** ✅ AAA · on canvas — **6.65 : 1** ✅ AA |
-| `cobalt-500` | `#3B4DF5` | Hover state, illustrative accents | white on it — **5.89 : 1** ✅ AA |
-| `cobalt-100` | `#E6E9FF` | Selected-row tint, info callout background | `cobalt-600` on it — **5.92 : 1** ✅ AA |
-| `cobalt-50` | `#F0F2FF` | Subtle selected/hover wash | decorative |
+| Token        | Hex       | Use                                        | Verified contrast                                                                                   |
+| ------------ | --------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `cobalt-700` | `#2430C9` | Pressed / active button state              | white on it — **8.97 : 1** ✅ AAA                                                                   |
+| `cobalt-600` | `#2E3DE8` | **Primary action**, links, focus ring      | white on it — **7.12 : 1** ✅ AAA · on white — **7.12 : 1** ✅ AAA · on canvas — **6.65 : 1** ✅ AA |
+| `cobalt-500` | `#3B4DF5` | Hover state, illustrative accents          | white on it — **5.89 : 1** ✅ AA                                                                    |
+| `cobalt-100` | `#E6E9FF` | Selected-row tint, info callout background | `cobalt-600` on it — **5.92 : 1** ✅ AA                                                             |
+| `cobalt-50`  | `#F0F2FF` | Subtle selected/hover wash                 | decorative                                                                                          |
 
 #### Accent — **Sun** (`#FFD23F`)
 
@@ -440,33 +441,34 @@ draws the eye.
 ambiguity), an error or warning state (that is `danger`/`warning` — yellow must not acquire a
 failure meaning), or large background fills.
 
-| Token | Hex | Use | Verified contrast |
-|---|---|---|---|
-| `sun-400` | `#FFD23F` | Scarcity badge, countdown attention, brand | ink-950 on it — **13.25 : 1** ✅ AAA |
+| Token     | Hex       | Use                                              | Verified contrast                    |
+| --------- | --------- | ------------------------------------------------ | ------------------------------------ |
+| `sun-400` | `#FFD23F` | Scarcity badge, countdown attention, brand       | ink-950 on it — **13.25 : 1** ✅ AAA |
 | `sun-500` | `#F5B80B` | Icon fills needing more weight on light surfaces | ink-950 on it — **10.70 : 1** ✅ AAA |
-| `sun-700` | `#8A5B00` | Sun-family **text** on light backgrounds | on white — **5.87 : 1** ✅ AA |
+| `sun-700` | `#8A5B00` | Sun-family **text** on light backgrounds         | on white — **5.87 : 1** ✅ AA        |
 
 #### Neutrals — warm ink and warm paper
 
 The neutrals are **warm**, not the cool blue-greys of default Tailwind. Warm neutrals make
 photography look better, read as gallery paper rather than software chrome, and keep the interface
 from feeling clinical. The page ground is `#F8F7F4` — a warm off-white — and cards are pure white,
-so cards *lift* off the page without needing a shadow.
+so cards _lift_ off the page without needing a shadow.
 
-| Token | Hex | Role | Verified |
-|---|---|---|---|
-| `canvas` | `#F8F7F4` | Page background (warm paper) | — |
-| `surface` | `#FFFFFF` | Cards, sheets, inputs — lifts off canvas by value alone | — |
-| `surface-2` | `#F1EFEA` | Inset areas: order-summary block, disabled fields, table stripes | — |
-| `ink-950` | `#0B0F1A` | Primary text, headlines, dark surfaces | on white — **19.13 : 1** ✅ AAA |
-| `ink-700` | `#374151` | Body copy, secondary headings | on white — **10.31 : 1** ✅ AAA · on `surface-2` — **8.97 : 1** ✅ AAA |
-| `ink-500` | `#6B7280` | Supporting text, metadata, captions | on white — **4.83 : 1** ✅ AA · on canvas — **4.51 : 1** ✅ AA |
-| `ink-400` | `#9CA3AF` | **Non-text only** — disabled glyphs, decorative icons | on white — 2.54 : 1 ❌ |
-| `border` | `#E5E3DD` | Decorative hairlines, card edges | 1.28 : 1 — decorative only |
-| `border-strong` | `#7F848F` | **Control boundaries** — inputs, checkboxes, radios, steppers | on white — **3.75 : 1** ✅ meets WCAG 1.4.11 non-text |
+| Token           | Hex       | Role                                                             | Verified                                                               |
+| --------------- | --------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `canvas`        | `#F8F7F4` | Page background (warm paper)                                     | —                                                                      |
+| `surface`       | `#FFFFFF` | Cards, sheets, inputs — lifts off canvas by value alone          | —                                                                      |
+| `surface-2`     | `#F1EFEA` | Inset areas: order-summary block, disabled fields, table stripes | —                                                                      |
+| `ink-950`       | `#0B0F1A` | Primary text, headlines, dark surfaces                           | on white — **19.13 : 1** ✅ AAA                                        |
+| `ink-700`       | `#374151` | Body copy, secondary headings                                    | on white — **10.31 : 1** ✅ AAA · on `surface-2` — **8.97 : 1** ✅ AAA |
+| `ink-500`       | `#6B7280` | Supporting text, metadata, captions                              | on white — **4.83 : 1** ✅ AA · on canvas — **4.51 : 1** ✅ AA         |
+| `ink-400`       | `#9CA3AF` | **Non-text only** — disabled glyphs, decorative icons            | on white — 2.54 : 1 ❌                                                 |
+| `border`        | `#E5E3DD` | Decorative hairlines, card edges                                 | 1.28 : 1 — decorative only                                             |
+| `border-strong` | `#7F848F` | **Control boundaries** — inputs, checkboxes, radios, steppers    | on white — **3.75 : 1** ✅ meets WCAG 1.4.11 non-text                  |
 
 > **Two hard rules that came out of validating this palette — both are easy to violate by accident:**
-> 1. **`ink-400` is never text.** At 2.54 : 1 on white it fails AA outright. Disabled *text* uses
+>
+> 1. **`ink-400` is never text.** At 2.54 : 1 on white it fails AA outright. Disabled _text_ uses
 >    `ink-500` at full opacity with a `surface-2` fill and `aria-disabled`, never a lighter grey.
 > 2. **`ink-500` is not allowed on `surface-2`.** That pairing measures **4.21 : 1** — it fails AA
 >    for normal text. Inside order summaries and other `surface-2` blocks, supporting text steps up
@@ -481,11 +483,11 @@ so cards *lift* off the page without needing a shadow.
 Semantics are used only for genuine state, never for decoration. Each has a **text-safe 700** and a
 **fill-safe 600** plus a **tint 100** for callout backgrounds.
 
-| Role | Text (`-700`) | Fill (`-600`) | Tint (`-100`) | Meaning in Tickr | Verified |
-|---|---|---|---|---|---|
-| **Success** | `#047857` | `#059669` | `#D1FAE5` | Order paid · ticket confirmed · checked in | `-700` on white **5.48 : 1** ✅ · on tint **4.84 : 1** ✅ · white on `-700` **5.48 : 1** ✅ |
-| **Warning** | `#B45309` | `#D97706` | `#FEF3C7` | Reservation expiring · low availability · sales window closing | `-700` on white **5.02 : 1** ✅ · on tint **4.51 : 1** ✅ |
-| **Danger** | `#B91C1C` | `#DC2626` | `#FEE2E2` | Payment failed · reservation expired · event cancelled | `-700` on white **6.47 : 1** ✅ · on tint **5.30 : 1** ✅ · white on `-600` **4.83 : 1** ✅ |
+| Role        | Text (`-700`) | Fill (`-600`) | Tint (`-100`) | Meaning in Tickr                                               | Verified                                                                                    |
+| ----------- | ------------- | ------------- | ------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Success** | `#047857`     | `#059669`     | `#D1FAE5`     | Order paid · ticket confirmed · checked in                     | `-700` on white **5.48 : 1** ✅ · on tint **4.84 : 1** ✅ · white on `-700` **5.48 : 1** ✅ |
+| **Warning** | `#B45309`     | `#D97706`     | `#FEF3C7`     | Reservation expiring · low availability · sales window closing | `-700` on white **5.02 : 1** ✅ · on tint **4.51 : 1** ✅                                   |
+| **Danger**  | `#B91C1C`     | `#DC2626`     | `#FEE2E2`     | Payment failed · reservation expired · event cancelled         | `-700` on white **6.47 : 1** ✅ · on tint **5.30 : 1** ✅ · white on `-600` **4.83 : 1** ✅ |
 
 `-600` fills clear 3 : 1 against white and so are valid for icons, bars and borders, but **must not
 carry small text** except `danger-600`, which does. When in doubt, text uses `-700`.
@@ -494,22 +496,22 @@ carry small text** except `danger-600`, which does. When in doubt, text uses `-7
 
 The backend already ships display metadata for statuses (`EVENT_STATUS_METADATA` carries Material
 palette hexes). **The frontend does not consume those hexes** — they are Material-family colours
-that would break this palette. The frontend maps backend *enum values* to Tickr's own tokens:
+that would break this palette. The frontend maps backend _enum values_ to Tickr's own tokens:
 
-| Backend enum | Tickr treatment |
-|---|---|
-| `EventStatus.PUBLISHED` | No badge — the normal case is silent |
-| `EventStatus.DRAFT` | Neutral badge, `ink-700` on `surface-2` — organizer surfaces only |
-| `EventStatus.CANCELLED` | `danger` tint badge, plus a full-width banner on the event page |
-| `EventStatus.COMPLETED` | Neutral badge, imagery desaturated to 60 % |
-| `OrderStatus.PENDING` / `PROCESSING` | `warning` tint + animated indicator |
-| `OrderStatus.PAID` | `success` |
-| `OrderStatus.FAILED` / `CANCELLED` | `danger` |
-| `OrderStatus.REFUNDED` | Neutral `ink-700` — a refund is a completed outcome, not an error |
-| `TicketStatus.CONFIRMED` | `success` · QR live |
-| `TicketStatus.RESERVED` | `warning` + countdown |
-| `TicketStatus.CHECKED_IN` | Neutral + timestamp — QR visually "spent" |
-| `TicketStatus.EXPIRED` / `CANCELLED` | `ink-500` on `surface-2`, QR hidden |
+| Backend enum                         | Tickr treatment                                                   |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| `EventStatus.PUBLISHED`              | No badge — the normal case is silent                              |
+| `EventStatus.DRAFT`                  | Neutral badge, `ink-700` on `surface-2` — organizer surfaces only |
+| `EventStatus.CANCELLED`              | `danger` tint badge, plus a full-width banner on the event page   |
+| `EventStatus.COMPLETED`              | Neutral badge, imagery desaturated to 60 %                        |
+| `OrderStatus.PENDING` / `PROCESSING` | `warning` tint + animated indicator                               |
+| `OrderStatus.PAID`                   | `success`                                                         |
+| `OrderStatus.FAILED` / `CANCELLED`   | `danger`                                                          |
+| `OrderStatus.REFUNDED`               | Neutral `ink-700` — a refund is a completed outcome, not an error |
+| `TicketStatus.CONFIRMED`             | `success` · QR live                                               |
+| `TicketStatus.RESERVED`              | `warning` + countdown                                             |
+| `TicketStatus.CHECKED_IN`            | Neutral + timestamp — QR visually "spent"                         |
+| `TicketStatus.EXPIRED` / `CANCELLED` | `ink-500` on `surface-2`, QR hidden                               |
 
 #### Dark surfaces
 
@@ -530,11 +532,11 @@ removed rather than left partially wired.
 
 **Two families, one purpose each.**
 
-| Role | Family | Why |
-|---|---|---|
-| **Display** — event titles, page headings, numbers that should feel like a poster | **Archivo** (variable, Google Fonts) | Grotesque with real poster energy at heavy weights, tightens beautifully at display sizes, full Latin-Extended for French diacritics, variable so weight costs nothing extra |
-| **UI / body** — everything else, and *all* money | **Inter** (variable, already installed) | The most legible UI face at small sizes on low-density Android screens; excellent French coverage; **has true tabular figures**, which the money rules below depend on |
-| *Future — Arabic* | **IBM Plex Sans Arabic** | Reserved now so the RTL locale is a font swap plus logical properties, not a redesign. Not loaded in V1. |
+| Role                                                                              | Family                                  | Why                                                                                                                                                                          |
+| --------------------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Display** — event titles, page headings, numbers that should feel like a poster | **Archivo** (variable, Google Fonts)    | Grotesque with real poster energy at heavy weights, tightens beautifully at display sizes, full Latin-Extended for French diacritics, variable so weight costs nothing extra |
+| **UI / body** — everything else, and _all_ money                                  | **Inter** (variable, already installed) | The most legible UI face at small sizes on low-density Android screens; excellent French coverage; **has true tabular figures**, which the money rules below depend on       |
+| _Future — Arabic_                                                                 | **IBM Plex Sans Arabic**                | Reserved now so the RTL locale is a font swap plus logical properties, not a redesign. Not loaded in V1.                                                                     |
 
 Both load via `next/font/google` with `display: 'swap'` and Latin + Latin-Extended subsets only.
 **Total web-font budget: two families, variable, ≤ 4 loaded axes** — this is a hard performance
@@ -545,17 +547,17 @@ ceiling for a 3G-first product.
 Mobile-first sizes; the display steps grow at `lg`. Nine steps, each with an assigned job — no step
 exists without one.
 
-| Token | Size / line-height | Weight · tracking | Job |
-|---|---|---|---|
-| `display-xl` | 36 / 40 → 44 / 48 at `lg` | Archivo 700 · −2 % | Event title on the event page hero |
-| `display-l` | 28 / 32 | Archivo 700 · −1.5 % | Section heroes, page titles |
-| `h1` | 22 / 28 | Archivo 600 · −1 % | Card titles, sheet titles |
-| `h2` | 18 / 24 | Inter 600 | Sub-sections, ticket-type names |
-| `body` | 16 / 24 | Inter 400 | Default body — **never below 16 px for primary reading** |
-| `body-sm` | 14 / 20 | Inter 400 | Metadata, helper text, dense lists |
-| `caption` | 13 / 18 | Inter 500 | Timestamps, legal, fine print — **floor for any text in the product** |
-| `overline` | 12 / 16 | Inter 600 · +6 % · uppercase | Category eyebrows, section labels — **short strings only** |
-| `mono-num` | inherits | Inter · `font-variant-numeric: tabular-nums` | **All money, all counts, all countdowns** |
+| Token        | Size / line-height        | Weight · tracking                            | Job                                                                   |
+| ------------ | ------------------------- | -------------------------------------------- | --------------------------------------------------------------------- |
+| `display-xl` | 36 / 40 → 44 / 48 at `lg` | Archivo 700 · −2 %                           | Event title on the event page hero                                    |
+| `display-l`  | 28 / 32                   | Archivo 700 · −1.5 %                         | Section heroes, page titles                                           |
+| `h1`         | 22 / 28                   | Archivo 600 · −1 %                           | Card titles, sheet titles                                             |
+| `h2`         | 18 / 24                   | Inter 600                                    | Sub-sections, ticket-type names                                       |
+| `body`       | 16 / 24                   | Inter 400                                    | Default body — **never below 16 px for primary reading**              |
+| `body-sm`    | 14 / 20                   | Inter 400                                    | Metadata, helper text, dense lists                                    |
+| `caption`    | 13 / 18                   | Inter 500                                    | Timestamps, legal, fine print — **floor for any text in the product** |
+| `overline`   | 12 / 16                   | Inter 600 · +6 % · uppercase                 | Category eyebrows, section labels — **short strings only**            |
+| `mono-num`   | inherits                  | Inter · `font-variant-numeric: tabular-nums` | **All money, all counts, all countdowns**                             |
 
 #### The money typography rules
 
@@ -575,18 +577,18 @@ Money is the highest-stakes text in the product, so it gets explicit rules:
 
 ### D.4 Shape, surface and depth
 
-**Radius philosophy — *posters are square, tickets are round*.**
+**Radius philosophy — _posters are square, tickets are round_.**
 
 Imagery keeps its corners so it reads as a printed poster; interactive and physical-feeling objects
 round progressively with size. Six values, each with a job:
 
-| Token | Value | Applies to |
-|---|---|---|
-| `radius-none` | `0` | Full-bleed hero imagery, edge-to-edge media |
-| `radius-sm` | `8 px` | Inputs, chips, badges, small controls |
-| `radius-md` | `12 px` | Buttons, compact cards, thumbnails |
-| `radius-lg` | `16 px` | Cards, panels, order summary block |
-| `radius-xl` | `24 px` | Bottom sheets, modals, the ticket pass |
+| Token         | Value     | Applies to                                           |
+| ------------- | --------- | ---------------------------------------------------- |
+| `radius-none` | `0`       | Full-bleed hero imagery, edge-to-edge media          |
+| `radius-sm`   | `8 px`    | Inputs, chips, badges, small controls                |
+| `radius-md`   | `12 px`   | Buttons, compact cards, thumbnails                   |
+| `radius-lg`   | `16 px`   | Cards, panels, order summary block                   |
+| `radius-xl`   | `24 px`   | Bottom sheets, modals, the ticket pass               |
 | `radius-full` | `9999 px` | Avatars, filter pills, quantity stepper, status dots |
 
 **Cards.** The default event card is: full-bleed 3 : 2 image with `radius-lg` on the top corners
@@ -598,25 +600,25 @@ name and the whole card as one link — never nested interactive elements.
 **Elevation.** Shadows are warm-tinted (`rgba(11, 15, 26, …)` rather than pure black) and there are
 only five levels, because a flat product with real photography does not need more:
 
-| Token | Value | Use |
-|---|---|---|
-| `shadow-none` | — | Default for cards at rest |
-| `shadow-sm` | `0 1px 2px rgba(11,15,26,.06), 0 2px 8px rgba(11,15,26,.04)` | Card hover, raised chips |
-| `shadow-md` | `0 4px 12px rgba(11,15,26,.08), 0 2px 4px rgba(11,15,26,.04)` | Dropdowns, popovers, date pickers |
-| `shadow-lg` | `0 12px 32px rgba(11,15,26,.14)` | Bottom sheets, modals |
+| Token           | Value                                                          | Use                                                |
+| --------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| `shadow-none`   | —                                                              | Default for cards at rest                          |
+| `shadow-sm`     | `0 1px 2px rgba(11,15,26,.06), 0 2px 8px rgba(11,15,26,.04)`   | Card hover, raised chips                           |
+| `shadow-md`     | `0 4px 12px rgba(11,15,26,.08), 0 2px 4px rgba(11,15,26,.04)`  | Dropdowns, popovers, date pickers                  |
+| `shadow-lg`     | `0 12px 32px rgba(11,15,26,.14)`                               | Bottom sheets, modals                              |
 | `shadow-sticky` | `0 -1px 0 var(--color-border), 0 -8px 24px rgba(11,15,26,.08)` | The sticky purchase bar — shadow points **upward** |
 
 ### D.5 Buttons
 
 One primary action per screen. Always.
 
-| Variant | Fill / text | Height | Use |
-|---|---|---|---|
-| **Primary** | `cobalt-600` → white · hover `cobalt-500` · active `cobalt-700` | 48 px (mobile) / 44 px (desktop) | The one action that moves the user forward |
-| **Secondary** | `surface` → `ink-950`, `1 px border-strong` | 44 px | Alternative, non-committal actions |
-| **Ghost** | transparent → `cobalt-600` | 44 px | Tertiary, in-card actions |
-| **Danger** | `danger-600` → white (4.83 : 1 ✅) | 44 px | Cancel order, delete event — always behind a confirmation |
-| **On-image** | `surface` → `ink-950`, with a scrim behind | 44 px | Actions overlaid on posters (share, save) |
+| Variant       | Fill / text                                                     | Height                           | Use                                                       |
+| ------------- | --------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------- |
+| **Primary**   | `cobalt-600` → white · hover `cobalt-500` · active `cobalt-700` | 48 px (mobile) / 44 px (desktop) | The one action that moves the user forward                |
+| **Secondary** | `surface` → `ink-950`, `1 px border-strong`                     | 44 px                            | Alternative, non-committal actions                        |
+| **Ghost**     | transparent → `cobalt-600`                                      | 44 px                            | Tertiary, in-card actions                                 |
+| **Danger**    | `danger-600` → white (4.83 : 1 ✅)                              | 44 px                            | Cancel order, delete event — always behind a confirmation |
+| **On-image**  | `surface` → `ink-950`, with a scrim behind                      | 44 px                            | Actions overlaid on posters (share, save)                 |
 
 Shape `radius-md`, Inter 600, no uppercase, no letter-spacing, no gradient, no icon-only primary
 buttons except in the wallet and scanner where the icon is universally understood.
@@ -691,25 +693,25 @@ make bad images acceptable and good images spectacular.
 
 **4 px base unit.** Ten steps, each with an assigned job:
 
-| Token | px | Job |
-|---|---|---|
-| `space-1` | 4 | Icon-to-label, tight inline pairs |
-| `space-2` | 8 | Inside chips and badges, dense stacks |
-| `space-3` | 12 | Input padding, list-row rhythm |
-| `space-4` | 16 | **Default gap**, card padding, mobile gutter |
-| `space-5` | 20 | Between related blocks |
-| `space-6` | 24 | Card padding at `md`+, tablet gutter |
-| `space-8` | 32 | Between sections within a screen, desktop gutter |
-| `space-10` | 40 | Section separation on mobile |
-| `space-12` | 48 | Major section separation |
-| `space-16` | 64 | Page-level top/bottom rhythm on desktop |
+| Token      | px  | Job                                              |
+| ---------- | --- | ------------------------------------------------ |
+| `space-1`  | 4   | Icon-to-label, tight inline pairs                |
+| `space-2`  | 8   | Inside chips and badges, dense stacks            |
+| `space-3`  | 12  | Input padding, list-row rhythm                   |
+| `space-4`  | 16  | **Default gap**, card padding, mobile gutter     |
+| `space-5`  | 20  | Between related blocks                           |
+| `space-6`  | 24  | Card padding at `md`+, tablet gutter             |
+| `space-8`  | 32  | Between sections within a screen, desktop gutter |
+| `space-10` | 40  | Section separation on mobile                     |
+| `space-12` | 48  | Major section separation                         |
+| `space-16` | 64  | Page-level top/bottom rhythm on desktop          |
 
 **Density philosophy — comfortable, and identical across breakpoints.** Touch targets do not shrink
 on desktop; a 44 px control is also more comfortable with a mouse. Density increases in exactly two
 places: admin data tables and the organizer sales list, which may drop to 40 px rows.
 
 **Overall visual density: medium-low.** Discovery is generous — imagery needs air to look premium,
-and a crowded grid looks like a classifieds site. Checkout is *tighter*, deliberately: the entire
+and a crowded grid looks like a classifieds site. Checkout is _tighter_, deliberately: the entire
 order summary plus the primary action should fit in one viewport on a 390 × 844 screen without
 scrolling, because a total that requires scrolling to see is a total that gets misread.
 
@@ -752,12 +754,12 @@ purchasable. A user must never have to infer scarcity from a greyed-out control.
 `availableQuantity`, `isSoldOut` and `isOnSale`, and `EventListDto` exposes `availableCapacity`,
 `salesProgress` (0–100) and `isSoldOut`. **The frontend derives nothing it can read:**
 
-| State | Condition (from the API) | Treatment |
-|---|---|---|
-| **Available** | `isOnSale && availableQuantity > 20 %` of `quantity` | No badge — the normal case is silent |
-| **Limited** | `isOnSale && availableQuantity ≤ 20 %` | `sun-400` badge, « Plus que N places » using `availableQuantity` — an exact number, not a vague warning |
-| **Sold out** | `isSoldOut` | `ink-500` on `surface-2`, « Complet », control disabled **and labelled**, tier stays visible |
-| **Not on sale** | `!isOnSale` — outside `salesStartDate`/`salesEndDate`, or `isActive: false` | « En vente le 12 septembre » or « Ventes terminées », using the real dates — never just "unavailable" |
+| State           | Condition (from the API)                                                    | Treatment                                                                                               |
+| --------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Available**   | `isOnSale && availableQuantity > 20 %` of `quantity`                        | No badge — the normal case is silent                                                                    |
+| **Limited**     | `isOnSale && availableQuantity ≤ 20 %`                                      | `sun-400` badge, « Plus que N places » using `availableQuantity` — an exact number, not a vague warning |
+| **Sold out**    | `isSoldOut`                                                                 | `ink-500` on `surface-2`, « Complet », control disabled **and labelled**, tier stays visible            |
+| **Not on sale** | `!isOnSale` — outside `salesStartDate`/`salesEndDate`, or `isActive: false` | « En vente le 12 septembre » or « Ventes terminées », using the real dates — never just "unavailable"   |
 
 On discovery cards the same logic runs one level up, from `isSoldOut` and `salesProgress`, so a card
 and the tier row it leads to can never disagree.
@@ -783,7 +785,7 @@ outright: the data would support them and they would be actively dishonest here.
 **Why it is a Tickr principle.** Availability is the second-most common reason a purchase is
 abandoned, and the first-most common reason a user feels cheated — discovering at the payment step
 that the tier they picked was gone. The backend rejects an over-large order with
-`INSUFFICIENT_AVAILABILITY` *and returns the true remaining count in its message*; that number
+`INSUFFICIENT_AVAILABILITY` _and returns the true remaining count in its message_; that number
 belongs on screen **before** the user hits the wall, not after.
 
 **What it forbids.** Hiding sold-out tiers (the user needs to know the cheap tier existed and went).
@@ -808,31 +810,31 @@ Total à payer                             106,000 DT
 ticket price (`order.entity.ts:192`) — a 50 DT ticket costs the buyer 53 DT. This is the single
 largest trust risk in the product: a price that grows between the poster and the payment screen is
 precisely how ticketing platforms earn their reputation. Tickr's answer is not to hide the fee but
-to surface it *earlier than anyone expects* — at the first moment it can be calculated, framed as a
+to surface it _earlier than anyone expects_ — at the first moment it can be calculated, framed as a
 named service fee with its rate shown.
 
 **Implementation constraints — and one real complication.** Three facts from the backend shape how
 this principle is actually built:
 
 1. **`platformFee` from the API is always authoritative.** `POST /orders` returns `subtotal`,
-  `platformFee` and `total`; `GET /orders/:id` additionally returns `paymentFees`. Those values are
-  rendered verbatim. The rate is configurable, so a client-side `× 1.06` can disagree with the
-  actual charge.
+   `platformFee` and `total`; `GET /orders/:id` additionally returns `paymentFees`. Those values are
+   rendered verbatim. The rate is configurable, so a client-side `× 1.06` can disagree with the
+   actual charge.
 2. **The public config endpoint resolves the effective rate.** `GET /config/public` returns the
-  global rate; `GET /config/public?eventId=<uuid>` returns
-  `commissionRateOverride` and `effectiveCommissionRate`. An Admin sets an event override with
-  `PATCH /events/:id/commission`; `null` restores global inheritance. The ticket sheet refreshes
-  event-specific config when it opens. `POST /orders` remains authoritative: if an Admin changes
-  the rate between preview and order creation, the UI must show the returned amount before payment.
+   global rate; `GET /config/public?eventId=<uuid>` returns
+   `commissionRateOverride` and `effectiveCommissionRate`. An Admin sets an event override with
+   `PATCH /events/:id/commission`; `null` restores global inheritance. The ticket sheet refreshes
+   event-specific config when it opens. `POST /orders` remains authoritative: if an Admin changes
+   the rate between preview and order creation, the UI must show the returned amount before payment.
 3. **`paymentFees` is a reserved customer-surcharge field, not a record of Tickr's gateway cost.**
-  `OrderEntity.setPaymentFees()` (`order.entity.ts:563`) can recompute
-  `total = subtotal + platformFee + paymentFees`, but no production path calls it. Konnect is sent
-  `addPaymentFeesToAmount: false`; Paymee and Stripe receive no separate surcharge; none of their
-  responses exposes the merchant processing cost. Therefore `paymentFees` is always 0 today and
-  provider costs must not be guessed into it. The summary keeps the row conditional for contract
-  compatibility, but V1 policy is that Tickr absorbs verified gateway costs in its service fee.
-  Any future buyer surcharge requires an explicit Product/Finance decision, an authoritative
-  provider-specific calculation before payment, and disclosure before confirmation.
+   `OrderEntity.setPaymentFees()` (`order.entity.ts:563`) can recompute
+   `total = subtotal + platformFee + paymentFees`, but no production path calls it. Konnect is sent
+   `addPaymentFeesToAmount: false`; Paymee and Stripe receive no separate surcharge; none of their
+   responses exposes the merchant processing cost. Therefore `paymentFees` is always 0 today and
+   provider costs must not be guessed into it. The summary keeps the row conditional for contract
+   compatibility, but V1 policy is that Tickr absorbs verified gateway costs in its service fee.
+   Any future buyer surcharge requires an explicit Product/Finance decision, an authoritative
+   provider-specific calculation before payment, and disclosure before confirmation.
 
 **What it forbids.** A fee that first appears on the payment screen. A « frais » line without an
 amount. A total that differs by even one millime from what the gateway charges. A hard-coded "6 %"
@@ -848,14 +850,14 @@ abandons the user.
 
 **The three phases:**
 
-| Phase | Treatment |
-|---|---|
-| **> 5 min** | Neutral. `ink-700` on `surface-2`. « Vos billets sont réservés pendant 14:32 » |
-| **≤ 5 min** | `warning` tint, no animation. « Il reste 4:12 pour finaliser » |
+| Phase       | Treatment                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| **> 5 min** | Neutral. `ink-700` on `surface-2`. « Vos billets sont réservés pendant 14:32 »                              |
+| **≤ 5 min** | `warning` tint, no animation. « Il reste 4:12 pour finaliser »                                              |
 | **≤ 1 min** | `sun-400` attention state, a single pulse per 10 s — **suppressed entirely under `prefers-reduced-motion`** |
-| **Expired** | A blocking, calm state — see [§G](#g-error-and-edge-case-ux) |
+| **Expired** | A blocking, calm state — see [§G](#g-error-and-edge-case-ux)                                                |
 
-**The countdown is always stated in two forms at once** — the relative « Il reste 12:34 » *and* the
+**The countdown is always stated in two forms at once** — the relative « Il reste 12:34 » _and_ the
 absolute « Vos billets sont gardés jusqu'à 21:45 ». This is not redundancy. The relative form is the
 one a user reads at a glance; the **absolute form is the only one that survives** a redirect to
 Konnect, a backgrounded browser tab, an OTP SMS arriving, and a return three minutes later. A user
@@ -870,6 +872,7 @@ order with no explanation will assume Tickr took their money. The countdown is t
 prevents that assumption.
 
 **Non-obvious requirements this creates:**
+
 - The countdown is driven by the **server's `expiresAt`** on the order, never by a client-side
   `setTimeout` started at mount — a backgrounded mobile browser throttles timers and will drift.
 - Every countdown re-derives from `expiresAt` on tab focus and on every order refetch.
@@ -899,7 +902,7 @@ product.
 > **Le paiement n'a pas abouti**
 > Votre banque a refusé la transaction. **Aucun montant n'a été débité.**
 > Vos billets restent réservés pendant **6:12**.
-> **[ Réessayer le paiement ]**  ·  Choisir un autre moyen de paiement
+> **[ Réessayer le paiement ]** · Choisir un autre moyen de paiement
 
 **What it forbids.** A raw HTTP status or backend error type shown to a user. A toast as the only
 handling of a failed purchase — money failures are page or sheet states, never a message that
@@ -923,11 +926,11 @@ appears on the order and confirmation screens.
 **Surfaces:** `GET /events`, `GET /events/upcoming`, `GET /events/search`, `GET /events/category/:category`.
 **Available lenses:** `q`, `category`, `city`, `country`, `dateFrom`, `dateTo`, `minPrice`,
 `maxPrice`, `page`, `limit`, plus `sortBy` (`startDate`, `soldTickets`, `publishedAt`, `title`, …)
-and `sortOrder`. Two of those sorts are genuinely useful as *editorial* surfaces rather than as a
+and `sortOrder`. Two of those sorts are genuinely useful as _editorial_ surfaces rather than as a
 sort dropdown: `soldTickets DESC` becomes « Les plus populaires » and `publishedAt DESC` becomes
 « Nouveautés ».
 
-The home screen answers *"what can I do?"* before it asks *"what are you looking for?"*:
+The home screen answers _"what can I do?"_ before it asks _"what are you looking for?"_:
 
 - A **hero rail** of a small number of editorially-weighted upcoming events, full-bleed poster,
   horizontally swipeable, with paging dots and real focus management.
@@ -1022,7 +1025,7 @@ and by <kbd>Esc</kbd>) so the event never leaves the screen behind it.
 
 ### F.4 Reservation and order creation
 
-> 🔴 **Status caveat.** The reservation described below is the *intended and correct* contract, and
+> 🔴 **Status caveat.** The reservation described below is the _intended and correct_ contract, and
 > the frontend should build to it. But `TICKET_RESERVATION_PORT` currently binds to a stub that logs
 > `[STUB]` and returns mock ticket IDs, so today `POST /orders` creates no tickets and decrements no
 > stock ([§L gap 0a](#l-open-contract-questions-for-the-backend)). Build to the contract; expect to
@@ -1054,11 +1057,11 @@ those words, not as "accès refusé".
 
 **Provider selection** is an explicit, named choice — three large radio cards, never a dropdown:
 
-| Provider | Presented as | Mechanism |
-|---|---|---|
-| **Konnect** | « Carte bancaire tunisienne · e-DINAR » | Returns `paymentUrl` → full-page redirect |
-| **Paymee** | « Carte bancaire tunisienne » | Returns `paymentUrl` → full-page redirect |
-| **Stripe** | « Carte internationale (Visa / Mastercard) » | Returns `clientSecret` → in-page confirmation |
+| Provider    | Presented as                                 | Mechanism                                     |
+| ----------- | -------------------------------------------- | --------------------------------------------- |
+| **Konnect** | « Carte bancaire tunisienne · e-DINAR »      | Returns `paymentUrl` → full-page redirect     |
+| **Paymee**  | « Carte bancaire tunisienne »                | Returns `paymentUrl` → full-page redirect     |
+| **Stripe**  | « Carte internationale (Visa / Mastercard) » | Returns `clientSecret` → in-page confirmation |
 
 Local providers are listed **first**, with the last-used provider pre-selected for returning users.
 Each card carries the provider's name and a one-line description of what card it accepts —
@@ -1095,10 +1098,10 @@ alone is not acceptable here; the user needs to know that waiting is expected.
 
 The terminal states are read from `OrderStatus` and nothing else:
 
-| Status | Screen |
-|---|---|
-| `PAID` | Success — see below |
-| `FAILED` | Payment failure with recovery ([§G](#g-error-and-edge-case-ux)) |
+| Status                                    | Screen                                                                                                                                                                                                                                                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PAID`                                    | Success — see below                                                                                                                                                                                                                                                                                           |
+| `FAILED`                                  | Payment failure with recovery ([§G](#g-error-and-edge-case-ux))                                                                                                                                                                                                                                               |
 | `PENDING` / `PROCESSING` past the ceiling | **Not a failure.** « Votre paiement est en cours de vérification. Vous recevrez un email dès confirmation. » with the order reference and a link to `/orders`. Under no circumstances is this presented as an error, and under no circumstances is a retry offered here — that is how double payments happen. |
 
 **The success screen** is the product's best moment and should feel like one — but its job is
@@ -1144,11 +1147,11 @@ where a dark surface is used for delight rather than utility.
 Every failure in Tickr is rendered in exactly one of three shapes. Choosing the right one is not a
 stylistic decision — it is determined by **whether money or a ticket is at stake**.
 
-| Shape | When | Behaviour |
-|---|---|---|
-| **Toast** | Non-blocking, no money involved, fully recoverable — a failed filter fetch, a copy-to-clipboard | Auto-dismisses at 5 s, `aria-live="polite"`, never the sole handling of a purchase failure |
-| **Inline** | Scoped to one control or one block — a field validation error, one tier gone | Rendered next to the thing that failed, does not move the page |
-| **Blocking state** | **Anything touching money, tickets or an expired hold** | Owns the viewport or the sheet, cannot be dismissed by accident, carries exactly one primary recovery action |
+| Shape              | When                                                                                            | Behaviour                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Toast**          | Non-blocking, no money involved, fully recoverable — a failed filter fetch, a copy-to-clipboard | Auto-dismisses at 5 s, `aria-live="polite"`, never the sole handling of a purchase failure                   |
+| **Inline**         | Scoped to one control or one block — a field validation error, one tier gone                    | Rendered next to the thing that failed, does not move the page                                               |
+| **Blocking state** | **Anything touching money, tickets or an expired hold**                                         | Owns the viewport or the sheet, cannot be dismissed by accident, carries exactly one primary recovery action |
 
 **The rule:** if a user could be left wondering whether they were charged, it is a **blocking
 state**. Never a toast.
@@ -1164,15 +1167,15 @@ rather than being replaced by a skeleton on refetch.
 **Empty states** are never a bare sentence. Each has an illustration or category glyph, a plain
 explanation, and an action that resolves it:
 
-| Empty state | Copy direction | Primary action |
-|---|---|---|
-| **No search results** | « Aucun événement pour "jazz" à Sfax en septembre » — echo back the *actual* filters | « Effacer les filtres » + show what the widest matching lens would return |
-| **No events in a category** | « Rien de prévu en Théâtre pour l'instant » | « Voir tous les événements » |
-| **No tickets yet** (participant) | « Vous n'avez pas encore de billets » | « Découvrir des événements » |
-| **No orders** | Same treatment as tickets | « Découvrir des événements » |
-| **Organizer dashboard, no events** | A genuine first-run experience, not an error — explain what publishing does | « Créer mon premier événement » |
-| **Organizer event, no sales** | « Aucune vente pour l'instant » + the shareable event link, prominently | « Copier le lien de l'événement » |
-| **No notifications** | « Aucune notification » — the calmest state in the product, no illustration needed | none |
+| Empty state                        | Copy direction                                                                       | Primary action                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| **No search results**              | « Aucun événement pour "jazz" à Sfax en septembre » — echo back the _actual_ filters | « Effacer les filtres » + show what the widest matching lens would return |
+| **No events in a category**        | « Rien de prévu en Théâtre pour l'instant »                                          | « Voir tous les événements »                                              |
+| **No tickets yet** (participant)   | « Vous n'avez pas encore de billets »                                                | « Découvrir des événements »                                              |
+| **No orders**                      | Same treatment as tickets                                                            | « Découvrir des événements »                                              |
+| **Organizer dashboard, no events** | A genuine first-run experience, not an error — explain what publishing does          | « Créer mon premier événement »                                           |
+| **Organizer event, no sales**      | « Aucune vente pour l'instant » + the shareable event link, prominently              | « Copier le lien de l'événement »                                         |
+| **No notifications**               | « Aucune notification » — the calmest state in the product, no illustration needed   | none                                                                      |
 
 The two organizer empty states matter disproportionately: they are the moment an organizer decides
 whether Tickr is worth their time.
@@ -1183,15 +1186,15 @@ The backend returns a consistent envelope — `{ statusCode, code, message, deta
 (`shared/infrastructure/common/filters/http-exception.filter.ts`). The frontend maps **status plus
 context** to a designed state. The raw `message` is never rendered directly to a user.
 
-| Code | Real backend cause | User-facing treatment | Recovery |
-|---|---|---|---|
-| **400** | `EVENT_NOT_PUBLISHED`, `INSUFFICIENT_AVAILABILITY`, `TICKET_LIMIT_EXCEEDED` (10 tickets/event/user), `VALIDATION_ERROR`, `ORDER_EXPIRED`, `INVALID_STATUS`, `MAX_ATTEMPTS_EXCEEDED`, `GATEWAY_ERROR` | **Never one generic message.** Disambiguated by context and mapped to the specific states below | Varies — see rows |
-| **401** | Access token expired or absent | **Silent refresh first.** Attempt `POST /auth/refresh-token`, replay the original request once, and only then show a session-expired state | Re-authenticate and return to the exact page — selection and checkout state preserved |
-| **403** | Insufficient role, **`RATE_LIMITED` on order creation**, an unverified email or deactivated account on `POST /auth/login` (`auth.controller.ts:188`), or a resource that is not the user's (someone else's order; a non-owner requesting a `DRAFT` event) | ⚠️ **Several different situations behind one status — never one generic « accès refusé ».** Role → « Cette page est réservée aux organisateurs ». Rate-limit → « Vous avez atteint la limite de 5 commandes par heure ». Login → « Vérifiez votre adresse email pour activer votre compte » | Role → go to the appropriate home. Rate limit → state when they can retry. Login → resend-verification entry point |
-| **404** | Event, ticket type, order or ticket not found | A designed 404 with the search entry point, not a bare page. For a **deleted or unpublished event**, say so rather than implying a broken link | « Découvrir des événements » |
-| **409 / sold out** | See the note below — currently surfaces as **400 `INSUFFICIENT_AVAILABILITY`** with the true remaining count in the message | Blocking sheet state: « Il ne reste que 2 billets Standard » with the quantity **auto-adjusted** to what is actually available | « Continuer avec 2 billets » as primary; other tiers offered as secondary |
-| **429** | Throttler — 3 req/s and 20 req/10 s | « Trop de tentatives. Réessayez dans quelques instants. » Disable the action and re-enable it on a visible timer | Automatic retry with exponential back-off for GETs; a manual, timed retry for anything that mutates |
-| **5xx / network** | Server or connectivity failure | « Connexion perdue » — and **if the failure happened during payment, explicitly state that the order status is unknown and must be checked, never that it failed** | « Réessayer », plus a link to `/orders` |
+| Code               | Real backend cause                                                                                                                                                                                                                                        | User-facing treatment                                                                                                                                                                                                                                                                       | Recovery                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **400**            | `EVENT_NOT_PUBLISHED`, `INSUFFICIENT_AVAILABILITY`, `TICKET_LIMIT_EXCEEDED` (10 tickets/event/user), `VALIDATION_ERROR`, `ORDER_EXPIRED`, `INVALID_STATUS`, `MAX_ATTEMPTS_EXCEEDED`, `GATEWAY_ERROR`                                                      | **Never one generic message.** Disambiguated by context and mapped to the specific states below                                                                                                                                                                                             | Varies — see rows                                                                                                  |
+| **401**            | Access token expired or absent                                                                                                                                                                                                                            | **Silent refresh first.** Attempt `POST /auth/refresh-token`, replay the original request once, and only then show a session-expired state                                                                                                                                                  | Re-authenticate and return to the exact page — selection and checkout state preserved                              |
+| **403**            | Insufficient role, **`RATE_LIMITED` on order creation**, an unverified email or deactivated account on `POST /auth/login` (`auth.controller.ts:188`), or a resource that is not the user's (someone else's order; a non-owner requesting a `DRAFT` event) | ⚠️ **Several different situations behind one status — never one generic « accès refusé ».** Role → « Cette page est réservée aux organisateurs ». Rate-limit → « Vous avez atteint la limite de 5 commandes par heure ». Login → « Vérifiez votre adresse email pour activer votre compte » | Role → go to the appropriate home. Rate limit → state when they can retry. Login → resend-verification entry point |
+| **404**            | Event, ticket type, order or ticket not found                                                                                                                                                                                                             | A designed 404 with the search entry point, not a bare page. For a **deleted or unpublished event**, say so rather than implying a broken link                                                                                                                                              | « Découvrir des événements »                                                                                       |
+| **409 / sold out** | See the note below — currently surfaces as **400 `INSUFFICIENT_AVAILABILITY`** with the true remaining count in the message                                                                                                                               | Blocking sheet state: « Il ne reste que 2 billets Standard » with the quantity **auto-adjusted** to what is actually available                                                                                                                                                              | « Continuer avec 2 billets » as primary; other tiers offered as secondary                                          |
+| **429**            | Throttler — 3 req/s and 20 req/10 s                                                                                                                                                                                                                       | « Trop de tentatives. Réessayez dans quelques instants. » Disable the action and re-enable it on a visible timer                                                                                                                                                                            | Automatic retry with exponential back-off for GETs; a manual, timed retry for anything that mutates                |
+| **5xx / network**  | Server or connectivity failure                                                                                                                                                                                                                            | « Connexion perdue » — and **if the failure happened during payment, explicitly state that the order status is unknown and must be checked, never that it failed**                                                                                                                          | « Réessayer », plus a link to `/orders`                                                                            |
 
 > **⚠️ Contract gap to resolve with the backend — flagged, not designed around.**
 > The specification for this phase anticipated **409** for sold-out and business conflicts, but the
@@ -1242,7 +1245,7 @@ availability — a case that must be handled rather than assumed away.
 
 **③ Sold out during checkout** — availability lost between selection and order
 
-Rendered in the sheet, without losing context. The message states the *true* remaining count from
+Rendered in the sheet, without losing context. The message states the _true_ remaining count from
 the API, the quantity stepper **auto-adjusts to what is available**, and other tiers with stock are
 offered inline.
 
@@ -1258,6 +1261,7 @@ recovery costs one existing endpoint call and converts the product's worst state
 **④ Cancelled event** — `EventStatus.CANCELLED`
 
 Two different audiences, two different treatments:
+
 - **A browser** sees a `danger` banner on the event page, a disabled purchase bar, and no path to buy.
 - **A ticket-holder** sees a banner on their ticket and in `/tickets` stating the event is
   cancelled and what happens next regarding their money. The `EVENT_CANCELLED` notification type
@@ -1271,7 +1275,7 @@ The design-critical fact: **the platform commission is not refunded.** The backe
 refund as `subtotal + paymentFees` (`request-refund.handler.ts:56`). A user who paid 106,000 DT for
 two 50 DT tickets receives 100,000 DT back.
 
-This *must* be stated **before** a refund is requested, not discovered afterwards, with the exact
+This _must_ be stated **before** a refund is requested, not discovered afterwards, with the exact
 arithmetic:
 
 ```
@@ -1287,16 +1291,16 @@ safely client-retryable.
 
 ### G.4 Remaining edge cases
 
-| Case | Treatment |
-|---|---|
-| **Session expiry mid-checkout** | Silent token refresh; if it fails, a re-auth sheet **over** the checkout that returns to the exact step — never a redirect that loses the order |
-| **User returns to a completed order** | `/checkout/[orderId]` on a `PAID` order redirects to the ticket, never re-offers payment |
-| **Back button after payment** | The payment step is replaced in history, not pushed, so Back cannot re-trigger a charge |
-| **Double-tap on pay** | Button loading state + reused `idempotencyKey` |
-| **Event starts during checkout** | Order creation fails on `EVENT_NOT_PUBLISHED` / status change; the state explains it plainly |
-| **Offline** | A persistent offline banner; cached tickets and QRs remain readable; mutating actions are disabled with an explanation rather than failing on tap |
-| **Slow 3G** | Skeletons with reserved aspect-ratio boxes; images lazy except the hero; no layout shift on arrival |
-| **Organizer views their own unpublished event** | Full preview plus a persistent « Brouillon — invisible par le public » bar, with publish as the primary action |
+| Case                                            | Treatment                                                                                                                                         |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Session expiry mid-checkout**                 | Silent token refresh; if it fails, a re-auth sheet **over** the checkout that returns to the exact step — never a redirect that loses the order   |
+| **User returns to a completed order**           | `/checkout/[orderId]` on a `PAID` order redirects to the ticket, never re-offers payment                                                          |
+| **Back button after payment**                   | The payment step is replaced in history, not pushed, so Back cannot re-trigger a charge                                                           |
+| **Double-tap on pay**                           | Button loading state + reused `idempotencyKey`                                                                                                    |
+| **Event starts during checkout**                | Order creation fails on `EVENT_NOT_PUBLISHED` / status change; the state explains it plainly                                                      |
+| **Offline**                                     | A persistent offline banner; cached tickets and QRs remain readable; mutating actions are disabled with an explanation rather than failing on tap |
+| **Slow 3G**                                     | Skeletons with reserved aspect-ratio boxes; images lazy except the hero; no layout shift on arrival                                               |
+| **Organizer views their own unpublished event** | Full preview plus a persistent « Brouillon — invisible par le public » bar, with publish as the primary action                                    |
 
 ---
 
@@ -1370,7 +1374,7 @@ ratios in those tables are computed, not estimated. The resulting rules:
 - **`<button>` for actions, `<a>` for navigation**, decided by whether the URL changes.
 - Icon-only controls carry an `aria-label`; their icons are `aria-hidden`.
 - Loading buttons set `aria-busy="true"` and announce completion politely.
-- Disabled controls use `aria-disabled` and remain focusable so a keyboard user can discover *why*
+- Disabled controls use `aria-disabled` and remain focusable so a keyboard user can discover _why_
   they are disabled — a genuinely important detail on sold-out tiers.
 - Toggle controls expose `aria-pressed` or `aria-expanded` as appropriate.
 
@@ -1431,14 +1435,14 @@ side-by-side preview.
 
 Tailwind's defaults, unmodified — inventing custom breakpoints creates drift with no benefit:
 
-| Token | Min width | Primary target |
-|---|---|---|
-| *(base)* | 0 | **Phone — the design target.** Single column |
-| `sm` | 640 px | Large phones, small tablets portrait — 2-column grids appear |
-| `md` | 768 px | Tablet portrait — sidebar layouts become possible |
-| `lg` | 1024 px | Tablet landscape / small laptop — **the desktop layout begins here** |
-| `xl` | 1280 px | Desktop — max content width caps at 1280 px |
-| `2xl` | 1536 px | Large desktop — content stays capped, gutters grow |
+| Token    | Min width | Primary target                                                       |
+| -------- | --------- | -------------------------------------------------------------------- |
+| _(base)_ | 0         | **Phone — the design target.** Single column                         |
+| `sm`     | 640 px    | Large phones, small tablets portrait — 2-column grids appear         |
+| `md`     | 768 px    | Tablet portrait — sidebar layouts become possible                    |
+| `lg`     | 1024 px   | Tablet landscape / small laptop — **the desktop layout begins here** |
+| `xl`     | 1280 px   | Desktop — max content width caps at 1280 px                          |
+| `2xl`    | 1536 px   | Large desktop — content stays capped, gutters grow                   |
 
 Content is capped at **1280 px** with a centred container; text measure never exceeds **~72
 characters**, which on the event description means a max-width column rather than a full-bleed
@@ -1505,19 +1509,19 @@ controls, curation model, event-page structure, price honesty, and the checkout 
 
 ### J.1 Summary — one actionable takeaway each
 
-| Competitor | What they do well | Actionable takeaway for Tickr |
-|---|---|---|
-| **Meetup** | Filter chips display their **current value**, not the field name — "Any day", "Within 18 miles" — and cards carry a seats-left count | Label every Tickr filter chip with its applied value (« Tunis », « Ce week-end », « Jusqu'à 50 DT ») instead of its field name, and print `ticketSummary.totalAvailable` as « Il reste 7 billets » on the discovery card itself |
-| **Fever** | City is chosen **first** and scopes everything; the feed is then named editorial rails, so there is never a blank state or a lonely search box | Make city a persistent header control that scopes all of `/events`, and build the home feed from named editorial rails driven by real filters (« Ce week-end à Tunis », « Nouveautés », « Les plus demandés » via `sortBy=soldTickets`) — curation Tickr can ship with zero recommendation engine |
-| **Eventbrite** | The event page has an **invariant section order**, so a returning buyer knows where to look, and the hold timer is an accepted norm rather than a surprise | Freeze Tickr's `/events/[id]` section order as a contract — hero → title → date/time → venue → price entry → ticket tiers → description → organizer → related — and never let a screen reorder it for a "special" event |
-| **DICE** | "The price you'll pay. No surprises later." — plus the hold stated **twice**, relative *and* absolute, and tickets cached for offline use at the door | State Tickr's 15-minute hold in both forms, exactly as DICE does — « Il reste 12:34 » **and** « Vos billets sont gardés jusqu'à 21:45 » — because an absolute time is the only form that survives a Konnect redirect and a backgrounded browser |
-| **Shotgun** | Checkout **drops the app's dark chrome entirely** for a stripped white surface: wordmark, bare mm:ss counter, no nav, no exits | Strip `/checkout/[orderId]` to a dedicated surface — Tickr wordmark instead of navigation, the countdown, the money block, the provider radios, nothing else — so the one screen handling money has no competing affordance |
+| Competitor     | What they do well                                                                                                                                          | Actionable takeaway for Tickr                                                                                                                                                                                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Meetup**     | Filter chips display their **current value**, not the field name — "Any day", "Within 18 miles" — and cards carry a seats-left count                       | Label every Tickr filter chip with its applied value (« Tunis », « Ce week-end », « Jusqu'à 50 DT ») instead of its field name, and print `ticketSummary.totalAvailable` as « Il reste 7 billets » on the discovery card itself                                                                   |
+| **Fever**      | City is chosen **first** and scopes everything; the feed is then named editorial rails, so there is never a blank state or a lonely search box             | Make city a persistent header control that scopes all of `/events`, and build the home feed from named editorial rails driven by real filters (« Ce week-end à Tunis », « Nouveautés », « Les plus demandés » via `sortBy=soldTickets`) — curation Tickr can ship with zero recommendation engine |
+| **Eventbrite** | The event page has an **invariant section order**, so a returning buyer knows where to look, and the hold timer is an accepted norm rather than a surprise | Freeze Tickr's `/events/[id]` section order as a contract — hero → title → date/time → venue → price entry → ticket tiers → description → organizer → related — and never let a screen reorder it for a "special" event                                                                           |
+| **DICE**       | "The price you'll pay. No surprises later." — plus the hold stated **twice**, relative _and_ absolute, and tickets cached for offline use at the door      | State Tickr's 15-minute hold in both forms, exactly as DICE does — « Il reste 12:34 » **and** « Vos billets sont gardés jusqu'à 21:45 » — because an absolute time is the only form that survives a Konnect redirect and a backgrounded browser                                                   |
+| **Shotgun**    | Checkout **drops the app's dark chrome entirely** for a stripped white surface: wordmark, bare mm:ss counter, no nav, no exits                             | Strip `/checkout/[orderId]` to a dedicated surface — Tickr wordmark instead of navigation, the countdown, the money block, the provider radios, nothing else — so the one screen handling money has no competing affordance                                                                       |
 
 ### J.2 Per competitor
 
-**Meetup** — *territory: discovery controls that state their own state.*
+**Meetup** — _territory: discovery controls that state their own state._
 Meetup's discovery is unglamorous and unusually honest: four filter chips that read « Any day »,
-« Any size », « Any type », « Within 18 miles » tell the user the *current* state of the filter
+« Any size », « Any type », « Within 18 miles » tell the user the _current_ state of the filter
 rather than naming an abstract field, and event cards carry a live "7 seats left" line plus a
 "Waitlist" badge before the tap. Its 2025 rebrand explicitly fixed CTAs that "blended into the
 background". **Tickr should learn** both moves directly: value-labelled chips, and per-card
@@ -1527,7 +1531,7 @@ Meetup's group/RSVP model at all — Tickr has no groups, no recurring communiti
 endpoint, and its unit of value is a paid ticket, not a membership. Meetup also publishes no service
 fee percentage in its help centre; Tickr's whole position is the opposite.
 
-**Fever** — *territory: curation as a substitute for personalisation.*
+**Fever** — _territory: curation as a substitute for personalisation._
 Fever opens on "Find your city" and lets that choice scope the entire product, then presents a stack
 of named editorial rails — "Top 10 in New York", "Fever Originals" — so a user is never confronted
 with an empty search field. Its cards are ruthlessly minimal: image, rating, venue, title, date
@@ -1541,7 +1545,7 @@ QR must work in a mobile browser, offline, with no install prompt. Tickr also ha
 reviews, so the rating number that anchors every Fever card is simply absent — the card design must
 not leave a hole where it would sit.
 
-**Eventbrite** — *territory: structural predictability.*
+**Eventbrite** — _territory: structural predictability._
 Eventbrite's strength is boring in the best way: every event page runs the same top-to-bottom order —
 hero, title, organizer badge, date/time, location, Get tickets, description, tiers, "Good to Know"
 with the posted refund policy, map, organizer, related events. Its tier rows pair a name with a
@@ -1555,7 +1559,7 @@ The 1–10 quantity enumeration is also a neat expression of Tickr's own 10-tick
 checkbox, custom organizer questions and BNPL options are the kind of accretion that made
 Eventbrite's checkout long. Tickr's checkout asks four things and stops.
 
-**DICE** — *territory: price honesty and the ticket as a physical, offline object.*
+**DICE** — _territory: price honesty and the ticket as a physical, offline object._
 DICE puts "The price you'll pay. No surprises later." directly on the event page under the price,
 folds its booking fee into the face price, and shows an order summary with no fee line at all.
 Its hold is stated twice — « %d min left » alongside "We'll hold them until {{time}} on {{date}}" —
@@ -1567,7 +1571,7 @@ both are already locked into [E.4](#e4--the-15-minute-hold-is-a-visible-explaine
 **Tickr should do differently on the fee, deliberately.** DICE can fold its fee into the face price
 because it controls the price shown everywhere. Tickr cannot: Tunisian organizers advertise the face
 price on physical posters and Instagram flyers, so a card quoting 53 DT against a poster saying
-50 DT would read as *Tickr adding a markup*, which is the opposite of the intended effect. Tickr
+50 DT would read as _Tickr adding a markup_, which is the opposite of the intended effect. Tickr
 therefore takes **Fever's structure with DICE's discipline** — the face price in discovery, matching
 the poster, and the complete arithmetic from the first moment a quantity exists, per
 [E.3](#e3--disclose-the-service-fee-the-instant-a-quantity-exists--never-at-the-payment-step). Because `GET /config/public?eventId=…` now exposes the effective rate, an
@@ -1575,7 +1579,7 @@ all-in « frais inclus » quote in discovery becomes possible and should be A/B 
 face-price form. Note also that DICE's waitlists, SMS on-sale reminders and resale have no backend
 equivalent and must not be designed in.
 
-**Shotgun** — *territory: the checkout as a separate, stripped trust surface.*
+**Shotgun** — _territory: the checkout as a separate, stripped trust surface._
 Shotgun is the closest cultural analogue to what Tickr wants to feel like: near-black surfaces, the
 organizer's raw poster used **uncropped and unretouched** as both hero and card image, a date chip
 laid over the poster so the date is readable before the title, heavy condensed uppercase headings,
@@ -1601,11 +1605,12 @@ step"; Eventbrite discloses honestly but inside a checkout that has grown long.
 
 **Tickr's opening is the narrow, specific gap where local payment rails meet published arithmetic.**
 It is the only product in this set that can say, in French, to a buyer paying with a Tunisian card:
-*this ticket is 50 DT, our service fee is 6 %, that is 3 DT, you will pay 53 DT, and here is the
-Konnect page where you pay it.* Combined with a QR that works offline at a venue door on a
+_this ticket is 50 DT, our service fee is 6 %, that is 3 DT, you will pay 53 DT, and here is the
+Konnect page where you pay it._ Combined with a QR that works offline at a venue door on a
 mid-range Android phone and a web product with no app to install, that is a defensible position
 that none of the five can reach into Tunisia to contest — and every design decision in this brief
 is chosen to protect it.
+
 ---
 
 ## K. Design system foundations
@@ -1625,73 +1630,96 @@ This replaces the placeholder `@theme` block currently in `frontend/src/app/glob
   /* ── Colour · brand ────────────────────────────────────────────────
      Cobalt is the ONLY action colour. Sun is accent/scarcity only —
      never a primary button, never an error.                          */
-  --color-cobalt-700: #2430C9;   /* pressed          · white 8.97:1 AAA */
-  --color-cobalt-600: #2E3DE8;   /* PRIMARY / focus  · white 7.12:1 AAA */
-  --color-cobalt-500: #3B4DF5;   /* hover            · white 5.89:1 AA  */
-  --color-cobalt-100: #E6E9FF;   /* selected tint    · 600 on it 5.92:1 */
-  --color-cobalt-50:  #F0F2FF;   /* wash                                */
+  --color-cobalt-700: #2430c9; /* pressed          · white 8.97:1 AAA */
+  --color-cobalt-600: #2e3de8; /* PRIMARY / focus  · white 7.12:1 AAA */
+  --color-cobalt-500: #3b4df5; /* hover            · white 5.89:1 AA  */
+  --color-cobalt-100: #e6e9ff; /* selected tint    · 600 on it 5.92:1 */
+  --color-cobalt-50: #f0f2ff; /* wash                                */
 
-  --color-sun-400: #FFD23F;      /* accent/scarcity  · ink 13.25:1 AAA */
-  --color-sun-500: #F5B80B;      /* weightier icon fill                */
-  --color-sun-700: #8A5B00;      /* sun-family TEXT  · white 5.87:1 AA */
+  --color-sun-400: #ffd23f; /* accent/scarcity  · ink 13.25:1 AAA */
+  --color-sun-500: #f5b80b; /* weightier icon fill                */
+  --color-sun-700: #8a5b00; /* sun-family TEXT  · white 5.87:1 AA */
 
   /* ── Colour · warm neutrals ──────────────────────────────────────── */
-  --color-canvas:    #F8F7F4;    /* page ground (warm paper)           */
-  --color-surface:   #FFFFFF;    /* cards — lifts by value, not shadow */
-  --color-surface-2: #F1EFEA;    /* inset: order summary, disabled     */
+  --color-canvas: #f8f7f4; /* page ground (warm paper)           */
+  --color-surface: #ffffff; /* cards — lifts by value, not shadow */
+  --color-surface-2: #f1efea; /* inset: order summary, disabled     */
 
-  --color-ink-950: #0B0F1A;      /* primary text     · white 19.13:1   */
-  --color-ink-700: #374151;      /* body             · white 10.31:1   */
-  --color-ink-500: #6B7280;      /* supporting       · white  4.83:1   */
-  --color-ink-400: #9CA3AF;      /* ⚠ NON-TEXT on light (2.54:1)       */
-  --color-ink-100: #E8E6E1;      /* text on dark     · ink-950 15.34:1 */
+  --color-ink-950: #0b0f1a; /* primary text     · white 19.13:1   */
+  --color-ink-700: #374151; /* body             · white 10.31:1   */
+  --color-ink-500: #6b7280; /* supporting       · white  4.83:1   */
+  --color-ink-400: #9ca3af; /* ⚠ NON-TEXT on light (2.54:1)       */
+  --color-ink-100: #e8e6e1; /* text on dark     · ink-950 15.34:1 */
 
-  --color-border:        #E5E3DD; /* decorative hairline only          */
-  --color-border-strong: #7F848F; /* CONTROL boundaries · 3.75:1 ✓1.4.11 */
+  --color-border: #e5e3dd; /* decorative hairline only          */
+  --color-border-strong: #7f848f; /* CONTROL boundaries · 3.75:1 ✓1.4.11 */
 
   /* ── Colour · semantic ──────────────────────────────────────────────
      -700 = text-safe · -600 = fill-safe (≥3:1) · -100 = callout tint  */
-  --color-success-700: #047857;  --color-success-600: #059669;  --color-success-100: #D1FAE5;
-  --color-warning-700: #B45309;  --color-warning-600: #D97706;  --color-warning-100: #FEF3C7;
-  --color-danger-700:  #B91C1C;  --color-danger-600:  #DC2626;  --color-danger-100:  #FEE2E2;
+  --color-success-700: #047857;
+  --color-success-600: #059669;
+  --color-success-100: #d1fae5;
+  --color-warning-700: #b45309;
+  --color-warning-600: #d97706;
+  --color-warning-100: #fef3c7;
+  --color-danger-700: #b91c1c;
+  --color-danger-600: #dc2626;
+  --color-danger-100: #fee2e2;
 
   /* ── Typography ───────────────────────────────────────────────────── */
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-sans:    var(--font-inter),   ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  --text-display-xl: 2.25rem;  --text-display-xl--line-height: 2.5rem;   /* 36/40 → clamp to 44 at lg */
-  --text-display-l:  1.75rem;  --text-display-l--line-height:  2rem;     /* 28/32 */
-  --text-h1:         1.375rem; --text-h1--line-height:         1.75rem;  /* 22/28 */
-  --text-h2:         1.125rem; --text-h2--line-height:         1.5rem;   /* 18/24 */
-  --text-body:       1rem;     --text-body--line-height:       1.5rem;   /* 16/24 — floor for reading */
-  --text-body-sm:    0.875rem; --text-body-sm--line-height:    1.25rem;  /* 14/20 */
-  --text-caption:    0.8125rem;--text-caption--line-height:    1.125rem; /* 13/18 — absolute floor */
-  --text-overline:   0.75rem;  --text-overline--line-height:   1rem;     /* 12/16 uppercase +6%   */
+  --text-display-xl: 2.25rem;
+  --text-display-xl--line-height: 2.5rem; /* 36/40 → clamp to 44 at lg */
+  --text-display-l: 1.75rem;
+  --text-display-l--line-height: 2rem; /* 28/32 */
+  --text-h1: 1.375rem;
+  --text-h1--line-height: 1.75rem; /* 22/28 */
+  --text-h2: 1.125rem;
+  --text-h2--line-height: 1.5rem; /* 18/24 */
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem; /* 16/24 — floor for reading */
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.25rem; /* 14/20 */
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.125rem; /* 13/18 — absolute floor */
+  --text-overline: 0.75rem;
+  --text-overline--line-height: 1rem; /* 12/16 uppercase +6%   */
 
   /* ── Spacing · 4px base ───────────────────────────────────────────── */
-  --spacing: 0.25rem;          /* Tailwind 4 derives 1–16 from this     */
+  --spacing: 0.25rem; /* Tailwind 4 derives 1–16 from this     */
 
   /* ── Radius · posters are square, tickets are round ───────────────── */
-  --radius-sm:   8px;          /* inputs, chips, badges                 */
-  --radius-md:  12px;          /* buttons, compact cards                */
-  --radius-lg:  16px;          /* cards, panels, summary block          */
-  --radius-xl:  24px;          /* sheets, modals, ticket pass           */
+  --radius-sm: 8px; /* inputs, chips, badges                 */
+  --radius-md: 12px; /* buttons, compact cards                */
+  --radius-lg: 16px; /* cards, panels, summary block          */
+  --radius-xl: 24px; /* sheets, modals, ticket pass           */
 
   /* ── Elevation · warm-tinted, five levels only ────────────────────── */
-  --shadow-sm: 0 1px 2px rgb(11 15 26 / .06), 0 2px 8px rgb(11 15 26 / .04);
-  --shadow-md: 0 4px 12px rgb(11 15 26 / .08), 0 2px 4px rgb(11 15 26 / .04);
-  --shadow-lg: 0 12px 32px rgb(11 15 26 / .14);
-  --shadow-sticky: 0 -1px 0 var(--color-border), 0 -8px 24px rgb(11 15 26 / .08);
+  --shadow-sm: 0 1px 2px rgb(11 15 26 / 0.06), 0 2px 8px rgb(11 15 26 / 0.04);
+  --shadow-md: 0 4px 12px rgb(11 15 26 / 0.08), 0 2px 4px rgb(11 15 26 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(11 15 26 / 0.14);
+  --shadow-sticky:
+    0 -1px 0 var(--color-border), 0 -8px 24px rgb(11 15 26 / 0.08);
 
   /* ── Motion ───────────────────────────────────────────────────────── */
-  --ease-standard: cubic-bezier(.2, 0, 0, 1);
-  --ease-exit:     cubic-bezier(.4, 0, 1, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* Focus ring — surface-level swap, not a per-component decision */
-:root                { --ring: var(--color-cobalt-600); --ring-offset: var(--color-canvas); }
-.on-surface          { --ring-offset: var(--color-surface); }
-.on-dark             { --ring: var(--color-sun-400);     --ring-offset: var(--color-ink-950); }
+:root {
+  --ring: var(--color-cobalt-600);
+  --ring-offset: var(--color-canvas);
+}
+.on-surface {
+  --ring-offset: var(--color-surface);
+}
+.on-dark {
+  --ring: var(--color-sun-400);
+  --ring-offset: var(--color-ink-950);
+}
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--ring);
@@ -1700,50 +1728,57 @@ This replaces the placeholder `@theme` block currently in `frontend/src/app/glob
 }
 
 /* Money and counts never jitter */
-.tabular { font-variant-numeric: tabular-nums; }
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
 
 /* Motion preference is honoured globally, not per component */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
 
-body { background: var(--color-canvas); color: var(--color-ink-950); }
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink-950);
+}
 ```
 
 ### K.2 Colour roles at a glance
 
-| Role | Token | Never used for |
-|---|---|---|
-| Action / interactive identity | `cobalt-600` | Backgrounds, headers, decoration |
-| Accent / scarcity / brand | `sun-400` | Primary buttons, errors, warnings |
-| Page ground | `canvas` | Cards |
-| Raised content | `surface` | Page background |
-| Inset content | `surface-2` | Anything carrying `ink-500` text (4.21 : 1 ✗) |
-| Primary text | `ink-950` | — |
-| Body text | `ink-700` | — |
-| Supporting text | `ink-500` | Text on `surface-2` |
-| Disabled glyphs | `ink-400` | **Any text on a light surface** (2.54 : 1 ✗) |
-| Decorative edges | `border` | Input / control boundaries (1.28 : 1 ✗) |
-| Control boundaries | `border-strong` | — |
+| Role                          | Token           | Never used for                                |
+| ----------------------------- | --------------- | --------------------------------------------- |
+| Action / interactive identity | `cobalt-600`    | Backgrounds, headers, decoration              |
+| Accent / scarcity / brand     | `sun-400`       | Primary buttons, errors, warnings             |
+| Page ground                   | `canvas`        | Cards                                         |
+| Raised content                | `surface`       | Page background                               |
+| Inset content                 | `surface-2`     | Anything carrying `ink-500` text (4.21 : 1 ✗) |
+| Primary text                  | `ink-950`       | —                                             |
+| Body text                     | `ink-700`       | —                                             |
+| Supporting text               | `ink-500`       | Text on `surface-2`                           |
+| Disabled glyphs               | `ink-400`       | **Any text on a light surface** (2.54 : 1 ✗)  |
+| Decorative edges              | `border`        | Input / control boundaries (1.28 : 1 ✗)       |
+| Control boundaries            | `border-strong` | —                                             |
 
 ### K.3 Typography hierarchy
 
-| Token | Family · weight | Job |
-|---|---|---|
-| `display-xl` | Archivo 700 | Event title, event-page hero |
-| `display-l` | Archivo 700 | Page and section titles |
-| `h1` | Archivo 600 | Card and sheet titles |
-| `h2` | Inter 600 | Sub-sections, ticket-type names |
-| `body` | Inter 400 | Default reading text |
-| `body-sm` | Inter 400 | Metadata, helper text |
-| `caption` | Inter 500 | Timestamps, fine print — floor size |
-| `overline` | Inter 600 · uppercase | Category eyebrows, section labels |
-| `.tabular` | modifier | **All money, counts and countdowns** |
+| Token        | Family · weight       | Job                                  |
+| ------------ | --------------------- | ------------------------------------ |
+| `display-xl` | Archivo 700           | Event title, event-page hero         |
+| `display-l`  | Archivo 700           | Page and section titles              |
+| `h1`         | Archivo 600           | Card and sheet titles                |
+| `h2`         | Inter 600             | Sub-sections, ticket-type names      |
+| `body`       | Inter 400             | Default reading text                 |
+| `body-sm`    | Inter 400             | Metadata, helper text                |
+| `caption`    | Inter 500             | Timestamps, fine print — floor size  |
+| `overline`   | Inter 600 · uppercase | Category eyebrows, section labels    |
+| `.tabular`   | modifier              | **All money, counts and countdowns** |
 
 Loaded via `next/font/google`, variable, `display: 'swap'`, Latin + Latin-Extended only.
 **Budget: two families. Adding a third requires removing one.**
@@ -1765,11 +1800,11 @@ Content caps at 1280 px; text measure caps at ~72 characters.
 
 ### K.6 Motion principles
 
-| Token | Duration | Use |
-|---|---|---|
-| `fast` | 120 ms | State changes — hover, press, chip toggle |
-| `base` | 200 ms | Small surfaces entering and leaving |
-| `slow` | 320 ms | Bottom sheets, modals, route transitions |
+| Token  | Duration | Use                                       |
+| ------ | -------- | ----------------------------------------- |
+| `fast` | 120 ms   | State changes — hover, press, chip toggle |
+| `base` | 200 ms   | Small surfaces entering and leaving       |
+| `slow` | 320 ms   | Bottom sheets, modals, route transitions  |
 
 Easing: `--ease-standard` for entering and moving, `--ease-exit` for leaving. Four rules govern all
 motion: it must communicate **spatial relationship or state change** (never decorate); nothing in
@@ -1779,16 +1814,16 @@ keeps running.
 
 ### K.7 Component density
 
-| Element | Mobile | Desktop |
-|---|---|---|
-| Primary CTA height | 48 px | 44 px |
-| Standard control height | 44 px | 44 px |
-| Input height | 48 px | 44 px |
-| Minimum touch target | 44 × 44 px | 44 × 44 px |
-| List row | 56–72 px | 56–72 px |
-| Data table row | *(not used)* | 40 px — **the only density increase in the system** |
-| Card padding | `space-4` | `space-6` |
-| Page gutter | `space-4` | `space-8` |
+| Element                 | Mobile       | Desktop                                             |
+| ----------------------- | ------------ | --------------------------------------------------- |
+| Primary CTA height      | 48 px        | 44 px                                               |
+| Standard control height | 44 px        | 44 px                                               |
+| Input height            | 48 px        | 44 px                                               |
+| Minimum touch target    | 44 × 44 px   | 44 × 44 px                                          |
+| List row                | 56–72 px     | 56–72 px                                            |
+| Data table row          | _(not used)_ | 40 px — **the only density increase in the system** |
+| Card padding            | `space-4`    | `space-6`                                           |
+| Page gutter             | `space-4`    | `space-8`                                           |
 
 Density is **comfortable and near-identical across breakpoints**. Controls do not shrink on desktop.
 
@@ -1798,7 +1833,7 @@ Phase 2 should treat these as the system's primitives, in this order — they ar
 purchase path depends on:
 
 1. `PriceDisplay` — TND formatting, millimes-only-when-non-zero, `tabular-nums`, `sr-only` spoken form
-2. `OrderSummary` — the subtotal / fee / *conditional* payment-fee / total block, used unchanged on
+2. `OrderSummary` — the subtotal / fee / _conditional_ payment-fee / total block, used unchanged on
    the sheet, the order screen and the confirmation
 3. `ReservationCountdown` — driven by the server's `expiresAt`, three phases, threshold-only announcements
 4. `TicketTypeRow` — name, description, price, and the four availability states
@@ -1817,18 +1852,18 @@ These are gaps found while grounding this brief against the actual API. **Gap 0a
 revenue UI; none of the others blocks Phase 2, but each one forces the frontend into a workaround
 that should be removed rather than entrenched. They are listed in priority order.
 
-| # | Gap | Impact on the design | Proposed resolution |
-|---|---|---|---|
-| **0a** 🔴 | **Ticket reservation is an unwired stub, so no purchase completes end to end.** `TICKET_RESERVATION_PORT` binds to `TicketReservationAdapter` (`payments.module.ts`), whose `reserveTickets()` logs `[STUB] …` and returns **mock ticket IDs** — its own comment reads *"Stub: return mock ticket IDs until Tickets module is wired"*. `create-order.handler.ts` step 5 calls it in good faith | **The design in [§F](#f-core-purchase-experience) is unaffected and still correct** — the frontend should call `POST /orders` alone and never `POST /tickets/reserve`. But today that call creates **no ticket rows** and moves **no `soldQuantity`**, so nothing appears in `GET /tickets`, availability never decrements, and the 15-minute hold is notional. Every money-path screen can be built, but none can be tested against real data | Bind the real Tickets reservation path behind `TICKET_RESERVATION_PORT`. Until then, treat the whole purchase flow as **designed but unverifiable**, and do not read "V1 MVP complete" as covering it |
-| **0b — Resolved** | **The shared `JwtAuthGuard` now extends Passport `AuthGuard('jwt')`.** It validates bearer tokens through the registered strategy, attaches the user, preserves the `@Public()` bypass and returns 401 for invalid authentication | Events, Tickets and Notifications no longer depend on a pre-populated `request.user`. The protected Events lifecycle, including Admin commission, is E2E-validated | Keep one shared guard implementation and the Users JWT strategy; do not reintroduce controller-specific placeholders |
-| **1 — Resolved** | **The commission rate is publicly readable.** `GET /config/public` returns global config; `?eventId=<uuid>` resolves an event override. Admin writes use `PATCH /events/:id/commission` with 0–20 % or `null` | Pre-order arithmetic can use the backend rate instead of duplicating environment state. Existing orders remain unchanged after a rate update | Cache global config ~1 h; refresh event-specific config when opening ticket selection; reconcile against `POST /orders` before payment |
-| **2** | **The error envelope carries a `code`, but it is not the domain error type.** The registered global filter is `AllExceptionsFilter` (`app.module.ts:81`), emitting `{ statusCode, code, message, details, timestamp, path, method }` — note that `HttpExceptionFilter` and `ValidationExceptionFilter` exist but are **registered nowhere**. For a standard `BadRequestException`, `code` is populated from `exceptionResponse.error`, i.e. the HTTP reason phrase (`"Bad Request"`), so it cannot distinguish sold-out from bad input. The rich domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`, …) are discarded at the controller boundary | [G.2](#g2-http-and-business-error-mapping) needs to distinguish "sold out" from "bad input" — both are 400. The frontend must key off endpoint context and, in the worst case, parse a message string, which cannot be translated | **Add a stable `code` field** carrying the existing domain error type. Zero new logic — the handlers already produce these values |
-| **3** | **Status codes do not match their semantics.** `INSUFFICIENT_AVAILABILITY` → 400 (expected 409); `RATE_LIMITED` → 403 (expected 429) | A 403 that means "you have ordered 5 times this hour" cannot be told apart from a genuine role failure, so the generic 403 handler would show the wrong message on a checkout screen | Return **409** for availability/business conflicts and **429** for rate limiting. Resolving #2 makes this lower-priority but not unnecessary |
-| **4** | **`paymentFees` is a reserved buyer-surcharge field and is never populated.** `OrderEntity.setPaymentFees()` exists, but no production path calls it. Konnect explicitly disables adding payment fees; no adapter exposes the merchant fee charged to Tickr | Confusing merchant processing cost with `paymentFees` would either overcharge the buyer or corrupt Tickr's margin reporting. The conditional UI row is always hidden today | Keep `paymentFees = 0` for V1. Track actual gateway costs separately from provider settlement reports. Only populate this field after an explicit, disclosed buyer-surcharge policy is approved |
-| **5** | **The QR string's stability is unconfirmed** (Phase 4 verified the payload itself is a client-renderable string; only its lifetime is open). The API already returns the QR payload as a plain string (`ticket.dto.ts:33`, e.g. `v1-<uuid>-a1b2`) and `POST /tickets/check-in` accepts that same string — server-side image rendering exists only for the PDF path | [F.7](#f7-the-ticket) depends on rendering that string **offline** at the venue door, so it must be immutable for the ticket's lifetime and safe to cache — neither guarantee is documented | Confirm the string is the scannable payload, immutable once `CONFIRMED`, and that no server-rendered image will replace it. Keep the PDF as the separate backup path |
-| **6** | **`PUSH` exists in `NotificationChannel` but is unsupported** (`isSupportedChannel` allows only EMAIL and SMS) | Notification-preference UI must not offer a channel that silently does nothing | Hide `PUSH` in V1. All copy says « email » or « SMS », never « notification » |
-| **7** | **One image per event** (`POST /events/:id/image`) | No gallery is possible; the event page is designed around a single hero image, which is correct for V1 but should be a conscious choice | Confirm single-image is intended for V1 |
-| **8** | **Organizer settlement is not implemented.** New event analytics correctly records `OrderPaidEvent.subtotalAmount` and `ticketCount`, while retaining total and platform fee in metric dimensions. However, existing metrics are append-only and may use the former buyer-total basis; refunds are not subtracted from the event aggregate; no organizer balance or payout ledger exists | The dashboard can show « Ventes de billets brutes » only after historical backfill, with « avant remboursements et ajustements ». It cannot show « revenu net » or « vous recevrez X » | Backfill pre-fix revenue metrics; aggregate exact platform fees from stored event dimensions or a dedicated metric; then implement organizer balances, refunds/adjustments, gateway reconciliation and payouts |
+| #                 | Gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Impact on the design                                                                                                                                                                                                                                                                                                                                                                                                                           | Proposed resolution                                                                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0a** 🔴         | **Ticket reservation is an unwired stub, so no purchase completes end to end.** `TICKET_RESERVATION_PORT` binds to `TicketReservationAdapter` (`payments.module.ts`), whose `reserveTickets()` logs `[STUB] …` and returns **mock ticket IDs** — its own comment reads _"Stub: return mock ticket IDs until Tickets module is wired"_. `create-order.handler.ts` step 5 calls it in good faith                                                                                                                                                                                                                                                                                                          | **The design in [§F](#f-core-purchase-experience) is unaffected and still correct** — the frontend should call `POST /orders` alone and never `POST /tickets/reserve`. But today that call creates **no ticket rows** and moves **no `soldQuantity`**, so nothing appears in `GET /tickets`, availability never decrements, and the 15-minute hold is notional. Every money-path screen can be built, but none can be tested against real data | Bind the real Tickets reservation path behind `TICKET_RESERVATION_PORT`. Until then, treat the whole purchase flow as **designed but unverifiable**, and do not read "V1 MVP complete" as covering it          |
+| **0b — Resolved** | **The shared `JwtAuthGuard` now extends Passport `AuthGuard('jwt')`.** It validates bearer tokens through the registered strategy, attaches the user, preserves the `@Public()` bypass and returns 401 for invalid authentication                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Events, Tickets and Notifications no longer depend on a pre-populated `request.user`. The protected Events lifecycle, including Admin commission, is E2E-validated                                                                                                                                                                                                                                                                             | Keep one shared guard implementation and the Users JWT strategy; do not reintroduce controller-specific placeholders                                                                                           |
+| **1 — Resolved**  | **The commission rate is publicly readable.** `GET /config/public` returns global config; `?eventId=<uuid>` resolves an event override. Admin writes use `PATCH /events/:id/commission` with 0–20 % or `null`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Pre-order arithmetic can use the backend rate instead of duplicating environment state. Existing orders remain unchanged after a rate update                                                                                                                                                                                                                                                                                                   | Cache global config ~1 h; refresh event-specific config when opening ticket selection; reconcile against `POST /orders` before payment                                                                         |
+| **2**             | **The error envelope carries a `code`, but it is not the domain error type.** The registered global filter is `AllExceptionsFilter` (`app.module.ts:81`), emitting `{ statusCode, code, message, details, timestamp, path, method }` — note that `HttpExceptionFilter` and `ValidationExceptionFilter` exist but are **registered nowhere**. For a standard `BadRequestException`, `code` is populated from `exceptionResponse.error`, i.e. the HTTP reason phrase (`"Bad Request"`), so it cannot distinguish sold-out from bad input. The rich domain error types (`INSUFFICIENT_AVAILABILITY`, `RATE_LIMITED`, `ORDER_EXPIRED`, `MAX_ATTEMPTS_EXCEEDED`, …) are discarded at the controller boundary | [G.2](#g2-http-and-business-error-mapping) needs to distinguish "sold out" from "bad input" — both are 400. The frontend must key off endpoint context and, in the worst case, parse a message string, which cannot be translated                                                                                                                                                                                                              | **Add a stable `code` field** carrying the existing domain error type. Zero new logic — the handlers already produce these values                                                                              |
+| **3**             | **Status codes do not match their semantics.** `INSUFFICIENT_AVAILABILITY` → 400 (expected 409); `RATE_LIMITED` → 403 (expected 429)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | A 403 that means "you have ordered 5 times this hour" cannot be told apart from a genuine role failure, so the generic 403 handler would show the wrong message on a checkout screen                                                                                                                                                                                                                                                           | Return **409** for availability/business conflicts and **429** for rate limiting. Resolving #2 makes this lower-priority but not unnecessary                                                                   |
+| **4**             | **`paymentFees` is a reserved buyer-surcharge field and is never populated.** `OrderEntity.setPaymentFees()` exists, but no production path calls it. Konnect explicitly disables adding payment fees; no adapter exposes the merchant fee charged to Tickr                                                                                                                                                                                                                                                                                                                                                                                                                                             | Confusing merchant processing cost with `paymentFees` would either overcharge the buyer or corrupt Tickr's margin reporting. The conditional UI row is always hidden today                                                                                                                                                                                                                                                                     | Keep `paymentFees = 0` for V1. Track actual gateway costs separately from provider settlement reports. Only populate this field after an explicit, disclosed buyer-surcharge policy is approved                |
+| **5**             | **The QR string's stability is unconfirmed** (Phase 4 verified the payload itself is a client-renderable string; only its lifetime is open). The API already returns the QR payload as a plain string (`ticket.dto.ts:33`, e.g. `v1-<uuid>-a1b2`) and `POST /tickets/check-in` accepts that same string — server-side image rendering exists only for the PDF path                                                                                                                                                                                                                                                                                                                                      | [F.7](#f7-the-ticket) depends on rendering that string **offline** at the venue door, so it must be immutable for the ticket's lifetime and safe to cache — neither guarantee is documented                                                                                                                                                                                                                                                    | Confirm the string is the scannable payload, immutable once `CONFIRMED`, and that no server-rendered image will replace it. Keep the PDF as the separate backup path                                           |
+| **6**             | **`PUSH` exists in `NotificationChannel` but is unsupported** (`isSupportedChannel` allows only EMAIL and SMS)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Notification-preference UI must not offer a channel that silently does nothing                                                                                                                                                                                                                                                                                                                                                                 | Hide `PUSH` in V1. All copy says « email » or « SMS », never « notification »                                                                                                                                  |
+| **7**             | **One image per event** (`POST /events/:id/image`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | No gallery is possible; the event page is designed around a single hero image, which is correct for V1 but should be a conscious choice                                                                                                                                                                                                                                                                                                        | Confirm single-image is intended for V1                                                                                                                                                                        |
+| **8**             | **Organizer settlement is not implemented.** New event analytics correctly records `OrderPaidEvent.subtotalAmount` and `ticketCount`, while retaining total and platform fee in metric dimensions. However, existing metrics are append-only and may use the former buyer-total basis; refunds are not subtracted from the event aggregate; no organizer balance or payout ledger exists                                                                                                                                                                                                                                                                                                                | The dashboard can show « Ventes de billets brutes » only after historical backfill, with « avant remboursements et ajustements ». It cannot show « revenu net » or « vous recevrez X »                                                                                                                                                                                                                                                         | Backfill pre-fix revenue metrics; aggregate exact platform fees from stored event dimensions or a dedicated metric; then implement organizer balances, refunds/adjustments, gateway reconciliation and payouts |
 
 **Resolved during this review:** `paymentsConfig` is registered, both configuration paths default to
 6 %, startup validates a rate between 0 and 20 %, and `CreateOrderHandler` reads
@@ -1851,17 +1886,17 @@ Anything **not** on this list is still open.
 ### M.1 Product and scope
 
 1. **V1 positioning:** discovery-led, trust-engineered, mobile-first event ticketing for Tunisia.
-  Target: **poster to paid in under 90 seconds** for a returning user. **Company north star:** a
-  global event network where people discover events, attend with confidence and connect safely
-  around the experience. Tunisia is the launch market, not the permanent market boundary.
+   Target: **poster to paid in under 90 seconds** for a returning user. **Company north star:** a
+   global event network where people discover events, attend with confidence and connect safely
+   around the experience. Tunisia is the launch market, not the permanent market boundary.
 2. **Design weight: 70 % participant / 25 % organizer / 5 % admin.**
 3. **Confirmed non-goals for V1 only** — do not design IA for them: recommendations/personalised feed,
    favourites, reviews or ratings, social graph, seat maps, promo codes, waitlists, resale market,
-  multi-image galleries, push notifications, full app-wide dark theme. Matching and Event Spaces
-  remain explicit post-V1 horizons; they are not rejected product directions.
+   multi-image galleries, push notifications, full app-wide dark theme. Matching and Event Spaces
+   remain explicit post-V1 horizons; they are not rejected product directions.
 4. **French-first (`fr-TN`)**, all strings externalised from day one; Arabic is a planned locale and
-  the type stack already accommodates it. English and multi-market localisation follow as Tickr
-  expands market by market.
+   the type stack already accommodates it. English and multi-market localisation follow as Tickr
+   expands market by market.
 
 **V1 pricing mode is locked:** organizers enter the ticket face price only. The effective
 commission, service fee and buyer total are read-only previews. No `pricingMode`, target-total input
@@ -1911,7 +1946,7 @@ future matching or Event Space availability.
 
 ### M.4 The purchase flow
 
-21. **`POST /orders` is the single entry point to checkout.** It creates the order *and* reserves the
+21. **`POST /orders` is the single entry point to checkout.** It creates the order _and_ reserves the
     tickets internally. The participant flow **does not call `POST /tickets/reserve` directly** —
     doing so would create an orphaned hold.
 22. **Steps 3–5 happen in one bottom sheet on mobile**, one right rail on desktop. The event never
@@ -1928,7 +1963,7 @@ future matching or Event Space availability.
 28. **An `idempotencyKey` is generated per payment attempt and reused on retry**, alongside a
     mandatory button loading state — together, the double-charge defence.
 29. **Confirmation polls `GET /orders/:id` and never guesses.** A prolonged `PENDING`/`PROCESSING`
-    is presented as *verification in progress*, never as failure, and never offers a retry.
+    is presented as _verification in progress_, never as failure, and never offers a retry.
 30. **The ticket is a dark `ink-950` pass**; the QR is the largest element, ≥ 240 px, on white with a
     quiet zone, reachable in one tap, brightness-boosted, and **rendered offline**.
 
@@ -1937,7 +1972,7 @@ future matching or Event Space availability.
 31. **Three failure shapes** — toast / inline / blocking. **Anything touching money is blocking.**
 32. **Every error answers: what happened · what it means for my money · what I do now.**
     « Aucun montant n'a été débité » is mandatory whenever it is true.
-33. **Refunds exclude the platform commission**, and the arithmetic is shown *before* the request.
+33. **Refunds exclude the platform commission**, and the arithmetic is shown _before_ the request.
 34. **WCAG 2.1 AA** with 44 px minimum touch targets, `:focus-visible` only, a two-token focus ring
     that swaps on dark surfaces, labels always visible, blur-time validation, and countdown
     announcements at thresholds only.
@@ -1950,14 +1985,14 @@ future matching or Event Space availability.
     nets is contradicted between the economic model and the code. Organizer surfaces show **gross
     sales only** until [§L](#l-open-contract-questions-for-the-backend) gap 8 is settled.
 
-### M.6 What Phase 2 must decide (explicitly *not* locked here)
+### M.6 What Phase 2 must decide (explicitly _not_ locked here)
 
 - The full route map and URL scheme, including French vs. English path segments.
 - Navigation structure for the organizer console and the admin area.
 - The onboarding and registration flow's step sequence.
 - Search and filter IA: which lenses are primary, which live behind a sheet.
 - Notification-preferences IA.
-- Empty-state illustration style (the *behaviour* is locked; the artwork is not).
+- Empty-state illustration style (the _behaviour_ is locked; the artwork is not).
 
 ---
 
@@ -1965,25 +2000,25 @@ future matching or Event Space availability.
 
 Every backend claim in this document is traceable to source:
 
-| Claim | File |
-|---|---|
-| 15-minute reservation TTL | `backend/src/modules/tickets/application/commands/reserve-tickets/reserve-tickets.handler.ts:24` |
-| Order expiry, commission rate | `backend/src/modules/payments/application/commands/create-order/create-order.handler.ts:41-42` |
-| Order total = subtotal + commission | `backend/src/modules/payments/domain/entities/order.entity.ts:192` |
-| `setPaymentFees` rewrites the total | `backend/src/modules/payments/domain/entities/order.entity.ts:563` |
-| Refund excludes commission | `backend/src/modules/payments/application/commands/request-refund/request-refund.handler.ts:56` |
-| Fraud limits (5/hour, 10/event) | `backend/src/modules/payments/infrastructure/services/fraud-detection.service.ts:36-43` |
-| TND = 3 decimals, symbol `DT` | `backend/src/shared/domain/value-objects/currency.vo.ts` |
-| Order / ticket / event status machines | `order-status.vo.ts`, `ticket-status.vo.ts`, `event-status.vo.ts` |
-| Payment providers and hand-off shape | `payment-method.vo.ts`, `application/types/payment-provider.types.ts` |
-| Discovery filters and sorts | `backend/src/modules/events/application/dtos/event-filter.dto.ts` |
-| Card-level price and availability | `event-list.dto.ts`, `ticket-type.dto.ts` (`TicketTypeSummaryDto`) |
-| `soldQuantity` moves at **hold** time | `backend/src/modules/tickets/infrastructure/adapters/event-query.adapter.ts:88` (atomic `sold_quantity + :qty`), called from `reserve-tickets.handler.ts:99` |
-| Availability restored on expiry / cancel | `expire-tickets.handler.ts:93`, `cancel-tickets.handler.ts:105` |
-| Order creation reserves tickets internally | `create-order.handler.ts` (step 5, `ticketReservation.reserveTickets`) |
-| Reservation holder limits (1–10) | `backend/src/modules/tickets/application/dtos/reserve-tickets.dto.ts` |
-| Error envelope | `backend/src/shared/infrastructure/common/filters/http-exception.filter.ts` |
-| Rate limiting (3/s, 20/10s) | `backend/src/modules/users/infrastructure/users.module.ts:131` |
-| Notification channels and types | `notification-channel.vo.ts`, `notification-type.vo.ts` |
-| Commission model and 6 % rationale | `docs/02-technique/04-modele-economique.md`, `docs/02-technique/10-commission-rate-update.md` |
-| Organizer settlement and analytics | `OrderPaidEvent` now records subtotal-based event revenue; pre-fix metrics need backfill, and no payout code exists |
+| Claim                                      | File                                                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 15-minute reservation TTL                  | `backend/src/modules/tickets/application/commands/reserve-tickets/reserve-tickets.handler.ts:24`                                                             |
+| Order expiry, commission rate              | `backend/src/modules/payments/application/commands/create-order/create-order.handler.ts:41-42`                                                               |
+| Order total = subtotal + commission        | `backend/src/modules/payments/domain/entities/order.entity.ts:192`                                                                                           |
+| `setPaymentFees` rewrites the total        | `backend/src/modules/payments/domain/entities/order.entity.ts:563`                                                                                           |
+| Refund excludes commission                 | `backend/src/modules/payments/application/commands/request-refund/request-refund.handler.ts:56`                                                              |
+| Fraud limits (5/hour, 10/event)            | `backend/src/modules/payments/infrastructure/services/fraud-detection.service.ts:36-43`                                                                      |
+| TND = 3 decimals, symbol `DT`              | `backend/src/shared/domain/value-objects/currency.vo.ts`                                                                                                     |
+| Order / ticket / event status machines     | `order-status.vo.ts`, `ticket-status.vo.ts`, `event-status.vo.ts`                                                                                            |
+| Payment providers and hand-off shape       | `payment-method.vo.ts`, `application/types/payment-provider.types.ts`                                                                                        |
+| Discovery filters and sorts                | `backend/src/modules/events/application/dtos/event-filter.dto.ts`                                                                                            |
+| Card-level price and availability          | `event-list.dto.ts`, `ticket-type.dto.ts` (`TicketTypeSummaryDto`)                                                                                           |
+| `soldQuantity` moves at **hold** time      | `backend/src/modules/tickets/infrastructure/adapters/event-query.adapter.ts:88` (atomic `sold_quantity + :qty`), called from `reserve-tickets.handler.ts:99` |
+| Availability restored on expiry / cancel   | `expire-tickets.handler.ts:93`, `cancel-tickets.handler.ts:105`                                                                                              |
+| Order creation reserves tickets internally | `create-order.handler.ts` (step 5, `ticketReservation.reserveTickets`)                                                                                       |
+| Reservation holder limits (1–10)           | `backend/src/modules/tickets/application/dtos/reserve-tickets.dto.ts`                                                                                        |
+| Error envelope                             | `backend/src/shared/infrastructure/common/filters/http-exception.filter.ts`                                                                                  |
+| Rate limiting (3/s, 20/10s)                | `backend/src/modules/users/infrastructure/users.module.ts:131`                                                                                               |
+| Notification channels and types            | `notification-channel.vo.ts`, `notification-type.vo.ts`                                                                                                      |
+| Commission model and 6 % rationale         | `docs/02-technique/04-modele-economique.md`, `docs/02-technique/10-commission-rate-update.md`                                                                |
+| Organizer settlement and analytics         | `OrderPaidEvent` now records subtotal-based event revenue; pre-fix metrics need backfill, and no payout code exists                                          |

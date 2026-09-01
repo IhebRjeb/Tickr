@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResult, PaginationOptions } from '@shared/application/interfaces/repository.interface';
 import { BaseTypeOrmRepository } from '@shared/infrastructure/database/base-typeorm.repository';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { UserEntityPort, UserRepositoryPort, UserWithPasswordPort } from '../../../application/ports/user.repository.port';
 import { UserRole } from '../../../domain/value-objects/user-role.vo';
@@ -36,6 +36,17 @@ export class UserTypeOrmRepository
       where: { email: email.toLowerCase() },
     });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<UserEntityPort[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const entities = await this.repository.find({
+      where: { id: In(ids) },
+    });
+    return this.mapper.toDomainArray(entities);
   }
 
   /**
@@ -204,6 +215,9 @@ export class UserTypeOrmRepository
     entity.lastName = domain.lastName;
     entity.role = domain.role;
     entity.phone = domain.phone;
+    if (domain.emailVerified !== undefined) {
+      entity.emailVerified = domain.emailVerified;
+    }
     entity.isActive = domain.isActive;
     entity.lastLoginAt = domain.lastLoginAt;
     entity.createdAt = domain.createdAt;

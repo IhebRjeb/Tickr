@@ -12,6 +12,7 @@
 #### Gateway Local Tunisie (Prioritaire)
 
 **Gateways Tunisie:**
+
 - **Konnect** (gateway principal)
   - Montants traités en millimes (TND × 1000)
   - Flux par redirection (page de paiement hébergée)
@@ -23,18 +24,21 @@
   - Utilisé en repli si Konnect indisponible
 
 **Contraintes:**
+
 - Conversion 3D Secure obligatoire
 - Remboursement Konnect: manuel via dashboard
 
 #### Stripe International (Secondaire)
 
 **Utilisation:**
+
 - Cartes internationales (Visa, Mastercard, Amex)
 - L'adapter envoie le montant et la devise de la commande à Stripe
 - Aucun tarif marchand Stripe ni coût de conversion n'est calculé dans le backend
 - Aucun reversement organisateur automatique n'est implémenté
 
 **Contraintes:**
+
 - Compte marchand, devises acceptées, KYC et tarifs à confirmer avec Stripe avant production
 - Le backend actuel utilise Payment Intents, pas Stripe Connect pour des payouts organisateur
 
@@ -43,11 +47,13 @@
 ### Téléphonie & SMS
 
 **Format Numéros:**
+
 - Format international: `+216XXXXXXXX` (8 chiffres)
 - Opérateurs: Tunisie Telecom, Ooredoo, Orange
 - Validation regex: `^\+216[2-9][0-9]{7}$`
 
 **SMS Transactionnels:**
+
 - **Prestataire recommandé:** Twilio (international)
 - **Alternative locale:** API Tunisie Telecom
 - **Coût:** ~0.05 TND par SMS
@@ -55,6 +61,7 @@
 - **Taux délivrabilité:** > 95%
 
 **Contraintes:**
+
 - Pas de SMS marketing sans opt-in explicite
 - Horaire envoi: 8h-20h uniquement
 - Obligation mention "STOP au XXX" pour désabonnement
@@ -64,6 +71,7 @@
 ### Localisation & Langue
 
 **V1 MVP:**
+
 - **Langue interface:** Français uniquement
 - **Format dates:** DD/MM/YYYY
 - **Format heures:** 24h (HH:mm)
@@ -71,10 +79,12 @@
 - **Timezone:** Africa/Tunis (UTC+1)
 
 **V2 (futur):**
+
 - Ajout Arabe (interface + contenu)
 - Anglais pour touristes étrangers
 
 **Villes Principales:**
+
 ```
 Tunis (capitale)
 Sousse
@@ -94,6 +104,7 @@ Bizerte
 **Taux:** 6% du prix billet (HT)
 
 **Benchmark Concurrents Tunisie:**
+
 - Teskerti : 10-18% + 1-5 TND/ticket
 - Ija : 8% + frais remboursement
 - Ayo : 6%
@@ -106,6 +117,7 @@ Admin peut définir un taux spécifique de 0 à 20% pour un événement; `null` 
 Le taux spécifique s'applique uniquement aux nouvelles commandes et chaque changement est audité.
 
 **Calcul:**
+
 ```
 Prix billet HT: 50 TND
 Frais de service Tickr (6%): 3 TND
@@ -135,6 +147,7 @@ Avec un taux événement de 3%, le même billet coûte 51.500 TND au participant
 50.000 TND dans cet exemple. Cette formule n'est pas un contrat API V1.
 
 **Paiement organisateur:**
+
 - Politique cible proposée: J+7 après événement, par virement bancaire
 - Le backend V1 ne contient encore ni ledger de reversement, ni RIB organisateur, ni payout
 - Aucun second prélèvement de 6% sur le prix facial n'est implémenté
@@ -150,6 +163,7 @@ montant doit venir des contrats/relevés gateway, pas d'une constante produit. L
 pas subir une déduction non représentée dans le modèle de commande.
 
 **Scénario purement illustratif si le coût gateway réel était 1.58 TND:**
+
 ```
 Billet: 50 TND
 Frais de service Tickr: 3 TND (6%)
@@ -171,12 +185,14 @@ Ce scénario n'est ni un tarif Konnect validé, ni une valeur calculée par le b
 **Maximum par événement:** 10 types
 
 **Exemples valides:**
+
 - Standard, VIP
 - Early Bird, Normal, Last Minute
 - Tribune Nord, Tribune Sud, Pelouse
 - Étudiant, Normal, VIP
 
 **Contraintes:**
+
 - Prix minimum: 0.001 (unité devise)
 - Prix maximum: 999,999 (unité devise)
 - Quantité minimum: 1
@@ -189,15 +205,16 @@ Ce scénario n'est ni un tarif Konnect validé, ni une valeur calculée par le b
 **Durée:** 15 minutes
 
 **Fonctionnement:**
+
 ```
 1. Participant ajoute billets au panier
    → Stock réservé temporairement
-   
+
 2. Timer 15 min démarre
-   
+
 3. Si paiement avant expiration:
    → Réservation confirmée
-   
+
 4. Si expiration sans paiement:
    → Stock libéré automatiquement
    → Panier vidé
@@ -208,6 +225,7 @@ Ce scénario n'est ni un tarif Konnect validé, ni une valeur calculée par le b
 ### Modification Billet
 
 **Après achat:**
+
 - ❌ Pas de changement type billet
 - ❌ Pas de revente entre participants (V1)
 - ✅ Changement nom participant (avant J-7)
@@ -220,11 +238,13 @@ Ce scénario n'est ni un tarif Konnect validé, ni une valeur calculée par le b
 ### Conditions
 
 **Remboursement accepté si:**
+
 - Demande > 7 jours avant événement
 - Événement annulé par organisateur
 - Événement reporté (option remboursement ou report)
 
 **Remboursement refusé si:**
+
 - Demande < 7 jours avant événement
 - Participant ne se présente pas
 - Événement s'est déroulé normalement
@@ -242,6 +262,7 @@ Ce scénario n'est ni un tarif Konnect validé, ni une valeur calculée par le b
 - Frais marchands retenus par le gateway: inconnus du backend et à traiter au rapprochement
 
 **Exemple:**
+
 ```
 Billet payé: 53 TND
 Remboursé: 50 TND (prix initial HT)
@@ -255,12 +276,14 @@ Perte participant: 3 TND
 ### Dates
 
 **Contraintes:**
+
 - Date début > maintenant + 7 jours minimum
 - Date fin > date début
 - Durée max: 7 jours (V1)
 - Pas d'événements récurrents (V1)
 
 **Modification dates:**
+
 - Possible si > 14 jours avant événement
 - Notification automatique tous participants
 - Option remboursement proposée
@@ -280,6 +303,7 @@ CANCELLED (annulé)
 ```
 
 **Statuts détaillés:**
+
 - **DRAFT**: Événement en cours de création/modification
 - **PUBLISHED**: Événement visible publiquement, vente de billets active
 - **CANCELLED**: Événement annulé (état terminal)
@@ -288,12 +312,14 @@ CANCELLED (annulé)
 > **Note:** Pas de statut ONGOING - le passage PUBLISHED → COMPLETED est automatique via un scheduler après la date de fin.
 
 **Règles transition:**
+
 - DRAFT → PUBLISHED: validation complétude (min 1 type billet actif, dates futures, lieu défini)
 - PUBLISHED → COMPLETED: date fin passée (automatique via scheduler)
 - DRAFT → CANCELLED: organisateur abandonne le brouillon
 - PUBLISHED → CANCELLED: organisateur annule avant le début
 
 **États terminaux (aucune modification permise):**
+
 - CANCELLED: plus aucune modification possible
 - COMPLETED: plus aucune modification possible
 
@@ -301,20 +327,22 @@ CANCELLED (annulé)
 
 **Règles d'annulation:**
 
-| Statut | Événement non commencé | Événement commencé |
-|--------|------------------------|-------------------|
-| DRAFT | ✅ Annulation permise | N/A |
-| PUBLISHED | ✅ Annulation permise | ❌ Impossible |
-| CANCELLED | ❌ Déjà annulé | ❌ Déjà annulé |
-| COMPLETED | ❌ Déjà terminé | ❌ Déjà terminé |
+| Statut    | Événement non commencé | Événement commencé |
+| --------- | ---------------------- | ------------------ |
+| DRAFT     | ✅ Annulation permise  | N/A                |
+| PUBLISHED | ✅ Annulation permise  | ❌ Impossible      |
+| CANCELLED | ❌ Déjà annulé         | ❌ Déjà annulé     |
+| COMPLETED | ❌ Déjà terminé        | ❌ Déjà terminé    |
 
 **Par organisateur:**
+
 - DRAFT: peut être annulé à tout moment (abandon du brouillon)
 - PUBLISHED: peut être annulé uniquement si l'événement n'a pas commencé
 - Remboursement automatique tous billets vendus
 - Pénalité: commission Tickr conservée
 
 **Par plateforme:**
+
 - Événement frauduleux
 - Contenu inapproprié
 - Non-respect CGU
@@ -325,18 +353,30 @@ CANCELLED (annulé)
 
 ### QR Codes
 
+**Autorisation du check-in:**
+
+- Le propriétaire de l'événement et un administrateur courant ont un accès implicite
+- Un compte actif et vérifié peut être affecté au check-in d'un événement sans changer de rôle
+- Une affectation révoquée perd l'accès dès la requête suivante
+- Le staff affecté n'accède ni à l'édition, ni aux revenus, ni aux exports participants
+- Le `eventId` sélectionné doit correspondre au billet scanné
+- La validation du billet et l'audit sont enregistrés dans une transaction atomique
+
 **Génération:**
+
 - Format: `{eventId}|{ticketId}|{userId}|{timestamp}|{hash}`
 - Hash: HMAC-SHA256 avec secret serveur
 - Validité: usage unique
 
 **Validation:**
+
 - Vérification hash
 - Check statut billet (pas déjà utilisé)
 - Check correspondance événement
 - Temps réponse: < 1 seconde
 
 **Anti-fraude:**
+
 - Screenshot détectable (watermark timestamp)
 - Rate limiting scan: 1 par seconde max
 - Log tous scans (audit trail)
@@ -344,12 +384,14 @@ CANCELLED (annulé)
 ### Paiements
 
 **Validation:**
+
 - 3D Secure obligatoire
 - Vérification CVV
 - Adresse IP géolocalisée
 - Rate limiting: 3 tentatives/15 min
 
 **Détection fraude:**
+
 - Multiple paiements refusés → blocage temporaire
 - Achat massif même carte → alerte
 - Changement IP entre tentatives → vérification
@@ -361,12 +403,14 @@ CANCELLED (annulé)
 ### Collecte
 
 **Données minimales:**
+
 - Email (obligatoire)
 - Téléphone (obligatoire pour SMS)
 - Nom/Prénom (obligatoire)
 - Mot de passe hashé (bcrypt)
 
 **Données optionnelles:**
+
 - Photo profil
 - Préférences notifications
 

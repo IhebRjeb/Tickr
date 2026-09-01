@@ -49,6 +49,12 @@ export class CheckInStatsDto {
   checkedIn!: number;
 
   @ApiProperty({
+    description: 'Confirmed tickets still waiting to check in',
+    example: 180,
+  })
+  remaining!: number;
+
+  @ApiProperty({
     description: 'Overall check-in rate percentage (0-100)',
     example: 64,
   })

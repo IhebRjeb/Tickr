@@ -83,10 +83,7 @@ export class EmailVerifiedGuard implements CanActivate {
       throw new ForbiddenException('User not found');
     }
 
-    // Note: emailVerified field needs to be added to UserEntityPort
-    // For now, we'll assume email is verified if user exists
-    // This should be updated when emailVerified is added to the entity
-    const emailVerified = (fullUser as unknown as { emailVerified?: boolean }).emailVerified ?? true;
+    const emailVerified = fullUser.emailVerified ?? false;
 
     if (!emailVerified) {
       throw new ForbiddenException(

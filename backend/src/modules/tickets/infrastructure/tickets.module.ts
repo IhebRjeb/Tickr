@@ -17,7 +17,9 @@ import { TicketCancelledEventHandler } from '../application/event-handlers/ticke
 import { TicketConfirmedEventHandler } from '../application/event-handlers/ticket-confirmed.handler';
 import { TicketExpiredEventHandler } from '../application/event-handlers/ticket-expired.handler';
 import { CHECK_IN_REPOSITORY } from '../application/ports/check-in.repository.port';
+import { EVENT_CHECK_IN_ACCESS_PORT } from '../application/ports/event-check-in-access.port';
 import { EVENT_QUERY_PORT } from '../application/ports/event-query.port';
+import { TICKET_CHECK_IN_PERSISTENCE_PORT } from '../application/ports/ticket-check-in-persistence.port';
 import { TICKET_REPOSITORY } from '../application/ports/ticket.repository.port';
 import { USER_QUERY_PORT } from '../application/ports/user-query.port';
 import { GetEventCheckInStatsHandler } from '../application/queries/get-event-check-in-stats/get-event-check-in-stats.handler';
@@ -26,6 +28,7 @@ import { GetTicketByIdHandler } from '../application/queries/get-ticket-by-id/ge
 import { GetTicketByQRCodeHandler } from '../application/queries/get-ticket-by-qr-code/get-ticket-by-qr-code.handler';
 import { GetUserTicketsHandler } from '../application/queries/get-user-tickets/get-user-tickets.handler';
 
+import { EventCheckInAccessAdapter } from './adapters/event-check-in-access.adapter';
 import { EventQueryAdapter } from './adapters/event-query.adapter';
 import { UserQueryAdapter } from './adapters/user-query.adapter';
 import { TicketsController } from './controllers/tickets.controller';
@@ -40,6 +43,7 @@ import { CheckInMapper } from './persistence/mappers/check-in.mapper';
 import { TicketMapper } from './persistence/mappers/ticket.mapper';
 import { CheckInTypeOrmRepository } from './persistence/repositories/check-in.repository';
 import { TicketTypeOrmRepository } from './persistence/repositories/ticket.repository';
+import { TicketCheckInTypeOrmRepository } from './repositories/ticket-check-in.repository';
 import { PDFGeneratorService } from './services/pdf-generator.service';
 import { QRCodeService } from './services/qr-code.service';
 import { TicketExpirationService } from './services/ticket-expiration.service';
@@ -101,12 +105,22 @@ const checkInRepositoryProvider: Provider = {
   useClass: CheckInTypeOrmRepository,
 };
 
+const ticketCheckInPersistenceProvider: Provider = {
+  provide: TICKET_CHECK_IN_PERSISTENCE_PORT,
+  useClass: TicketCheckInTypeOrmRepository,
+};
+
 // ============================================
 // Cross-Module Adapter Providers
 // ============================================
 const eventQueryProvider: Provider = {
   provide: EVENT_QUERY_PORT,
   useClass: EventQueryAdapter,
+};
+
+const eventCheckInAccessProvider: Provider = {
+  provide: EVENT_CHECK_IN_ACCESS_PORT,
+  useClass: EventCheckInAccessAdapter,
 };
 
 const userQueryProvider: Provider = {
@@ -166,9 +180,11 @@ const userQueryProvider: Provider = {
     // Repositories
     ticketRepositoryProvider,
     checkInRepositoryProvider,
+    ticketCheckInPersistenceProvider,
 
     // Cross-module adapters
     eventQueryProvider,
+    eventCheckInAccessProvider,
     userQueryProvider,
 
     // Infrastructure services

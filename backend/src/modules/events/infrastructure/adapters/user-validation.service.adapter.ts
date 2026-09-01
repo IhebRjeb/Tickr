@@ -6,6 +6,10 @@ import type { UserRepositoryPort } from '@modules/users/application/ports/user.r
 import { UserRole } from '@modules/users/domain/value-objects/user-role.vo';
 import { Injectable, Inject, Logger } from '@nestjs/common';
 
+import type {
+  EventStaffUserDirectoryPort,
+  EventStaffUserInterface,
+} from '../../application/ports/event-staff-user-directory.port';
 import {
   UserValidationServicePort,
   UserValidationResult,
@@ -30,13 +34,30 @@ import {
  * - Uses type-safe interfaces for data transfer
  */
 @Injectable()
-export class UserValidationServiceAdapter implements UserValidationServicePort {
+export class UserValidationServiceAdapter
+  implements UserValidationServicePort, EventStaffUserDirectoryPort
+{
   private readonly logger = new Logger(UserValidationServiceAdapter.name);
 
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
   ) {}
+
+  async getUserById(userId: string): Promise<EventStaffUserInterface | null> {
+    const user = await this.userRepository.findById(userId);
+    return user ? this.toEventStaffUser(user) : null;
+  }
+
+  async getUserByEmail(email: string): Promise<EventStaffUserInterface | null> {
+    const user = await this.userRepository.findByEmail(email.trim().toLowerCase());
+    return user ? this.toEventStaffUser(user) : null;
+  }
+
+  async getUsersByIds(userIds: string[]): Promise<EventStaffUserInterface[]> {
+    const users = await this.userRepository.findByIds(userIds);
+    return users.map((user) => this.toEventStaffUser(user));
+  }
 
   /**
    * Validate that a user exists and has ORGANIZER role
@@ -185,6 +206,26 @@ export class UserValidationServiceAdapter implements UserValidationServicePort {
       );
       throw error;
     }
+  }
+
+  private toEventStaffUser(user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    isActive: boolean;
+    emailVerified?: boolean;
+  }): EventStaffUserInterface {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isActive: user.isActive,
+      emailVerified: user.emailVerified ?? false,
+    };
   }
 }
 

@@ -39,6 +39,7 @@ describe('GetUsersByRoleHandler', () => {
     mockRepository = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
+      findByIds: jest.fn(),
       findByEmailWithPassword: jest.fn(),
       findByRole: jest.fn(),
       save: jest.fn(),

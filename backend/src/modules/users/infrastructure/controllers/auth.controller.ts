@@ -108,7 +108,11 @@ export class AuthController {
    */
   @Public()
   @Post('register')
-  @Throttle({ default: { ttl: 3600000, limit: 3 } }) // 3 requests per hour
+  @Throttle({
+    short: { ttl: 3600000, limit: 3 },
+    medium: { ttl: 3600000, limit: 3 },
+    long: { ttl: 3600000, limit: 3 },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
@@ -170,7 +174,11 @@ export class AuthController {
   @Public()
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  @Throttle({ default: { ttl: 900000, limit: 5 } }) // 5 requests per 15 minutes
+  @Throttle({
+    short: { ttl: 900000, limit: 5 },
+    medium: { ttl: 900000, limit: 5 },
+    long: { ttl: 900000, limit: 5 },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({ type: LoginDto })
@@ -256,7 +264,11 @@ export class AuthController {
    */
   @Public()
   @Post('request-reset')
-  @Throttle({ default: { ttl: 3600000, limit: 3 } }) // 3 requests per hour per email
+  @Throttle({
+    short: { ttl: 3600000, limit: 3 },
+    medium: { ttl: 3600000, limit: 3 },
+    long: { ttl: 3600000, limit: 3 },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset email' })
   @ApiResponse({

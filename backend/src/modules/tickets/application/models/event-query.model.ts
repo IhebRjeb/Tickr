@@ -24,3 +24,8 @@ export interface TicketTypeAvailability {
   readonly currency: string;
   readonly name: string;
 }
+
+export interface TicketTypeInfo {
+  readonly id: string;
+  readonly name: string;
+}
