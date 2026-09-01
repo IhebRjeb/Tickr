@@ -44,6 +44,7 @@ async function bootstrap() {
     .addTag('Authentication', 'User authentication and authorization endpoints')
     .addTag('Users', 'User profile management endpoints')
     .addTag('Events', 'Event management endpoints')
+    .addTag('Config', 'Public pricing configuration endpoints')
     .addTag('Tickets', 'Ticket management endpoints')
     .addTag('Payments', 'Payment processing endpoints')
     .addTag('Notifications', 'Notification endpoints')

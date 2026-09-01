@@ -119,10 +119,12 @@ Livrer plateforme fonctionnelle permettant de:
 - [ ] Ajouter 1 à 5 types billets par événement
 - [ ] Chaque type:
   - Nom (ex: VIP, Standard, Early Bird)
-  - Prix en TND
+  - Prix facial organisateur en TND, hors frais de service
   - Quantité disponible
   - Description courte (optionnel)
 - [ ] Validation: prix > 0, quantité > 0
+- [ ] Aperçu immédiat du taux effectif, des frais de service et du total participant
+- [ ] **Un seul mode V1:** l'organisateur fixe le prix facial; il ne saisit pas un total participant cible
 - [ ] Possibilité modifier/supprimer types (si 0 ventes)
 
 **Estimé:** 5 points
@@ -228,13 +230,13 @@ Livrer plateforme fonctionnelle permettant de:
 
 ---
 
-#### US-4.2: Paiement Clictopay/Edinar
+#### US-4.2: Paiement Konnect/Paymee (Tunisie)
 **En tant que** participant  
-**Je veux** payer par carte bancaire tunisienne  
+**Je veux** payer via un gateway de paiement tunisien  
 **Pour** obtenir mes billets
 
 **Critères acceptation:**
-- [ ] Redirection vers gateway Clictopay OU Edinar
+- [ ] Redirection vers gateway Konnect (principal) OU Paymee (fallback)
 - [ ] Passage paramètres:
   - Montant TND
   - Email participant
@@ -263,7 +265,7 @@ Livrer plateforme fonctionnelle permettant de:
 - [ ] 3D Secure activé
 - [ ] Conversion TND → USD/EUR automatique
 - [ ] Frais conversion affichés
-- [ ] Fallback si Clictopay indisponible
+- [ ] Fallback si les gateways tunisiens (Konnect/Paymee) indisponibles
 
 **Estimé:** 8 points
 
@@ -497,7 +499,7 @@ Livrer plateforme fonctionnelle permettant de:
 - Recherche événements
 - Page détails
 - Panier billets
-- Intégration paiement Clictopay
+- Intégration paiement Konnect/Paymee/Stripe
 ```
 
 ### Sprint 7-8: Billets & QR (Semaines 13-16)

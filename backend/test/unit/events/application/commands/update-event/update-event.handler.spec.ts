@@ -65,9 +65,11 @@ describe('UpdateEventHandler', () => {
       city: 'Tunis',
       country: 'Tunisia',
     });
+    const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 2 * 24 * 60 * 60 * 1000);
     const dateRange = EventDateRangeVO.create(
-      new Date('2026-07-15T18:00:00Z'),
-      new Date('2026-07-17T23:00:00Z'),
+      startDate,
+      endDate,
       true,
     );
 
@@ -138,8 +140,8 @@ describe('UpdateEventHandler', () => {
 
     it('should update dates for DRAFT events', async () => {
       const event = createDraftEvent();
-      const newStartDate = new Date('2026-08-01T18:00:00Z');
-      const newEndDate = new Date('2026-08-03T23:00:00Z');
+      const newStartDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+      const newEndDate = new Date(newStartDate.getTime() + 2 * 24 * 60 * 60 * 1000);
       const command = new UpdateEventCommand(
         eventId,
         userId,
@@ -216,8 +218,8 @@ describe('UpdateEventHandler', () => {
 
     it('should fail with invalid date range', async () => {
       const event = createDraftEvent();
-      const startDate = new Date('2026-08-03T18:00:00Z');
-      const endDate = new Date('2026-08-01T18:00:00Z');
+      const startDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+      const endDate = new Date(startDate.getTime() - 2 * 24 * 60 * 60 * 1000);
       const command = new UpdateEventCommand(eventId, userId, undefined, undefined, undefined, undefined, startDate, endDate);
 
       mockEventRepository.findById.mockResolvedValue(event);

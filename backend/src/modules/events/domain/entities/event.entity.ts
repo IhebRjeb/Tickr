@@ -3,6 +3,7 @@ import { Result } from '@shared/domain/result';
 import { isUUID, generateUUID } from '@shared/domain/utils';
 
 import { EventCancelledEvent } from '../events/event-cancelled.event';
+import { EventCommissionOverrideUpdatedEvent } from '../events/event-commission-override-updated.event';
 import { EventCreatedEvent } from '../events/event-created.event';
 import { EventPublishedEvent } from '../events/event-published.event';
 import { EventUpdatedEvent } from '../events/event-updated.event';
@@ -50,6 +51,7 @@ interface CreateEventProps {
 interface EventProps {
   id: string;
   organizerId: string;
+  commissionRateOverride?: number | null;
   title: string;
   description: string | null;
   category: EventCategory;
@@ -131,6 +133,7 @@ export class EventEntity extends BaseEntity<EventEntity> {
   // ============================================
 
   private _organizerId: string;
+  private _commissionRateOverride: number | null;
   private _title: string;
   private _description: string | null;
   private _category: EventCategory;
@@ -154,6 +157,7 @@ export class EventEntity extends BaseEntity<EventEntity> {
   private constructor(props: EventProps) {
     super(props.id, props.createdAt);
     this._organizerId = props.organizerId;
+    this._commissionRateOverride = props.commissionRateOverride ?? null;
     this._title = props.title;
     this._description = props.description;
     this._category = props.category;
@@ -178,6 +182,37 @@ export class EventEntity extends BaseEntity<EventEntity> {
 
   get organizerId(): string {
     return this._organizerId;
+  }
+
+  get commissionRateOverride(): number | null {
+    return this._commissionRateOverride;
+  }
+
+  setCommissionRateOverride(
+    rate: number | null,
+    adminId: string,
+  ): Result<void, InvalidEventException> {
+    if (rate !== null && (!Number.isFinite(rate) || rate < 0 || rate > 0.2)) {
+      return Result.fail(InvalidEventException.invalidCommissionRate(rate));
+    }
+
+    if (rate === this._commissionRateOverride) {
+      return Result.okVoid();
+    }
+
+    const previousRate = this._commissionRateOverride;
+    this._commissionRateOverride = rate;
+    this.touch();
+    this.addDomainEvent(
+      new EventCommissionOverrideUpdatedEvent(
+        this._id,
+        adminId,
+        previousRate,
+        rate,
+        this._updatedAt,
+      ),
+    );
+    return Result.okVoid();
   }
 
   get title(): string {
@@ -930,6 +965,7 @@ export class EventEntity extends BaseEntity<EventEntity> {
     const event = new EventEntity({
       id,
       organizerId: props.organizerId.trim(),
+      commissionRateOverride: null,
       title: trimmedTitle,
       description: props.description?.trim() || null,
       category: props.category,
@@ -983,6 +1019,7 @@ export class EventEntity extends BaseEntity<EventEntity> {
     return new EventEntity({
       id: this._id,
       organizerId: this._organizerId,
+      commissionRateOverride: this._commissionRateOverride,
       title: this._title,
       description: this._description,
       category: this._category,
@@ -1030,6 +1067,7 @@ export class EventEntity extends BaseEntity<EventEntity> {
   toObject(): {
     id: string;
     organizerId: string;
+    commissionRateOverride: number | null;
     title: string;
     description: string | null;
     category: string;
@@ -1061,6 +1099,7 @@ export class EventEntity extends BaseEntity<EventEntity> {
     return {
       id: this._id,
       organizerId: this._organizerId,
+      commissionRateOverride: this._commissionRateOverride,
       title: this._title,
       description: this._description,
       category: this._category,

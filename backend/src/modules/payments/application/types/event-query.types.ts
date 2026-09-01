@@ -10,6 +10,7 @@ export interface PaymentEventInfo {
   readonly status: string;
   readonly startDate: Date;
   readonly organizerId: string;
+  readonly commissionRateOverride: number | null;
 }
 
 export interface PaymentTicketTypeInfo {

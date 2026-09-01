@@ -36,8 +36,8 @@ describe('CreateEventHandler', () => {
     latitude: 36.8065,
     longitude: 10.1815,
   };
-  const validStartDate = new Date('2026-07-15T18:00:00Z');
-  const validEndDate = new Date('2026-07-17T23:00:00Z');
+  const validStartDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const validEndDate = new Date(validStartDate.getTime() + 2 * 24 * 60 * 60 * 1000);
 
   beforeEach(() => {
     // Create mocks
@@ -488,8 +488,8 @@ describe('CreateEventHandler', () => {
 
     it('should handle multi-day events', async () => {
       // Arrange
-      const startDate = new Date('2026-07-15T00:00:00Z');
-      const endDate = new Date('2026-07-20T23:59:59Z'); // 5 days
+      const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const endDate = new Date(startDate.getTime() + 5 * 24 * 60 * 60 * 1000);
       const command = createValidCommand({ startDate, endDate });
       const savedEvent = mockSavedEvent(command);
 

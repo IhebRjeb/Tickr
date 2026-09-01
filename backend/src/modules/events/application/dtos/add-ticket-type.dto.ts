@@ -44,7 +44,8 @@ export class AddTicketTypeDto {
   description?: string | null;
 
   @ApiProperty({
-    description: 'Ticket price amount (must be > 0)',
+    description:
+      'Organizer-defined face price, excluding Tickr service fees. This is not a target buyer total.',
     example: 150.0,
     minimum: 0.01,
   })

@@ -25,9 +25,13 @@ All documentation files have been updated to reflect the new 6% commission rate:
 ```
 Billet à 50 TND
 → Participant paie : 53 TND
-→ Organisateur reçoit : 47 TND (50 - 6%)
-→ Tickr reçoit : 3 TND
+→ Valeur brute attribuable à l'organisateur : 50 TND
+→ Tickr reçoit brut avant coûts : 3 TND
 ```
+
+The implementation adds the 6% fee to the buyer total; it does not deduct another 6% from the
+organizer. Organizer payouts and gateway settlement costs are not implemented. Any processor-fee
+number remains a financial assumption until verified against provider contracts and statements.
 
 ---
 
@@ -103,18 +107,27 @@ GET /config/public
 **Response:**
 ```json
 {
-  "commission": {
-    "rate": 0.06,
-    "displayPercentage": "6.0%"
-  },
-  "version": "1.0.0"
+  "globalCommissionRate": 0.06,
+  "commissionRateOverride": 0.03,
+  "effectiveCommissionRate": 0.03,
+  "currency": "TND",
+  "reservationTtlMinutes": 15
 }
 ```
 
 **Features:**
 - ✅ Public endpoint (no authentication required)
-- ✅ Cached response (5 min server-side, 1 hour client-side)
+- ✅ Optional `eventId` resolves an event-specific Admin override
 - ✅ Used by frontend for dynamic pricing display
+
+Admin configuration:
+
+```http
+PATCH /events/:id/commission
+{ "commissionRate": 0.03 }
+```
+
+`null` restores global inheritance. Overrides affect new orders only.
 
 ---
 

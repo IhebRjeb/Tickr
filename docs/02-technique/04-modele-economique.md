@@ -3,13 +3,34 @@
 **Version:** 1.0  
 **Temps lecture:** 10 minutes
 
+> **Statut des chiffres:** la tarification participant ci-dessous est vérifiée contre le code.
+> Les frais gateway, les reversements organisateur et les marges nettes restent des hypothèses de
+> planification tant qu'ils ne sont pas contractualisés et implémentés dans un ledger de règlement.
+
 ---
 
 ## 🎯 Modèle Revenus
 
 ### Commission Plateforme
 
-**Taux:** 6% sur prix billet HT
+**Taux par défaut:** 6% sur le prix facial du billet, **ajouté au-dessus** du prix organisateur.
+Le taux reste configurable par `PLATFORM_COMMISSION_RATE`.
+
+**Surcharge par événement:** un Admin peut définir un taux de 0 à 20 % avec
+`PATCH /events/:id/commission`. La valeur `null` retire la surcharge et rétablit l'héritage du taux
+global. La priorité appliquée aux nouvelles commandes est:
+
+```text
+commissionRateOverride de l'événement ?? PLATFORM_COMMISSION_RATE ?? 0.06
+```
+
+Une modification ne re-tarifie jamais une commande existante: `platformFee` et `total` sont figés à
+la création de la commande. Chaque changement Admin produit un événement d'audit avec ancien taux,
+nouveau taux et identifiant Admin.
+
+`docker-compose.prod.yml` charge `backend/.env.production`: la valeur de production doit donc être
+vérifiée dans le déploiement. Le dépôt garantit un défaut de 6%, pas que chaque environnement utilise
+effectivement ce défaut.
 
 **Benchmark Concurrents Tunisie:**
 ```
@@ -23,12 +44,54 @@ Tunis.Events : 2.8-4% (online only)
 
 ```
 Prix billet: 50 TND
-Commission Tickr: 3 TND (6%)
+Frais de service Tickr facturés au participant: 3 TND (6%)
 Prix final participant: 53 TND
 
-Organisateur reçoit: 47 TND
-Tickr reçoit brut: 3 TND
+Valeur brute des billets attribuable à l'organisateur: 50 TND
+Revenu brut Tickr avant coûts: 3 TND
+Frais de paiement refacturés au participant (`paymentFees`): 0 TND actuellement
 ```
+
+Pour le même billet à 50 TND avec une surcharge événement à 3 %, le participant paie 51.500 TND,
+dont 1.500 TND de frais de service. L'organisateur conserve le même prix facial brut de 50 TND.
+
+### Décision tarifaire V1: prix facial comme entrée canonique
+
+Le backend accepte uniquement le prix facial dans `AddTicketTypeDto.price` et
+`UpdateTicketTypeDto.price`. Il stocke cette valeur dans `ticket_types.price_amount`; aucun mode de
+tarification ni total participant cible n'est stocké.
+
+```text
+Entrée organisateur: prix facial P
+Taux effectif: r = override événement ?? taux global
+Frais Tickr: round_TND(P × r)
+Total participant: P + frais Tickr
+```
+
+Le formulaire V1 montre les trois valeurs, mais l'organisateur ne modifie que `P`. Cela rend la
+source comptable non ambiguë et reste cohérent si l'Admin change la commission: le prix facial reste
+stable, tandis que le total des nouvelles commandes suit le nouveau taux.
+
+#### Mode futur « total participant cible »
+
+Ce mode n'est **pas implémenté**. Le calcul indicatif pour une cible `T` serait `P = T / (1 + r)`;
+ainsi `50 / 1.06 = 47.169811…`, soit 47.170 TND après arrondi. Toutefois, une implémentation fiable
+doit appartenir au backend et:
+
+1. introduire un contrat explicite (`pricingMode`, `targetBuyerTotal`), sans surcharger le sens de
+  `price`;
+2. résoudre et vérifier le résultat au millime avec les mêmes règles `Money` que la commande;
+3. décider si un changement de commission conserve le prix facial ou la cible participant;
+4. interdire toute re-tarification rétroactive des commandes existantes;
+5. définir le comportement après la première vente, quand le prix facial est verrouillé.
+
+Jusqu'à ces décisions, le frontend ne propose ni toggle ni champ « total participant cible ».
+
+Le backend implémente `total = subtotal + platformFee + paymentFees`. À la création d'une commande,
+`paymentFees` vaut toujours `0` et aucun flux de production n'appelle `setPaymentFees()`. Le code ne
+retire donc **pas** une seconde commission de 6% à l'organisateur. En revanche, aucun ledger de
+reversement n'existe encore: les 50 TND sont une attribution économique recommandée, pas un virement
+actuellement exécuté par Tickr.
 
 ### Répartition Revenus par Transaction
 
@@ -36,39 +99,64 @@ Tickr reçoit brut: 3 TND
 Exemple: Billet à 50 TND
 
 ┌─────────────────────────────────────┐
-│ Participant paie: 53.00 TND         │
+│ Participant paie: 53.000 TND        │
 └────────────┬────────────────────────┘
              │
     ┌────────┴──────────┐
     │                   │
     ▼                   ▼
 ┌──────────┐      ┌──────────┐
-│ 47.00 TND│      │  6.00 TND│
-│Organisat.│      │ Plateforme│
+│50.000 TND│      │ 3.000 TND│
+│Billets   │      │Frais Tickr│
+│(brut org.)│     │(brut)     │
 └──────────┘      └────┬─────┘
-                       │
-              ┌────────┴────────┐
-              │                 │
-              ▼                 ▼
-         ┌─────────┐      ┌─────────┐
-         │ 3.00 TND│      │ 1.58 TND│
-         │  Tickr  │      │ Gateway │
-         └─────────┘      └─────────┘
+             │
+             ▼
+         Coûts gateway
+         non suivis dans
+         le backend
 ```
 
 **Détail:**
-- Prix billet HT: 50.00 TND
-- Commission Tickr (6%): 3.00 TND
-- **Total participant:** 53.00 TND
-- Frais Clictopay (2.5% + 0.3): ~1.58 TND
-- **Tickr net:** 1.42 TND (47% de la commission)
-- **Organisateur net:** 47.00 TND (94%)
+- Prix facial / sous-total billets: 50.000 TND
+- Frais de service Tickr (6%): 3.000 TND
+- Frais de paiement ajoutés par Tickr: 0.000 TND
+- **Total participant:** 53.000 TND
+- **Brut organisateur recommandé avant ajustements:** 50.000 TND
+- **Revenu brut Tickr avant coûts:** 3.000 TND
 
-✅ **Marges saines permettant rentabilité plus rapide**
+### Frais des prestataires de paiement
+
+Les adapters envoient le total de commande de 53 TND aux prestataires. Konnect reçoit
+`addPaymentFeesToAmount: false`; Paymee et Stripe ne reçoivent aucun supplément Tickr. Les réponses
+des trois adapters n'exposent aucun coût marchand, et le backend ne stocke ni frais de transaction,
+ni montant net réglé, ni facture gateway.
+
+Le chiffre **1.580 TND** utilisé dans les anciennes projections n'est donc ni calculé par le code,
+ni retourné par Konnect/Paymee/Stripe, ni validé par un contrat présent dans le dépôt. Il peut servir
+uniquement de scénario financier. Par exemple, si le coût réel était 1.580 TND et si Tickr
+l'absorbait, le résultat serait:
+
+```text
+Participant paie:                 53.000 TND
+Brut organisateur recommandé:     50.000 TND
+Revenu brut Tickr:                 3.000 TND
+Coût gateway hypothétique:        -1.580 TND
+Contribution Tickr avant autres coûts: 1.420 TND
+```
+
+**Politique recommandée pour V1:** Tickr absorbe les frais gateway dans ses 3 TND de frais de
+service; l'organisateur conserve le prix facial de 50 TND. Une refacturation future au participant
+doit être une décision commerciale explicite, alimenter `paymentFees` avant le paiement et être
+affichée avant la confirmation. Elle ne doit jamais être activée depuis une estimation interne.
 
 ---
 
-## 📊 Projections Revenus
+## 📊 Projections de frais de service bruts
+
+Les projections de cette section calculent uniquement les frais de service facturés par Tickr.
+Elles ne sont **pas** des projections de revenu net, car le dépôt ne contient ni tarifs gateway
+contractuels, ni nombre de commandes payées, ni taxes, chargebacks ou coûts de remboursement.
 
 ### Scénario Conservateur (Année 1)
 
@@ -86,14 +174,12 @@ Mois 4: 30 événements × 200 billets × 40 TND × 6% =  14,400 TND
 Mois 5: 40 événements × 200 billets × 40 TND × 6% =  19,200 TND
 Mois 6-12: 50 événements/mois × 7 mois             = 168,000 TND
 
-TOTAL ANNÉE 1: ~216,000 TND brut
+TOTAL ANNÉE 1: ~216,000 TND de frais de service bruts
 ```
 
-**Après frais gateway (-47%):**
-```
-Revenus nets: 114,500 TND/an
-            = 9,500 TND/mois (mois 6-12)
-```
+Le revenu net ne peut pas être déduit d'un simple pourcentage des 216,000 TND. Il faut au minimum,
+par prestataire, le GMV traité, le nombre de transactions, le taux variable, le coût fixe, les frais
+de remboursement/chargeback et les taxes.
 
 ### Scénario Optimiste (Année 2)
 
@@ -104,8 +190,10 @@ Revenus nets: 114,500 TND/an
 - Amélioration marges (négociation gateway)
 
 ```
-Revenus bruts mensuels: 540,000 TND
-Revenus nets (après frais): 350,000 TND/an
+GMV mensuel: 100 × 300 × 45 = 1,350,000 TND
+Frais de service bruts mensuels: 1,350,000 × 6% = 81,000 TND
+Frais de service bruts annuels: 81,000 × 12 = 972,000 TND
+Revenu net: à calculer après intégration des coûts réels
 ```
 
 ---
@@ -134,25 +222,33 @@ TOTAL FIXES: ~104 TND/mois (~1,250 TND/an)
 
 ```yaml
 Paiements Gateway:
-  Clictopay: 2.5% + 0.3 TND par transaction
-  Stripe: 2.9% + 0.3 USD (fallback)
-  
-  Exemple 10,000 billets/mois à 40 TND:
-  = 10,000 × 1.3 TND = 13,000 TND/mois
+  Konnect (gateway TN principal): tarif contractuel à confirmer
+  Paymee (gateway TN fallback): tarif contractuel à confirmer
+  Stripe: tarif du compte marchand et de la devise à confirmer
+
+  Formule par prestataire p:
+  = GMV_p × taux_variable_p
+    + commandes_payées_p × frais_fixe_p
+    + remboursements_p + chargebacks_p + taxes_p
+
+  Important: le nombre de billets ne remplace pas le nombre de commandes.
+  Une commande peut contenir plusieurs billets, alors que le frais fixe est généralement
+  appliqué par transaction.
 
 SMS Notifications:
-  Twilio: ~0.05 TND par SMS
+  Hypothèse historique à confirmer: ~0.05 TND par SMS
   2 SMS par billet (confirmation + rappel)
   
   10,000 billets/mois:
   = 20,000 SMS × 0.05 = 1,000 TND/mois
 
 Emails:
-  AWS SES: 0.1 USD per 1000 emails
-  Quasi gratuit: ~10 TND/mois
-
-TOTAL VARIABLES: ~14,010 TND/mois (pour 10k billets)
+  Tarif du compte AWS à confirmer au moment du budget
 ```
+
+**Le total des coûts variables reste à déterminer.** Il dépend notamment du mix prestataires, du
+nombre de commandes payées, du nombre moyen de billets par commande, des remboursements et du volume
+réel de messages.
 
 ---
 
@@ -160,55 +256,42 @@ TOTAL VARIABLES: ~14,010 TND/mois (pour 10k billets)
 
 ### Point Mort Mensuel
 
+Le point mort se calcule par **commande payée**, pas uniquement par billet:
+
 ```
-Coûts fixes: 104 TND
-Marge nette par billet: 0.40 TND (après tous frais)
+Contribution_commande
+= sous_total_commande × 6%
+  - coût_gateway_commande
+  - communications_variables
+  - coût_attendu_remboursements_chargebacks
 
-Break-even: 104 / 0.40 = 260 billets/mois
+Commandes_au_point_mort
+= coûts_fixes_mensuels / contribution_moyenne_par_commande
 ```
 
-**Soit:**
-- 3 événements de 87 billets
-- ou 5 événements de 52 billets
-- ou 10 événements de 26 billets
-
-✅ **Atteignable dès mois 2!**
+Le dépôt ne fournit pas encore la contribution moyenne par commande. Tout chiffre de point mort
+serait donc une hypothèse, pas un résultat validé.
 
 ### Rentabilité
 
-```
-Année 1:
-Revenus nets: 86,400 TND
-Coûts totaux: 1,250 + (14,000 × 8 mois) = ~113,250 TND
-PERTE: -26,850 TND
-
-Année 2:
-Revenus nets: 350,000 TND
-Coûts totaux: 1,250 + (30,000 × 12) = ~361,250 TND
-PERTE: -11,250 TND (amélioration!)
-
-Année 3:
-Rentabilité positive si volume × 2
-```
-
-⚠️ **Modèle nécessite investissement initial ou sponsors**
+La rentabilité ne doit pas être annoncée avant d'avoir renseigné le modèle financier avec les
+contrats gateway, le mix de prestataires, les commandes payées, les taxes, les remboursements, les
+chargebacks, le support et les coûts marketing. Les anciens totaux mélangeaient billets et
+transactions et ne constituaient pas un P&L exploitable.
 
 ---
 
 ## 💡 Optimisations Possibles
 
-### 1. Réduire Frais Gateway (Priorité Haute)
+### 1. Mesurer puis réduire les frais gateway (Priorité Haute)
 
 **Actions:**
-- Négocier taux avec Clictopay (volume > 100k TND/mois)
-- Cible: 2% au lieu de 2.5% = +20% marges
+- Négocier taux avec gateway TN (Konnect/Paymee) (volume > 100k TND/mois)
+- Comparer le coût effectif par commande et par TND de GMV
 - Contacter directement banques (taux négociés)
 
-**Impact:**
-```
-Économie mensuelle (10k billets): 2,000 TND
-Économie annuelle: 24,000 TND
-```
+**Impact:** à calculer sur les devis signés et le mix de transactions, jamais sur le seul nombre de
+billets.
 
 ### 2. Optimiser Coûts SMS
 
@@ -235,10 +318,11 @@ Rentabilité positive si volume × 2
 - ✅ Support client réactif
 - ✅ Dashboard analytics avancé
 - ✅ Check-in mobile temps réel
-- ✅ Paiement multi-gateway (Clictopay + Stripe)
+- ✅ Paiement multi-gateway (Konnect + Paymee + Stripe)
 - ✅ Notifications SMS/Email automatiques
 
-**Recommandation:** 6% validé par benchmark marché
+**Décision V1:** 6% est le taux produit retenu et implémenté par défaut. Le benchmark reste une
+hypothèse commerciale à revalider avec des sources datées; il ne prouve pas à lui seul la marge.
 
 ### 4. Revenus Additionnels (V2/V3)
 
@@ -290,8 +374,9 @@ Marges:
 ✅ GMV: 80,000 TND
 ✅ Billets vendus: 2,000
 ✅ Commission brute: 4,800 TND (6%)
-✅ Marge nette: 2,400 TND
-✅ Break-even largement dépassé
+À mesurer: commandes payées et panier moyen
+À mesurer: frais gateway réels par prestataire
+À calculer: contribution et marge nette
 ```
 
 ---
@@ -311,6 +396,9 @@ Exemple:
 
 Trésorerie immobilisée: 7-21 jours
 ```
+
+Le délai J+7 est une **politique cible**, pas une capacité du backend actuel. Aucun compte de solde,
+ledger de règlement, RIB organisateur, lot de payout ou rapprochement gateway n'est implémenté.
 
 ### Besoins Trésorerie
 
@@ -373,18 +461,19 @@ Onglets:
 
 ```yaml
 ✅ Revenus:
-  - [ ] Commission 6% définie et configurable via environnement
+  - [x] Commission participant 6% définie et configurable via environnement
   - [ ] Projections 12 mois établies
   - [ ] Scenarios optimiste/réaliste/pessimiste
 
 ✅ Coûts:
   - [ ] Fixes identifiés (infra, SaaS)
-  - [ ] Variables calculés (gateway, SMS)
+  - [ ] Tarifs gateway contractualisés et rapprochés par prestataire
+  - [ ] Variables calculées (gateway, SMS)
   - [ ] Marges par transaction comprises
 
 ✅ Trésorerie:
   - [ ] Besoins lancement estimés (~2k TND)
-  - [ ] Délais paiements connus (J+7)
+  - [ ] Politique de reversement validée et implémentée (J+7 proposé)
   - [ ] Sources financement identifiées
 
 ✅ KPIs:

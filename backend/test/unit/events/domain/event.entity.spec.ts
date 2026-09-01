@@ -14,6 +14,7 @@ import {
   SalesPeriodVO,
   Currency,
   EventCreatedEvent,
+  EventCommissionOverrideUpdatedEvent,
   EventPublishedEvent,
   EventUpdatedEvent,
   EventCancelledEvent,
@@ -1479,6 +1480,62 @@ describe('EventEntity (Aggregate Root)', () => {
 
       // Cloned should have its own domain events list
       expect(cloned).toBeDefined();
+    });
+  });
+
+  describe('setCommissionRateOverride()', () => {
+    it('should set and clear a valid event commission override', () => {
+      const event = EventEntity.create(createValidEventProps()).value;
+
+      expect(event.setCommissionRateOverride(0.03, event.organizerId).isSuccess).toBe(true);
+      expect(event.commissionRateOverride).toBe(0.03);
+
+      expect(event.setCommissionRateOverride(null, event.organizerId).isSuccess).toBe(true);
+      expect(event.commissionRateOverride).toBeNull();
+    });
+
+    it.each([-0.01, 0.21, Number.NaN, Number.POSITIVE_INFINITY])(
+      'should reject an invalid event commission override: %s',
+      (rate) => {
+        const event = EventEntity.create(createValidEventProps()).value;
+
+        const result = event.setCommissionRateOverride(rate, event.organizerId);
+
+        expect(result.isFailure).toBe(true);
+        expect(event.commissionRateOverride).toBeNull();
+      },
+    );
+
+    it('should preserve the override when cloned', () => {
+      const event = EventEntity.create(createValidEventProps()).value;
+      event.setCommissionRateOverride(0.02, event.organizerId);
+
+      expect(event.clone().commissionRateOverride).toBe(0.02);
+    });
+
+    it('should record an auditable commission change', () => {
+      const event = EventEntity.create(createValidEventProps()).value;
+      event.clearDomainEvents();
+
+      event.setCommissionRateOverride(0.03, event.organizerId);
+
+      const auditEvent = event.domainEvents[0];
+      expect(auditEvent).toBeInstanceOf(EventCommissionOverrideUpdatedEvent);
+      expect(auditEvent).toMatchObject({
+        adminId: event.organizerId,
+        previousRate: null,
+        newRate: 0.03,
+      });
+    });
+
+    it('should not audit an unchanged commission override', () => {
+      const event = EventEntity.create(createValidEventProps()).value;
+      event.setCommissionRateOverride(0.03, event.organizerId);
+      event.clearDomainEvents();
+
+      event.setCommissionRateOverride(0.03, event.organizerId);
+
+      expect(event.domainEvents).toHaveLength(0);
     });
   });
 

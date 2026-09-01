@@ -16,6 +16,14 @@ export type { UpdateEventResultCommand, UpdateEventErrorCommand } from './comman
 export { UpdateEventHandler } from './commands/update-event/update-event.handler';
 export type { UpdateEventResult, UpdateEventError } from './commands/update-event/update-event.handler';
 
+// Set Event Commission Override (Admin)
+export { SetEventCommissionOverrideCommand } from './commands/set-event-commission-override/set-event-commission-override.command';
+export type {
+  SetEventCommissionOverrideError,
+  SetEventCommissionOverrideResult,
+} from './commands/set-event-commission-override/set-event-commission-override.command';
+export { SetEventCommissionOverrideHandler } from './commands/set-event-commission-override/set-event-commission-override.handler';
+
 // Add Ticket Type
 export { AddTicketTypeCommand } from './commands/add-ticket-type/add-ticket-type.command';
 export type { AddTicketTypeResultCommand, AddTicketTypeErrorCommand } from './commands/add-ticket-type/add-ticket-type.command';

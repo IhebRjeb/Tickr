@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Put,
   Delete,
   Param,
@@ -23,6 +24,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiProperty,
   ApiTags,
   ApiOperation,
   ApiResponse,
@@ -56,6 +58,8 @@ import {
   RemoveTicketTypeHandler,
   UploadEventImageCommand,
   UploadEventImageHandler,
+  SetEventCommissionOverrideCommand,
+  SetEventCommissionOverrideHandler,
   // Queries
   GetEventByIdQuery,
   GetEventByIdHandler,
@@ -78,6 +82,7 @@ import {
   PaginatedEventListDto,
   EventFilterDto,
   CancelEventDto,
+  SetEventCommissionOverrideDto,
 } from '../../application';
 import { EventCategory } from '../../domain/value-objects/event-category.vo';
 import { EventStatus } from '../../domain/value-objects/event-status.vo';
@@ -117,6 +122,34 @@ class AddTicketTypeResponse {
 class ImageUploadResponse {
   imageUrl!: string;
   thumbnailUrl?: string;
+}
+
+class EventCommissionResponse {
+  @ApiProperty({
+    description: 'Event whose commission configuration was updated',
+    format: 'uuid',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  eventId!: string;
+
+  @ApiProperty({
+    description: 'Stored event override, or null to inherit the global rate',
+    nullable: true,
+    example: 0.03,
+  })
+  commissionRateOverride!: number | null;
+
+  @ApiProperty({
+    description: 'Commission rate applied to new orders after this update',
+    example: 0.03,
+  })
+  effectiveCommissionRate!: number;
+
+  @ApiProperty({
+    description: 'Whether the event currently inherits the global rate',
+    example: false,
+  })
+  usesGlobalRate!: boolean;
 }
 
 // ============================================
@@ -189,6 +222,7 @@ export class EventsController {
     private readonly updateTicketTypeHandler: UpdateTicketTypeHandler,
     private readonly removeTicketTypeHandler: RemoveTicketTypeHandler,
     private readonly uploadEventImageHandler: UploadEventImageHandler,
+    private readonly setEventCommissionOverrideHandler: SetEventCommissionOverrideHandler,
     // Query Handlers
     private readonly getEventByIdHandler: GetEventByIdHandler,
     private readonly getPublishedEventsHandler: GetPublishedEventsHandler,
@@ -441,6 +475,49 @@ export class EventsController {
   // ============================================
   // Protected Endpoints - Event CRUD
   // ============================================
+
+  @Patch(':id/commission')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Configure an event-specific commission rate' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiBody({ type: SetEventCommissionOverrideDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Event commission configured',
+    type: EventCommissionResponse,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid commission rate' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Admin role required' })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async setEventCommissionOverride(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+    @Body() dto: SetEventCommissionOverrideDto,
+  ): Promise<EventCommissionResponse> {
+    const result = await this.setEventCommissionOverrideHandler.execute(
+      new SetEventCommissionOverrideCommand(id, user.userId, dto.commissionRate),
+    );
+
+    if (result.isFailure) {
+      const error = result.error;
+      switch (error.type) {
+        case 'ACCESS_DENIED':
+          throw new ForbiddenException(error.message);
+        case 'EVENT_NOT_FOUND':
+          throw new NotFoundException(error.message);
+        case 'INVALID_COMMISSION_RATE':
+          throw new BadRequestException(error.message);
+        case 'PERSISTENCE_ERROR':
+          throw new InternalServerErrorException(error.message);
+      }
+    }
+
+    return result.value;
+  }
 
   /**
    * Create a new event

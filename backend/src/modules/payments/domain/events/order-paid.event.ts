@@ -9,6 +9,8 @@ export class OrderPaidEvent extends DomainEvent {
     public readonly totalAmount: number,
     public readonly currency: string,
     public readonly platformFeeAmount: number,
+    public readonly subtotalAmount: number,
+    public readonly ticketCount: number,
   ) {
     super();
   }
@@ -22,6 +24,8 @@ export class OrderPaidEvent extends DomainEvent {
       totalAmount: this.totalAmount,
       currency: this.currency,
       platformFeeAmount: this.platformFeeAmount,
+      subtotalAmount: this.subtotalAmount,
+      ticketCount: this.ticketCount,
     };
   }
 }

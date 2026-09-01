@@ -14,7 +14,7 @@ Documentation complète pour développer une plateforme de billetterie en ligne 
 ### Décisions Validées
 
 - **Architecture:** Monolithe Modulaire Hexagonal V1 → Migration Progressive V2/V3
-- **Commission:** 6% par billet vendu (payé par organisateur) - Configurable via `PLATFORM_COMMISSION_RATE`
+- **Frais de service:** 6% globaux par défaut via `PLATFORM_COMMISSION_RATE`, avec override Admin 0–20% par événement; ajoutés au prix facial et payés par le participant
 - **Paiements:** Stripe (international) + Konnect & Paymee (Tunisie)
 - **MVP Timeline:** 3 mois (20-40h/semaine)
 - **Budget AWS V1:** $80-100/mois
@@ -62,7 +62,8 @@ docs/
 │   ├── 13-users-module-architecture.md # Users module (✅ 100%)
 │   ├── 14-tickets-module-architecture.md # Tickets module (✅ 100%)
 │   ├── 15-payments-module-architecture.md # Payments module (✅ 100%)
-│   └── 16-payments-module-plan.md      # Payments implementation plan
+│   ├── 16-payments-module-plan.md      # Payments implementation plan
+│   └── 17-analytics-module-architecture.md # Analytics module (✅ 100%)
 │
 ├── 04-infrastructure/                  # INFRASTRUCTURE & DÉPLOIEMENT
 │   ├── 01-aws-architecture.md          # ECS, RDS, S3, EventBridge
@@ -87,6 +88,14 @@ docs/
 │   ├── README.md                       # Agent system overview
 │   ├── COPILOT-AGENTS-QUICK-REF.md     # Quick reference for agents
 │   └── TECH-LEAD-AGENT-GUIDE.md        # Tech lead agent guide
+│
+├── 08-frontend/                        # FRONTEND DESIGN & UX (Epic #64)
+│   ├── README.md                       # Deliverables index (Phases 1-11)
+│   ├── 01-frontend-plan-and-design-direction.md
+│   ├── 02-product-design-brief.md      # Phase 1 — design direction (locked)
+│   ├── 03-…-11-…                       # IA, journeys, screens, features,
+│   │                                   # components, design system, wireframes,
+│   │                                   # hi-fi/responsive, frontend architecture
 │
 └── collections/                        # API COLLECTIONS
     └── tickr-api.postman_collection.json
@@ -213,7 +222,7 @@ docs/
 
 ✅ Comptes Créés:
   - [ ] AWS Account (Free Tier)
-  - [ ] Clictopay/Edinar (Tunisia)
+  - [ ] Konnect / Paymee (Tunisia)
   - [ ] Stripe (international)
   - [ ] GitHub (repository)
 
@@ -314,8 +323,8 @@ Infrastructure:
 
 ### Paiements Tunisie
 
-- [Clictopay](https://www.clictopay.com.tn/)
-- [Edinar](https://www.edinar.tn/)
+- [Konnect](https://www.konnect.network/)
+- [Paymee](https://www.paymee.tn/)
 - [Stripe Tunisia](https://stripe.com/docs/connect/payouts)
 
 ---

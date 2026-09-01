@@ -59,6 +59,15 @@ export class EventOrmEntity {
   @Column({ name: 'image_url', type: 'varchar', length: 500, nullable: true })
   imageUrl!: string | null;
 
+  @Column({
+    name: 'commission_rate_override',
+    type: 'decimal',
+    precision: 5,
+    scale: 4,
+    nullable: true,
+  })
+  commissionRateOverride!: number | null;
+
   // ============================================
   // Location Fields (Embedded)
   // ============================================

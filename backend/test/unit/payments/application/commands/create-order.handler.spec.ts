@@ -39,6 +39,7 @@ describe('CreateOrderHandler', () => {
         status: 'PUBLISHED',
         startDate: new Date('2026-07-01'),
         organizerId: '550e8400-e29b-41d4-a716-446655440010',
+        commissionRateOverride: null,
       }),
       getTicketType: jest.fn().mockResolvedValue({
         id: validTicketTypeId,
@@ -117,6 +118,45 @@ describe('CreateOrderHandler', () => {
     expect(result.value.expiresAt).toBeInstanceOf(Date);
   });
 
+  it('should prefer the registered payments commission rate', async () => {
+    mockConfigService.get.mockImplementation((key: string, defaultValue: any) => {
+      if (key === 'payments.commission.rate') return 0.06;
+      if (key === 'PLATFORM_COMMISSION_RATE') return 0.04;
+      if (key === 'ORDER_EXPIRATION_MINUTES') return 15;
+      return defaultValue;
+    });
+    handler = new CreateOrderHandler(
+      mockOrderRepo,
+      mockEventQuery,
+      mockFraudDetection,
+      mockTicketReservation,
+      mockEventPublisher,
+      mockConfigService,
+    );
+
+    const result = await handler.execute(createValidCommand());
+
+    expect(result.value.platformFee).toBe(6);
+    expect(result.value.total).toBe(106);
+  });
+
+  it('should prefer the event commission override over the global rate', async () => {
+    mockEventQuery.getEventById.mockResolvedValue({
+      id: validEventId,
+      title: 'Test Event',
+      status: 'PUBLISHED',
+      startDate: new Date('2026-07-01'),
+      organizerId: '550e8400-e29b-41d4-a716-446655440010',
+      commissionRateOverride: 0.03,
+    });
+
+    const result = await handler.execute(createValidCommand());
+
+    expect(result.value.subtotal).toBe(100);
+    expect(result.value.platformFee).toBe(3);
+    expect(result.value.total).toBe(103);
+  });
+
   it('should save order to repository', async () => {
     await handler.execute(createValidCommand());
 
@@ -169,6 +209,7 @@ describe('CreateOrderHandler', () => {
       status: 'DRAFT',
       startDate: new Date(),
       organizerId: 'org-1',
+      commissionRateOverride: null,
     });
 
     const result = await handler.execute(createValidCommand());

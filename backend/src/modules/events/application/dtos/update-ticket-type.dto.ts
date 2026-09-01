@@ -48,7 +48,8 @@ export class UpdateTicketTypeDto {
   description?: string | null;
 
   @ApiPropertyOptional({
-    description: 'Updated ticket price (cannot modify after first sale)',
+    description:
+      'Updated organizer face price excluding service fees; cannot modify after first sale',
     example: 175.0,
     minimum: 0.01,
   })

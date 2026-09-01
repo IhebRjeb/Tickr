@@ -38,7 +38,9 @@ export class CreateOrderHandler {
     private readonly eventPublisher: DomainEventPublisher,
     private readonly configService: ConfigService,
   ) {
-    this.commissionRate = this.configService.get<number>('PLATFORM_COMMISSION_RATE', 0.06);
+    this.commissionRate =
+      this.configService.get<number>('payments.commission.rate') ??
+      this.configService.get<number>('PLATFORM_COMMISSION_RATE', 0.06);
     this.expirationMinutes = this.configService.get<number>('ORDER_EXPIRATION_MINUTES', 15);
   }
 
@@ -120,7 +122,7 @@ export class CreateOrderHandler {
       eventId: command.eventId,
       items: orderItems,
       currency: orderItems[0].price.currency,
-      commissionRate: this.commissionRate,
+      commissionRate: event.commissionRateOverride ?? this.commissionRate,
       expirationMinutes: this.expirationMinutes,
       metadata: command.metadata,
     });

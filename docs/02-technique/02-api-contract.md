@@ -1,7 +1,7 @@
 # 🔌 API Contract - Tickr REST API
 
 **Version:** 1.0  
-**Base URL:** `https://api.tickr.tn/v1`  
+**Base URL:** `https://api.tickr.tn/api`  
 **Temps lecture:** 20 minutes
 
 ---
@@ -23,8 +23,8 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 
 **JWT Token:**
-- Expiration: 24h
-- Refresh token: 30 jours
+- Expiration: **7 jours** (`JWT_EXPIRES_IN`, défaut `'7d'` — `jwt.service.ts:74`)
+- Refresh token: **30 jours** (`JWT_REFRESH_EXPIRES_IN`, défaut `'30d'` — `jwt.service.ts:75`)
 - Algorithme: HS256
 
 ### Codes Statut HTTP
@@ -83,30 +83,53 @@ GET /events?page=1&limit=12
 
 ### GET /config/public
 
-**Description:** Récupère la configuration publique de la plateforme (taux de commission, version)
+**Description:** Récupère le taux global ou le taux effectif d'un événement.
 
 **Authentification:** Non requise (public)
 
 **Response 200:**
 ```json
 {
-  "commission": {
-    "rate": 0.06,
-    "displayPercentage": "6.0%"
-  },
-  "version": "1.0.0"
+  "globalCommissionRate": 0.06,
+  "commissionRateOverride": 0.03,
+  "effectiveCommissionRate": 0.03,
+  "currency": "TND",
+  "reservationTtlMinutes": 15
 }
 ```
 
 **Utilisation Frontend:**
-- Cache recommandé: 1 heure
-- Fallback si échec: 6% par défaut
-- Utilisé pour afficher prix dynamiquement
+- Sans `eventId`: cache recommandé 1 heure
+- Avec `eventId`: rafraîchir à l'ouverture de la sélection de billets
+- Ne pas inventer un fallback à 6 % pour un événement; une surcharge peut s'appliquer
+- Les montants retournés par `POST /orders` restent autoritaires
 
 **Notes:**
 - ✅ Endpoint public (pas de token requis)
-- ✅ Réponse cachée côté serveur (5 min)
 - ✅ Permet changement commission sans redéployer frontend
+
+**Query optionnelle:** `eventId` (UUID). Un événement inconnu retourne `404`.
+
+### PATCH /events/:id/commission
+
+**Auth:** Required (`ADMIN` uniquement)
+
+**Body:**
+```json
+{ "commissionRate": 0.03 }
+```
+
+Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, maximum 4 décimales.
+
+**Response 200:**
+```json
+{
+  "eventId": "uuid",
+  "commissionRateOverride": 0.03,
+  "effectiveCommissionRate": 0.03,
+  "usesGlobalRate": false
+}
+```
 
 ---
 
@@ -171,7 +194,7 @@ GET /events?page=1&limit=12
 
 ---
 
-### POST /auth/refresh
+### POST /auth/refresh-token
 
 **Description:** Renouveler access token
 
@@ -458,21 +481,24 @@ GET /events?page=1&limit=12
 ```json
 {
   "name": "Early Bird",
-  "price": 35.00,
+  "description": "Prix réduit pour les premiers",
+  "price": 35.000,
+  "currency": "TND",
   "quantity": 200,
-  "description": "Prix réduit pour les premiers"
+  "salesStartDate": "2026-06-01T00:00:00Z",
+  "salesEndDate": "2026-07-14T23:59:59Z",
+  "isActive": true
 }
 ```
+
+`price` est le **prix facial organisateur hors frais de service**, pas un total participant cible.
+Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 
 **Response 201:**
 ```json
 {
-  "id": "uuid",
-  "name": "Early Bird",
-  "price": 35.00,
-  "quantity": 200,
-  "sold": 0,
-  "available": 200
+  "ticketTypeId": "uuid",
+  "message": "Ticket type added successfully"
 }
 ```
 
@@ -559,7 +585,7 @@ GET /events?page=1&limit=12
 **Body:**
 ```json
 {
-  "paymentMethod": "CLICTOPAY"
+  "paymentMethod": "KONNECT"
 }
 ```
 
@@ -569,7 +595,7 @@ GET /events?page=1&limit=12
   "orderId": "uuid",
   "amount": 104.00,
   "status": "PENDING",
-  "paymentUrl": "https://clictopay.com/pay/abc123",
+  "paymentUrl": "https://gateway.konnect.network/pay/abc123",
   "expiresAt": "2024-01-15T10:45:00Z"
 }
 ```
@@ -578,10 +604,10 @@ GET /events?page=1&limit=12
 
 ## 💳 Paiements
 
-### POST /payments/webhook/clictopay
+### GET /payments/webhooks/konnect
 
 **Auth:** Webhook signature  
-**Description:** Callback Clictopay
+**Description:** Callback Konnect (gateway TN principal)
 
 **Body:**
 ```json
@@ -604,12 +630,19 @@ GET /events?page=1&limit=12
 
 ---
 
-### POST /payments/webhook/stripe
+### POST /payments/webhooks/stripe
 
 **Auth:** Stripe signature  
-**Description:** Callback Stripe
+**Description:** Callback Stripe (paiements internationaux)
 
 **Body:** (Stripe Event Object)
+
+---
+
+### POST /payments/webhooks/paymee
+
+**Auth:** Webhook signature  
+**Description:** Callback Paymee (gateway TN fallback)
 
 ---
 

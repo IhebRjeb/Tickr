@@ -9,36 +9,34 @@
 
 ### Paiements
 
-#### Carte Bancaire Locale (Prioritaire)
+#### Gateway Local Tunisie (Prioritaire)
 
 **Gateways Tunisie:**
-- **Clictopay** (recommandé)
-  - Frais: 2.5% + 0.3 TND par transaction
-  - Délai paiement organisateur: J+7
+- **Konnect** (gateway principal)
+  - Montants traités en millimes (TND × 1000)
+  - Flux par redirection (page de paiement hébergée)
   - API REST disponible
-  
-- **Edinar** (alternative)
-  - Frais: 2.8% par transaction
-  - Délai paiement organisateur: J+10
-  - Intégration plus complexe
+
+- **Paymee** (fallback)
+  - Montants en TND (format décimal, ex: 10.500)
+  - Flux par redirection (page de paiement hébergée)
+  - Utilisé en repli si Konnect indisponible
 
 **Contraintes:**
-- Plafond transaction: 5,000 TND max
 - Conversion 3D Secure obligatoire
-- Remboursement: jusqu'à 14 jours après paiement
+- Remboursement Konnect: manuel via dashboard
 
 #### Stripe International (Secondaire)
 
 **Utilisation:**
 - Cartes internationales (Visa, Mastercard, Amex)
-- Frais: 2.9% + 0.3 USD par transaction
-- Conversion automatique TND → USD/EUR
-- Délai paiement organisateur: J+7
+- L'adapter envoie le montant et la devise de la commande à Stripe
+- Aucun tarif marchand Stripe ni coût de conversion n'est calculé dans le backend
+- Aucun reversement organisateur automatique n'est implémenté
 
 **Contraintes:**
-- Compte Stripe Connect requis pour organisateurs
-- Frais conversion devise: ~3% additionnel
-- Limites par mois avant vérification KYC
+- Compte marchand, devises acceptées, KYC et tarifs à confirmer avec Stripe avant production
+- Le backend actuel utilise Payment Intents, pas Stripe Connect pour des payouts organisateur
 
 ---
 
@@ -103,36 +101,66 @@ Bizerte
 
 **Positionnement:** Tickr = 6% (aligné avec Ayo, bien meilleur que Teskerti/Ija)
 
+**Règle de configuration:** 6% est le taux global par défaut, configurable par environnement. Un
+Admin peut définir un taux spécifique de 0 à 20% pour un événement; `null` rétablit le taux global.
+Le taux spécifique s'applique uniquement aux nouvelles commandes et chaque changement est audité.
+
 **Calcul:**
 ```
 Prix billet HT: 50 TND
-Commission Tickr (6%): 3 TND
+Frais de service Tickr (6%): 3 TND
 Prix final participant: 53 TND
 
-Organisateur reçoit: 47 TND
-Tickr reçoit: 3 TND
+Valeur brute attribuable à l'organisateur: 50 TND
+Tickr reçoit brut avant coûts: 3 TND
 ```
 
+Avec un taux événement de 3%, le même billet coûte 51.500 TND au participant: 50 TND de billet et
+1.500 TND de frais de service.
+
+### Contrat de saisie du prix V1
+
+- `price` / `priceAmount` désigne toujours le **prix facial organisateur**, hors frais Tickr.
+- L'organisateur saisit une seule valeur; le frontend affiche le taux effectif, les frais et le
+  total participant en lecture seule.
+- Le total participant est calculé par le backend lors de `POST /orders` et n'est jamais stocké
+  comme objectif sur le type de billet.
+- Un changement Admin de commission modifie le total des **nouvelles** commandes, mais ne modifie ni
+  le prix facial ni les commandes déjà créées.
+- Le mode « je fixe le total participant » est hors scope V1. Aucun champ `pricingMode`,
+  `targetBuyerTotal` ou calcul inverse n'existe dans le backend.
+
+**Exemple mathématique uniquement:** pour viser 50 TND avec un taux de 6%, le prix théorique est
+`50 / 1.06 = 47.169811…`, arrondi à `47.170 TND`. Après arrondi des frais au millime, le total vaut
+50.000 TND dans cet exemple. Cette formule n'est pas un contrat API V1.
+
 **Paiement organisateur:**
-- Délai: J+7 après événement
-- Méthode: Virement bancaire (RIB)
-- Minimum retrait: 100 TND
+- Politique cible proposée: J+7 après événement, par virement bancaire
+- Le backend V1 ne contient encore ni ledger de reversement, ni RIB organisateur, ni payout
+- Aucun second prélèvement de 6% sur le prix facial n'est implémenté
 
 ### Frais Gateway Paiement
 
-**Qui paie ?** Organisateur (inclus dans commission)
+**Code actuel:** aucun frais gateway n'est calculé ou stocké. `paymentFees` reste à 0 dans tous les
+flux de production. Konnect est appelé avec `addPaymentFeesToAmount: false`; Paymee et Stripe
+reçoivent le total de commande sans supplément distinct.
 
-**Exemple Clictopay:**
+**Politique V1 recommandée:** Tickr absorbe le coût marchand réel dans ses frais de service. Le
+montant doit venir des contrats/relevés gateway, pas d'une constante produit. L'organisateur ne doit
+pas subir une déduction non représentée dans le modèle de commande.
+
+**Scénario purement illustratif si le coût gateway réel était 1.58 TND:**
 ```
 Billet: 50 TND
-Commission Tickr: 3 TND (6%)
-Frais Clictopay: 1.58 TND (2.5% de 53 + 0.3)
+Frais de service Tickr: 3 TND (6%)
+Total participant: 53 TND
+Coût gateway hypothétique supporté par Tickr: 1.58 TND
 
-Organisateur reçoit: 45.42 TND
+Brut organisateur recommandé: 50 TND
 Tickr reçoit net: 1.42 TND
 ```
 
-✅ **Marges raisonnables** permettant rentabilité plus rapide
+Ce scénario n'est ni un tarif Konnect validé, ni une valeur calculée par le backend.
 
 ---
 
@@ -210,7 +238,8 @@ Tickr reçoit net: 1.42 TND
 
 - Remboursement: 100% prix billet
 - Commission Tickr: non remboursée
-- Frais gateway: non remboursés
+- `paymentFees`: remboursés par le code s'ils deviennent non nuls; ils valent 0 actuellement
+- Frais marchands retenus par le gateway: inconnus du backend et à traiter au rapprochement
 
 **Exemple:**
 ```
@@ -393,7 +422,7 @@ Avant développement, vérifier compréhension:
 
 ```yaml
 ✅ Paiements:
-  - [ ] Gateways Tunisie identifiés (Clictopay/Edinar)
+  - [ ] Gateways Tunisie identifiés (Konnect/Paymee)
   - [ ] Frais et délais compris
   - [ ] Stripe comme fallback
 

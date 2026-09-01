@@ -41,6 +41,7 @@ describe('EventMapper', () => {
     entity.category = EventCategory.CONCERT;
     entity.status = EventStatus.PUBLISHED;
     entity.imageUrl = 'https://example.com/image.jpg';
+    entity.commissionRateOverride = null;
     entity.locationAddress = '123 Main Street';
     entity.locationCity = 'Tunis';
     entity.locationCountry = 'Tunisia';
@@ -84,6 +85,10 @@ describe('EventMapper', () => {
 
   // Helper to create a domain event entity
   const createDomainEvent = (): EventEntity => {
+    const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const salesStart = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const salesEnd = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
     const location = LocationVO.create({
       address: '456 Avenue',
       city: 'Sousse',
@@ -94,8 +99,8 @@ describe('EventMapper', () => {
     });
 
     const dateRange = EventDateRangeVO.create(
-      new Date('2026-08-01T19:00:00Z'),
-      new Date('2026-08-03T22:00:00Z'),
+      startDate,
+      endDate,
       true,
     );
 
@@ -121,8 +126,8 @@ describe('EventMapper', () => {
       price: TicketPriceVO.create(200, Currency.TND),
       quantity: 1000,
       salesPeriod: SalesPeriodVO.create(
-        new Date('2026-06-01T00:00:00Z'),
-        new Date('2026-07-31T23:59:59Z'),
+        salesStart,
+        salesEnd,
       ),
     });
 
@@ -148,6 +153,15 @@ describe('EventMapper', () => {
       expect(domain.category).toBe(ormEntity.category);
       expect(domain.status).toBe(ormEntity.status);
       expect(domain.imageUrl).toBe(ormEntity.imageUrl);
+    });
+
+    it('should map an event commission override', () => {
+      const ormEntity = createOrmEntity({ commissionRateOverride: 0.03 });
+
+      const domain = mapper.toDomain(ormEntity);
+
+      expect(domain.commissionRateOverride).toBe(0.03);
+      expect(mapper.toPersistence(domain).commissionRateOverride).toBe(0.03);
     });
 
     it('should convert location fields to LocationVO', () => {

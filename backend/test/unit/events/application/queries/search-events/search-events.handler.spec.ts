@@ -65,9 +65,11 @@ describe('SearchEventsHandler', () => {
       city: 'Tunis',
       country: 'Tunisia',
     });
+    const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 2 * 24 * 60 * 60 * 1000);
     const dateRange = EventDateRangeVO.create(
-      new Date('2026-07-15T18:00:00Z'),
-      new Date('2026-07-17T23:00:00Z'),
+      startDate,
+      endDate,
       true,
     );
 
