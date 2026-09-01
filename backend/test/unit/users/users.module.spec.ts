@@ -108,8 +108,8 @@ describe('UsersModule', () => {
       const moduleRef = Reflect.getMetadata('imports', UsersModule);
       
       expect(moduleRef).toBeDefined();
-      // Should include TypeOrmModule, CqrsModule, PassportModule, JwtModule, ThrottlerModule
-      expect(moduleRef.length).toBeGreaterThanOrEqual(5);
+      // Rate limiting is configured globally in AppModule.
+      expect(moduleRef.length).toBeGreaterThanOrEqual(4);
     });
   });
 

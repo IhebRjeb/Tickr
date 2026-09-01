@@ -1,33 +1,33 @@
 # Phase 8 — Low-Fidelity Wireframes
 
-| Field | Value |
-| --- | --- |
-| **Phase** | 8 of 11 |
-| **Epic** | [01-frontend-plan-and-design-direction.md](01-frontend-plan-and-design-direction.md) |
-| **Status** | ✅ Complete |
-| **Owner** | Product Design |
+| Field          | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Phase**      | 8 of 11                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Epic**       | [01-frontend-plan-and-design-direction.md](01-frontend-plan-and-design-direction.md)                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Status**     | ✅ Complete                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Owner**      | Product Design                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | **Depends on** | [Phase 1 — Product Design Brief](02-product-design-brief.md) (§E principles, §F flow, §G failure shapes) · [Phase 2 — Information Architecture](03-information-architecture.md) (canonical route tree) · [Phase 4 — Screen Inventory](05-screen-inventory.md) (33 routes, states, priorities) · [Phase 5 — Feature Inventory](06-feature-inventory.md) (per-screen behaviour and copy) · [Phase 6 — Component Inventory](07-component-inventory.md) · [Phase 7 — Design System](08-design-system.md) (density, targets, radii) |
 
 > **Objective:** Fix the **structure** of every Tickr screen — layout, hierarchy, navigation and
 > flow — before a single visual decision is applied. This document is the **wireframe
 > specification**: it defines the conventions, then draws a black-and-white, mobile-first, 390 px
 > frame for each of the fourteen screen archetypes the other twenty routes inherit from, states
-> what each frame must *prove*, and defines the review protocol that gates Phase 9. The Figma file
+> what each frame must _prove_, and defines the review protocol that gates Phase 9. The Figma file
 > is executed **against this document** and linked back into [§4](#4-tracking).
 
 ---
 
 ## Contents
 
-| § | Section |
-| --- | --- |
-| [0](#0-how-to-read-this-document) | How to read this document |
-| [1](#1-wireframe-conventions) | Wireframe conventions — canvas, notation, naming, rejection criteria |
-| [2](#2-the-screen-set) | The screen set — fourteen archetypes and how routes inherit |
-| [3](#3-the-wireframes) | The wireframes — money path drawn in full, the rest specified |
-| [4](#4-tracking) | Tracking — ASCII spec, Figma frame, review status |
-| [5](#5-review-protocol) | Review protocol |
-| — | [Acceptance Criteria](#acceptance-criteria) |
+| §                                 | Section                                                              |
+| --------------------------------- | -------------------------------------------------------------------- |
+| [0](#0-how-to-read-this-document) | How to read this document                                            |
+| [1](#1-wireframe-conventions)     | Wireframe conventions — canvas, notation, naming, rejection criteria |
+| [2](#2-the-screen-set)            | The screen set — fourteen archetypes and how routes inherit          |
+| [3](#3-the-wireframes)            | The wireframes — money path drawn in full, the rest specified        |
+| [4](#4-tracking)                  | Tracking — ASCII spec, Figma frame, review status                    |
+| [5](#5-review-protocol)           | Review protocol                                                      |
+| —                                 | [Acceptance Criteria](#acceptance-criteria)                          |
 
 ---
 
@@ -51,14 +51,14 @@ gone wrong.
 
 ### 0.2 What a wireframe must **not** decide
 
-| Not decided here | Where it is decided |
-|---|---|
-| Colour, including status colour | [Phase 7 §2](08-design-system.md#2-colour) |
-| Typeface, weight, exact size | [Phase 7 §3](08-design-system.md#3-typography) |
-| Radius, shadow, elevation | [Phase 7 §4](08-design-system.md#4-spacing-radius-elevation-and-layout) |
-| Iconography (which glyph) | [Phase 7 §9](08-design-system.md#9-iconography) — frames use a labelled box, never a chosen icon |
-| Real photography or real posters | Every image is a `▒` placeholder. A wireframe that looks good only because of a beautiful poster has proved nothing |
-| Final microcopy wording | [Phase 5](06-feature-inventory.md) owns the string table. Frames carry **copy direction** — real French of realistic length, so the layout is tested against the sentence it will actually hold |
+| Not decided here                 | Where it is decided                                                                                                                                                                             |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Colour, including status colour  | [Phase 7 §2](08-design-system.md#2-colour)                                                                                                                                                      |
+| Typeface, weight, exact size     | [Phase 7 §3](08-design-system.md#3-typography)                                                                                                                                                  |
+| Radius, shadow, elevation        | [Phase 7 §4](08-design-system.md#4-spacing-radius-elevation-and-layout)                                                                                                                         |
+| Iconography (which glyph)        | [Phase 7 §9](08-design-system.md#9-iconography) — frames use a labelled box, never a chosen icon                                                                                                |
+| Real photography or real posters | Every image is a `▒` placeholder. A wireframe that looks good only because of a beautiful poster has proved nothing                                                                             |
+| Final microcopy wording          | [Phase 5](06-feature-inventory.md) owns the string table. Frames carry **copy direction** — real French of realistic length, so the layout is tested against the sentence it will actually hold |
 
 **The one exception, and it is deliberate: money, counts and countdowns are drawn with real values.**
 `106,000 DT`, `Il reste 12:34`, `Plus que 7 places`. A wireframe with `Lorem 00,00` cannot prove that
@@ -71,17 +71,17 @@ These are carried forward from [Phase 4 §0.5](05-screen-inventory.md#05-contrac
 because they change what a frame is allowed to draw. **Every frame in this document follows the code,
 not the issue text.**
 
-| Stated in GitHub issue #64 / the old scaffolds | Verified in `backend/src` — what the frames draw |
-|---|---|
-| API base `/v1` | **`/api`** (`main.ts:17`, `config/app.config.ts` → `API_PREFIX \|\| 'api'`). Every `DATA` line below reads `https://api.tickr.tn/api/…`. Swagger at `/api/docs` |
-| `GET /config/public` supplies the commission rate | **Implemented.** Ticket-selection frames use `?eventId=<uuid>` and `effectiveCommissionRate`; Admin overrides affect new orders only |
-| Pagination `{ data, meta: { … } }` | **Flat** — `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`. The « Charger plus » control in the discovery frame is driven by `hasNextPage`, and the count line by `total` |
+| Stated in GitHub issue #64 / the old scaffolds       | Verified in `backend/src` — what the frames draw                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| API base `/v1`                                       | **`/api`** (`main.ts:17`, `config/app.config.ts` → `API_PREFIX \|\| 'api'`). Every `DATA` line below reads `https://api.tickr.tn/api/…`. Swagger at `/api/docs`                                                                                                                                                                                                                                                                                                                                        |
+| `GET /config/public` supplies the commission rate    | **Implemented.** Ticket-selection frames use `?eventId=<uuid>` and `effectiveCommissionRate`; Admin overrides affect new orders only                                                                                                                                                                                                                                                                                                                                                                   |
+| Pagination `{ data, meta: { … } }`                   | **Flat** — `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`. The « Charger plus » control in the discovery frame is driven by `hasNextPage`, and the count line by `total`                                                                                                                                                                                                                                                                                                     |
 | The error envelope carries a machine-readable `code` | It does not: `{ statusCode, code, message, details, timestamp, path, method }`. Failure frames are therefore selected by **status + endpoint context**, which is why each failure is drawn as a **state of the screen that caused it** (§3.4–§3.6) rather than as one generic error component. Note that `403` alone carries eight distinct verified meanings — the full table is [Phase 2 §5.3](03-information-architecture.md#53-the-eight-meanings-of-403), and no other document may contradict it |
-| Sold out → `409`, rate limited → `429` | Sold out → **`400`**; order-creation rate limiting → **`403`** (`ForbiddenException`). The « limite de 5 commandes par heure » frame is a 403 state, not a 429 one |
+| Sold out → `409`, rate limited → `429`               | Sold out → **`400`**; order-creation rate limiting → **`403`** (`ForbiddenException`). The « limite de 5 commandes par heure » frame is a 403 state, not a 429 one                                                                                                                                                                                                                                                                                                                                     |
 
 One more, inherited from the existing frontend rather than the issue:
 `frontend/src/lib/api/client.ts` redirects to **`/auth/login`**, while the canonical route tree says
-**`/login`** — and it hard-redirects on *any* `401` with **no refresh attempt**. Both are defects to
+**`/login`** — and it hard-redirects on _any_ `401` with **no refresh attempt**. Both are defects to
 fix before the first screen ships. The login archetype in [§3.8](#38-remaining-archetypes--compact-specs) is drawn at
 **`/login`**, and the checkout frames assume a **silent refresh** rather than a redirect, because a
 redirect mid-checkout destroys the order context the countdown is protecting.
@@ -92,17 +92,17 @@ redirect mid-checkout destroys the order context the countdown is protecting.
 
 ### 1.1 Canvas and grid
 
-| Property | Value | Why |
-|---|---|---|
-| **Design canvas** | **390 × 844** | The realistic modern mid-range default ([Phase 1 §I.1](02-product-design-brief.md#i1-mobile-is-the-design-target-not-the-fallback)) |
-| **Mandatory stress width** | **360** | Still extremely common on mid-range Android in Tunisia. Any frame that breaks at 360 is rejected |
-| **Gutter** | **16 px** (`space-4`) both sides | Content column is therefore **358 px** at 390, **328 px** at 360 |
-| **Vertical rhythm** | 4 px base, blocks separated by 24 / 32 px | [Phase 7 §4.1](08-design-system.md#41-spacing--4-px-base) |
-| **Bottom reserve** | **88 px** above `env(safe-area-inset-bottom)` | Reserved for the primary action. Nothing else may live there |
-| **Header height** | 56 px | |
-| **Bottom tab bar** | 56 px + safe area | Participant surfaces only |
-| **Row heights** | control 44 · CTA 48 · data-table row 40 (desktop only) | [Phase 7 §7](08-design-system.md#7-component-density) |
-| **Minimum touch target** | 44 × 44 with an 8 px gap | Drawn to scale — a frame that shows two 32 px targets touching is wrong even in black and white |
+| Property                   | Value                                                  | Why                                                                                                                                 |
+| -------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Design canvas**          | **390 × 844**                                          | The realistic modern mid-range default ([Phase 1 §I.1](02-product-design-brief.md#i1-mobile-is-the-design-target-not-the-fallback)) |
+| **Mandatory stress width** | **360**                                                | Still extremely common on mid-range Android in Tunisia. Any frame that breaks at 360 is rejected                                    |
+| **Gutter**                 | **16 px** (`space-4`) both sides                       | Content column is therefore **358 px** at 390, **328 px** at 360                                                                    |
+| **Vertical rhythm**        | 4 px base, blocks separated by 24 / 32 px              | [Phase 7 §4.1](08-design-system.md#41-spacing--4-px-base)                                                                           |
+| **Bottom reserve**         | **88 px** above `env(safe-area-inset-bottom)`          | Reserved for the primary action. Nothing else may live there                                                                        |
+| **Header height**          | 56 px                                                  |                                                                                                                                     |
+| **Bottom tab bar**         | 56 px + safe area                                      | Participant surfaces only                                                                                                           |
+| **Row heights**            | control 44 · CTA 48 · data-table row 40 (desktop only) | [Phase 7 §7](08-design-system.md#7-component-density)                                                                               |
+| **Minimum touch target**   | 44 × 44 with an 8 px gap                               | Drawn to scale — a frame that shows two 32 px targets touching is wrong even in black and white                                     |
 
 **ASCII scale used in this document.** Two canvases are in use. The discovery frames
 ([§3.1](#31-landing--)–[§3.2](#32-discovery--events)) are drawn at a **62-column interior** —
@@ -136,30 +136,30 @@ Figma. A frame taller than the viewport carries an explicit fold rule.
 Every frame in [§3](#3-the-wireframes) uses this notation and nothing else. The Figma library mirrors
 it one-to-one as a set of wireframe components.
 
-| Glyph | Meaning |
-|---|---|
-| `┌─┐ │ └─┘ ├─┤` | Container / frame boundary. The outermost box is the 390 px viewport |
-| `╔═╗ ║ ╚═╝` | **Sticky** region — fixed to the viewport, does not scroll with content |
-| `▒▒▒▒` | Image region. Always labelled with aspect ratio and the field that fills it |
-| `░░░░` | Inset block (`surface-2`) — order summary, disabled field, table stripe |
-| `▓▓▓░░░` | Progress / capacity bar |
-| `[[ Label ]]` | **Primary** action, 48 px, full width unless the frame shows otherwise |
-| `[ Label ]` | Secondary action, 44 px |
-| `[ CAPS LABEL ]` filling a region | A labelled placeholder region, not a control — `[ POSTER 4:5 ]`, `[ QR ≥ 240px ]` |
-| `< Label >` | Ghost / tertiary / link-style action |
-| `( placeholder .... )` | Text input. The label always sits **above** it on its own line |
-| `(o)` / `( )` | Radio — selected / unselected |
-| `[x]` / `[_]` | Checkbox — checked / unchecked |
-| `< - >  2  < + >` | Quantity stepper, 44 px targets |
-| `▾` | Disclosure, select or menu trigger |
-| `● ○ ○` | Pagination dots for a rail |
-| `···` | Repeated or truncated content of the same gabarit |
-| `{ ... }` | **State annotation** — an engineering condition or an unnamed component, never rendered copy |
-| `FOLD (844 px)` on a rule | The initial viewport boundary. Everything below it requires a scroll |
-| `@@1` | Callout marker, resolved in the **Notes** table under the frame |
-| `@R` / `@C` | The item that follows is right-aligned / centred on its interior line |
-| `##` and `==` inside a rule | ASCII fill for `─` and `═` where a label is dropped into the rule (`┌## 390 x 844 ##┐`) |
-| Text right of the closing border | Spec annotation for the reviewer, never rendered. Used instead of `@@n` in the 38-column frames |
+| Glyph                             | Meaning                                                                                         |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `┌─┐ │ └─┘ ├─┤`                   | Container / frame boundary. The outermost box is the 390 px viewport                            |
+| `╔═╗ ║ ╚═╝`                       | **Sticky** region — fixed to the viewport, does not scroll with content                         |
+| `▒▒▒▒`                            | Image region. Always labelled with aspect ratio and the field that fills it                     |
+| `░░░░`                            | Inset block (`surface-2`) — order summary, disabled field, table stripe                         |
+| `▓▓▓░░░`                          | Progress / capacity bar                                                                         |
+| `[[ Label ]]`                     | **Primary** action, 48 px, full width unless the frame shows otherwise                          |
+| `[ Label ]`                       | Secondary action, 44 px                                                                         |
+| `[ CAPS LABEL ]` filling a region | A labelled placeholder region, not a control — `[ POSTER 4:5 ]`, `[ QR ≥ 240px ]`               |
+| `< Label >`                       | Ghost / tertiary / link-style action                                                            |
+| `( placeholder .... )`            | Text input. The label always sits **above** it on its own line                                  |
+| `(o)` / `( )`                     | Radio — selected / unselected                                                                   |
+| `[x]` / `[_]`                     | Checkbox — checked / unchecked                                                                  |
+| `< - >  2  < + >`                 | Quantity stepper, 44 px targets                                                                 |
+| `▾`                               | Disclosure, select or menu trigger                                                              |
+| `● ○ ○`                           | Pagination dots for a rail                                                                      |
+| `···`                             | Repeated or truncated content of the same gabarit                                               |
+| `{ ... }`                         | **State annotation** — an engineering condition or an unnamed component, never rendered copy    |
+| `FOLD (844 px)` on a rule         | The initial viewport boundary. Everything below it requires a scroll                            |
+| `@@1`                             | Callout marker, resolved in the **Notes** table under the frame                                 |
+| `@R` / `@C`                       | The item that follows is right-aligned / centred on its interior line                           |
+| `##` and `==` inside a rule       | ASCII fill for `─` and `═` where a label is dropped into the rule (`┌## 390 x 844 ##┐`)         |
+| Text right of the closing border  | Spec annotation for the reviewer, never rendered. Used instead of `@@n` in the 38-column frames |
 
 Each frame is preceded by a header naming its route, its data and its purpose:
 
@@ -173,15 +173,15 @@ PROVES   the one sentence this frame has to demonstrate
 
 ### 1.4 Content rules inside a frame
 
-| Rule | Consequence in the frames |
-|---|---|
+| Rule                                                                | Consequence in the frames                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Money is drawn at full precision in summaries, trimmed on cards** | `100,000 DT` in an order summary; `50 DT` on a discovery card. TND has 3 decimals and the symbol `DT` (`shared/domain/value-objects/currency.vo.ts:37-40`); millimes are shown only when non-zero, and always at full precision in a total or receipt |
-| **Availability is a number and a sentence** | « Plus que 7 places », never a greyed control. Driven by `availableQuantity` / `isSoldOut` / `isOnSale`, which the API already computes |
-| **Availability is a snapshot, never a counter** | No frame draws a ticking number. `soldQuantity` moves at **hold** time and is restored on expiry or cancellation, so the figure can legitimately go *up* — every frame treats it as a per-fetch snapshot, and sold out as reversible |
-| **The countdown is always drawn twice** | Relative « Il reste 12:34 » **and** absolute « jusqu'à 21:45 ». The absolute form is the only one that survives a Konnect redirect |
-| **The fee is drawn from the first quantity onward** | The summary block appears in the ticket sheet, unchanged in structure through checkout, order and confirmation |
-| **Every failure frame names the money** | « Aucun montant n'a été débité. » is drawn as a line, not implied |
-| **No fabricated social proof** | No « 12 personnes regardent », no ratings, no favourite counts — none of it exists in the API |
+| **Availability is a number and a sentence**                         | « Plus que 7 places », never a greyed control. Driven by `availableQuantity` / `isSoldOut` / `isOnSale`, which the API already computes                                                                                                               |
+| **Availability is a snapshot, never a counter**                     | No frame draws a ticking number. `soldQuantity` moves at **hold** time and is restored on expiry or cancellation, so the figure can legitimately go _up_ — every frame treats it as a per-fetch snapshot, and sold out as reversible                  |
+| **The countdown is always drawn twice**                             | Relative « Il reste 12:34 » **and** absolute « jusqu'à 21:45 ». The absolute form is the only one that survives a Konnect redirect                                                                                                                    |
+| **The fee is drawn from the first quantity onward**                 | The summary block appears in the ticket sheet, unchanged in structure through checkout, order and confirmation                                                                                                                                        |
+| **Every failure frame names the money**                             | « Aucun montant n'a été débité. » is drawn as a line, not implied                                                                                                                                                                                     |
+| **No fabricated social proof**                                      | No « 12 personnes regardent », no ratings, no favourite counts — none of it exists in the API                                                                                                                                                         |
 
 ### 1.5 Figma frame naming
 
@@ -226,47 +226,47 @@ Phase 4 catalogues **33 routes** plus the static `/legal/*` group. Drawing all 3
 chosen because it introduces a layout problem the others do not solve. The remaining **twenty**
 routes inherit from them in [§2.2](#22-how-the-remaining-routes-inherit).
 
-| # | Archetype | Route | Role | P | The layout problem it is the only screen to solve |
-|---|---|---|---|---|---|
-| 01 | [Landing](#31-landing--) | `/` | public | P1 | A browsable surface answerable by thumb, with no query and no account |
-| 02 | [Discovery](#32-discovery--events) | `/events` | public | **P0** | Value-labelled filters + a card that carries when, where, how much and availability without a tap |
-| 03 | [Event detail](#33-event-detail--eventsid) | `/events/[id]` | public | **P0** | Facts before prose, an invariant section order, and the product's most important control — the sticky purchase bar |
-| 04 | [Ticket selection sheet](#34-ticket-selection-sheet--over-eventsid) | sheet over `/events/[id]` | public | **P0** | Tier + quantity + holder + the complete arithmetic, in one sheet, without losing the event behind it |
-| 05 | [Checkout](#35-checkout--checkoutorderid) | `/checkout/[orderId]` | participant | **P0** | A stripped trust surface: countdown, money, provider choice, nothing else |
-| 06 | [Payment return](#36-payment-return--checkoutorderidretour) | `/checkout/[orderId]/retour` | participant | **P0** | A screen whose truth has not arrived yet, and which must never guess |
-| 07 | [Order confirmation](#38-remaining-archetypes--compact-specs) | `/orders/[id]` | participant | **P0** | The receipt: what was paid, what it bought, and the non-refundable fee, stated before it matters |
-| 08 | [My tickets](#38-remaining-archetypes--compact-specs) | `/tickets` | participant | **P0** | A wallet where today's ticket is reachable in one tap |
-| 09 | [Ticket + QR](#37-ticket--ticketsid) | `/tickets/[id]` | participant | **P0** | A dark, offline-capable physical object, readable at a venue door at night |
-| 10 | [Login](#38-remaining-archetypes--compact-specs) | `/login` | public | **P0** | The one authentication moment, entered mid-purchase and returning to it intact |
-| 11 | [Organizer dashboard](#38-remaining-archetypes--compact-specs) | `/organizer` | organizer | P1 | Three numbers on a phone, plus a first-run state that is an onboarding moment |
-| 12 | [Create event](#38-remaining-archetypes--compact-specs) | `/organizer/events/new` | organizer | **P0** | A multi-step form whose order mirrors a poster, with live buyer-price arithmetic |
-| 13 | [Event analytics](#38-remaining-archetypes--compact-specs) | `/organizer/events/[id]/analytics` | organizer | P1 | Charts on a 390 px screen without a horizontal scroll, labelled **gross** |
-| 14 | [Scanner](#38-remaining-archetypes--compact-specs) | `/organizer/scanner` | organizer | **P0** | A dark, one-glance tool operated at a door, with a mandatory setup step and no offline queue |
+| #   | Archetype                                                           | Route                              | Role                                 | P      | The layout problem it is the only screen to solve                                                                  |
+| --- | ------------------------------------------------------------------- | ---------------------------------- | ------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| 01  | [Landing](#31-landing--)                                            | `/`                                | public                               | P1     | A browsable surface answerable by thumb, with no query and no account                                              |
+| 02  | [Discovery](#32-discovery--events)                                  | `/events`                          | public                               | **P0** | Value-labelled filters + a card that carries when, where, how much and availability without a tap                  |
+| 03  | [Event detail](#33-event-detail--eventsid)                          | `/events/[id]`                     | public                               | **P0** | Facts before prose, an invariant section order, and the product's most important control — the sticky purchase bar |
+| 04  | [Ticket selection sheet](#34-ticket-selection-sheet--over-eventsid) | sheet over `/events/[id]`          | public                               | **P0** | Tier + quantity + holder + the complete arithmetic, in one sheet, without losing the event behind it               |
+| 05  | [Checkout](#35-checkout--checkoutorderid)                           | `/checkout/[orderId]`              | participant                          | **P0** | A stripped trust surface: countdown, money, provider choice, nothing else                                          |
+| 06  | [Payment return](#36-payment-return--checkoutorderidretour)         | `/checkout/[orderId]/retour`       | participant                          | **P0** | A screen whose truth has not arrived yet, and which must never guess                                               |
+| 07  | [Order confirmation](#38-remaining-archetypes--compact-specs)       | `/orders/[id]`                     | participant                          | **P0** | The receipt: what was paid, what it bought, and the non-refundable fee, stated before it matters                   |
+| 08  | [My tickets](#38-remaining-archetypes--compact-specs)               | `/tickets`                         | participant                          | **P0** | A wallet where today's ticket is reachable in one tap                                                              |
+| 09  | [Ticket + QR](#37-ticket--ticketsid)                                | `/tickets/[id]`                    | participant                          | **P0** | A dark, offline-capable physical object, readable at a venue door at night                                         |
+| 10  | [Login](#38-remaining-archetypes--compact-specs)                    | `/login`                           | public                               | **P0** | The one authentication moment, entered mid-purchase and returning to it intact                                     |
+| 11  | [Organizer dashboard](#38-remaining-archetypes--compact-specs)      | `/organizer`                       | organizer                            | P1     | Three numbers on a phone, plus a first-run state that is an onboarding moment                                      |
+| 12  | [Create event](#38-remaining-archetypes--compact-specs)             | `/organizer/events/new`            | organizer                            | **P0** | A multi-step form whose order mirrors a poster, with live buyer-price arithmetic                                   |
+| 13  | [Event analytics](#38-remaining-archetypes--compact-specs)          | `/organizer/events/[id]/analytics` | organizer                            | P1     | Charts on a 390 px screen without a horizontal scroll, labelled **gross**                                          |
+| 14  | [Scanner](#38-remaining-archetypes--compact-specs)                  | `/check-in`                        | event owner / admin / assigned staff | **P0** | A dark, event-scoped tool with event selection, mandatory station setup, revocation handling, and no offline queue |
 
 ### 2.2 How the remaining routes inherit
 
 No route is left without a frame to build from. Each row below states which archetype it clones and
 **what genuinely differs** — the delta is what the designer draws as a variant, not a new frame.
 
-| Route | Inherits | Delta to draw |
-|---|---|---|
-| `/search` | 02 Discovery | Query echoed in the `<h1>`; the no-results state echoes the query only (« Aucun événement pour “jazz” »). ⚠ `GET /events/search` takes **`q`, `page`, `limit` and nothing else**, so the filter chip row is **removed**, not disabled — refinement links out to `/events?category=…&city=…` |
-| `/categories/[category]` | 02 Discovery | Category eyebrow as the page title from `displayNameFr`; the category filter chip is fixed and not removable |
-| `/register` | 10 Login | Three extra fields; the post-submit blocking screen « Vérifiez votre boîte mail » |
-| `/verify-email`, `/forgot-password`, `/reset-password` | 10 Login | Single-purpose form shells; each has a token-invalid state |
-| `/unsubscribe/[token]/[category]` | 10 Login | No form — a single confirmation panel. ⚠ The endpoint is a **side-effecting GET**, so the frame **must** carry an explicit « Confirmer la désinscription » press and must never fire on page load; the link is `prefetch={false}` and `nofollow` so a mail scanner cannot unsubscribe the user silently |
-| `/legal/*` | — | Static prose. A single measure-capped text column; no frame required beyond the shared page shell |
-| `/orders` | 08 My tickets | Rows are orders, not passes; each row carries `status` as a word and the `total`. ⚠ `GET /orders` accepts **only `page` and `limit`** under `forbidNonWhitelisted`, so `?status=PAID` is a 400 — status tabs filter the loaded pages and must say so |
-| `/notifications` | 08 My tickets | Rows are `GET /notifications/me` items — a **delivery log, not an inbox**: `channel` (EMAIL \| SMS), `status` and `sentAt` as words. ⚠ `NotificationDto` has **no read state**, so no unread dot, badge or « marquer comme lu » may be drawn |
-| `/profile`, `/settings` | 10 Login | Stacked form sections; `/settings` adds a destructive `DELETE /users/me` block, isolated at the bottom behind confirmation |
-| `/organizer/events` | 02 Discovery | Status tabs (Brouillons · Publiés · Annulés · Terminés) driven by the `status` query on `GET /events/organizer/:organizerId`; per-row publish/edit/delete. ⚠ `status` is applied **after** the page is fetched and overwrites `total`, so a filtered tab draws **no count and no pager** |
-| `/organizer/events/[id]` | 03 Event detail | The participant event page **plus** a persistent « Brouillon — invisible par le public » bar; the sticky bar's action becomes *Publier*. ⚠ `GET /events/:id` is `@Public()` and ignores the bearer token, so a `DRAFT` is a 403 **even for its owner** — until that is fixed the frame can only be built for a `PUBLISHED` event |
-| `/organizer/events/[id]/edit` | 12 Create event | Same step structure, pre-filled; adds the unsaved-changes guard, publish confirmation and delete confirmation |
-| `/organizer/events/[id]/ticket-types` | 12 Create event, step 3 | Extracted as a standalone page; tiers read from `GET /events/:id` → `ticketTypes[]`, as there is no list endpoint. Deletion is refused unless the event is `DRAFT` **and** `soldQuantity === 0` (`event.entity.ts:535,548`), so the delete control is hidden on a published event, not disabled |
-| `/organizer/events/[id]/participants` | 13 Event analytics | Check-in progress + per-type breakdown only — ⚠ **no endpoint lists an event's ticket holders**, so no roster table may be drawn |
-| `/admin`, `/admin/reports` | 11 Organizer dashboard / 13 Analytics | Same stat and chart blocks, denser; `lastUpdated` drawn verbatim |
-| `/admin/moderation` | 02 Discovery | Event rows add a commission drawer: global rate, optional override, effective rate, 50 DT buyer-price preview, save and « Utiliser le taux global ». Takedown remains unavailable and separately explained |
-| `/admin/users` | 08 My tickets | Desktop-first 40 px data table; on mobile it degrades to stacked cards, never a horizontally scrolling table |
+| Route                                                  | Inherits                              | Delta to draw                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/search`                                              | 02 Discovery                          | Query echoed in the `<h1>`; the no-results state echoes the query only (« Aucun événement pour “jazz” »). ⚠ `GET /events/search` takes **`q`, `page`, `limit` and nothing else**, so the filter chip row is **removed**, not disabled — refinement links out to `/events?category=…&city=…`                                      |
+| `/categories/[category]`                               | 02 Discovery                          | Category eyebrow as the page title from `displayNameFr`; the category filter chip is fixed and not removable                                                                                                                                                                                                                      |
+| `/register`                                            | 10 Login                              | Three extra fields; the post-submit blocking screen « Vérifiez votre boîte mail »                                                                                                                                                                                                                                                 |
+| `/verify-email`, `/forgot-password`, `/reset-password` | 10 Login                              | Single-purpose form shells; each has a token-invalid state                                                                                                                                                                                                                                                                        |
+| `/unsubscribe/[token]/[category]`                      | 10 Login                              | No form — a single confirmation panel. ⚠ The endpoint is a **side-effecting GET**, so the frame **must** carry an explicit « Confirmer la désinscription » press and must never fire on page load; the link is `prefetch={false}` and `nofollow` so a mail scanner cannot unsubscribe the user silently                          |
+| `/legal/*`                                             | —                                     | Static prose. A single measure-capped text column; no frame required beyond the shared page shell                                                                                                                                                                                                                                 |
+| `/orders`                                              | 08 My tickets                         | Rows are orders, not passes; each row carries `status` as a word and the `total`. ⚠ `GET /orders` accepts **only `page` and `limit`** under `forbidNonWhitelisted`, so `?status=PAID` is a 400 — status tabs filter the loaded pages and must say so                                                                             |
+| `/notifications`                                       | 08 My tickets                         | Rows are `GET /notifications/me` items — a **delivery log, not an inbox**: `channel` (EMAIL \| SMS), `status` and `sentAt` as words. ⚠ `NotificationDto` has **no read state**, so no unread dot, badge or « marquer comme lu » may be drawn                                                                                     |
+| `/profile`, `/settings`                                | 10 Login                              | Stacked form sections; `/settings` adds a destructive `DELETE /users/me` block, isolated at the bottom behind confirmation                                                                                                                                                                                                        |
+| `/organizer/events`                                    | 02 Discovery                          | Status tabs (Brouillons · Publiés · Annulés · Terminés) driven by the `status` query on `GET /events/organizer/:organizerId`; per-row publish/edit/delete. ⚠ `status` is applied **after** the page is fetched and overwrites `total`, so a filtered tab draws **no count and no pager**                                         |
+| `/organizer/events/[id]`                               | 03 Event detail                       | The participant event page **plus** a persistent « Brouillon — invisible par le public » bar; the sticky bar's action becomes _Publier_. ⚠ `GET /events/:id` is `@Public()` and ignores the bearer token, so a `DRAFT` is a 403 **even for its owner** — until that is fixed the frame can only be built for a `PUBLISHED` event |
+| `/organizer/events/[id]/edit`                          | 12 Create event                       | Same step structure, pre-filled; adds the unsaved-changes guard, publish confirmation and delete confirmation                                                                                                                                                                                                                     |
+| `/organizer/events/[id]/ticket-types`                  | 12 Create event, step 3               | Extracted as a standalone page; tiers read from `GET /events/:id` → `ticketTypes[]`, as there is no list endpoint. Deletion is refused unless the event is `DRAFT` **and** `soldQuantity === 0` (`event.entity.ts:535,548`), so the delete control is hidden on a published event, not disabled                                   |
+| `/organizer/events/[id]/participants`                  | 13 Event analytics                    | Check-in progress + per-type breakdown only — ⚠ **no endpoint lists an event's ticket holders**, so no roster table may be drawn                                                                                                                                                                                                 |
+| `/admin`, `/admin/reports`                             | 11 Organizer dashboard / 13 Analytics | Same stat and chart blocks, denser; `lastUpdated` drawn verbatim                                                                                                                                                                                                                                                                  |
+| `/admin/moderation`                                    | 02 Discovery                          | Event rows add a commission drawer: global rate, optional override, effective rate, 50 DT buyer-price preview, save and « Utiliser le taux global ». Takedown remains unavailable and separately explained                                                                                                                        |
+| `/admin/users`                                         | 08 My tickets                         | Desktop-first 40 px data table; on mobile it degrades to stacked cards, never a horizontally scrolling table                                                                                                                                                                                                                      |
 
 ### 2.3 The frame map of the money path
 
@@ -290,7 +290,7 @@ flowchart TD
 ```
 
 > **The single most important structural fact in this diagram:** there is **no `POST /tickets/reserve`
-> step**. `POST /orders` creates the order *and* reserves the tickets internally
+> step**. `POST /orders` creates the order _and_ reserves the tickets internally
 > (`create-order.handler.ts`, step 5). A frame that draws a separate « réservation » step would produce
 > an orphaned second hold. `POST /tickets/reserve` and `POST /tickets/confirm` exist but belong to
 > the Payments module's internal path, not to any participant screen.
@@ -362,7 +362,7 @@ PROVES   A user with no query and no account leaves this screen with
 
 **Layout intent.** Discovery is the product, not a search box
 ([Phase 1 §A.3](02-product-design-brief.md#a3-six-positioning-commitments)). The header carries a
-*secondary* search affordance; the primary affordances are the city scope, the date-window chips and
+_secondary_ search affordance; the primary affordances are the city scope, the date-window chips and
 the rails. City is chosen once and scopes everything below it — the Fever move from
 [Phase 1 §J](02-product-design-brief.md#j-competitive-inspiration) — and is persisted, so a returning
 user lands already scoped. Nothing above the fold requires an account, and the only account control
@@ -372,13 +372,13 @@ Every rail has a « Tout voir » link to a real filtered `/events` URL. A horizo
 accessible navigation on its own; the link is what makes the rail's content reachable by keyboard and
 by a crawler.
 
-| # | Note |
-|---|---|
-| 1 | Header is a **three-state** shell: `unknown` → `logged-out` → `logged-in`. The `unknown` state renders neutral chrome so a returning user never sees « Se connecter » flash before their name (Phase 4 §1.2) |
-| 2 | Each chip is a `dateFrom`/`dateTo` pair — no new backend capability. The chip is labelled with its **value**, never the field name |
-| 3 | Price and scarcity come from `EventListDto.ticketSummary` — `minPrice`, `totalAvailable`, `hasAvailableTickets`, `isSoldOut`. **No per-card follow-up request**, which is what makes this grid viable on 3G |
-| 4 | Ten categories from `EventCategory`, labelled with `displayNameFr` from the backend metadata so the label can never drift from the enum. Icons are decided in Phase 7 §9, not here |
-| 5 | Four tabs, never five (Phase 1 §I.3). The bar is present logged in **and** logged out — « Mes billets » simply routes through `/login?next=/tickets` |
+| #   | Note                                                                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Header is a **three-state** shell: `unknown` → `logged-out` → `logged-in`. The `unknown` state renders neutral chrome so a returning user never sees « Se connecter » flash before their name (Phase 4 §1.2) |
+| 2   | Each chip is a `dateFrom`/`dateTo` pair — no new backend capability. The chip is labelled with its **value**, never the field name                                                                           |
+| 3   | Price and scarcity come from `EventListDto.ticketSummary` — `minPrice`, `totalAvailable`, `hasAvailableTickets`, `isSoldOut`. **No per-card follow-up request**, which is what makes this grid viable on 3G  |
+| 4   | Ten categories from `EventCategory`, labelled with `displayNameFr` from the backend metadata so the label can never drift from the enum. Icons are decided in Phase 7 §9, not here                           |
+| 5   | Four tabs, never five (Phase 1 §I.3). The bar is present logged in **and** logged out — « Mes billets » simply routes through `/login?next=/tickets`                                                         |
 
 **States to draw:** `default` · `loading` (rail skeletons at the real card aspect ratio, zero CLS) ·
 `empty-city` (« Rien de prévu à Sfax cette semaine » + « Voir tous les événements ») · `offline`
@@ -464,14 +464,14 @@ Card content order is fixed and identical everywhere the card appears: poster �
 the organizer printed, not an all-in figure; the event's effective service fee appears when a quantity
 exists ([§0.3](#03-contract-corrections-this-phase-inherits)).
 
-| # | Note |
-|---|---|
-| 1 | Chips are labelled with their **applied value**, never the field name. « Filtres · 3 » counts the active ones. Chips scroll horizontally; the sheet is the complete set |
-| 2 | `total` from the flat envelope. Sort options map to real `sortBy` values only — `startDate`, `soldTickets`, `publishedAt`, `title`, `totalCapacity` |
-| 3 | Scarcity sentence from `ticketSummary.totalAvailable`; the threshold rule is in Phase 1 §E.2. **Never animated** — the number can legitimately go back up |
-| 4 | A sold-out card **stays in the grid**. Hiding it hides the information that the cheap tier existed and went |
-| 5 | « Charger plus » is a real button, not scroll-only. Infinite scroll may *supplement* it; it may never replace it |
-| 6 | The apply button carries the live result count. On mobile the sheet is full-height; at `md` it becomes a centred modal |
+| #   | Note                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Chips are labelled with their **applied value**, never the field name. « Filtres · 3 » counts the active ones. Chips scroll horizontally; the sheet is the complete set |
+| 2   | `total` from the flat envelope. Sort options map to real `sortBy` values only — `startDate`, `soldTickets`, `publishedAt`, `title`, `totalCapacity`                     |
+| 3   | Scarcity sentence from `ticketSummary.totalAvailable`; the threshold rule is in Phase 1 §E.2. **Never animated** — the number can legitimately go back up               |
+| 4   | A sold-out card **stays in the grid**. Hiding it hides the information that the cheap tier existed and went                                                             |
+| 5   | « Charger plus » is a real button, not scroll-only. Infinite scroll may _supplement_ it; it may never replace it                                                        |
+| 6   | The apply button carries the live result count. On mobile the sheet is full-height; at `md` it becomes a centred modal                                                  |
 
 **States to draw:** `default` · `loading` (6 card skeletons) · `empty-filtered` (echo the actual
 filters, « Effacer les filtres ») · `empty-unfiltered` · `error` (« Connexion perdue » + « Réessayer »)
@@ -533,13 +533,13 @@ PROVES   A buyer settles quand, où, combien and disponible before
 └──────────────────────────────────────┘
 ```
 
-| # | What this must prove |
-|---|---|
-| 1 | Decision-critical facts sit above the fold; prose is below. A user decides on *when · where · how much · still available* |
-| 2 | Every tier states its availability in words **and** numbers — never a bare disabled control |
-| 3 | The sold-out tier stays in the list with a re-check control. `soldQuantity` moves at **hold** time and is restored on expiry or cancellation, so availability is a per-fetch snapshot that can go back **up** — sold out is never terminal |
-| 4 | The organizer block is a name with **no link**. `GET /events/organizer/:organizerId` is `@Roles('ORGANIZER','ADMIN')` **and** rejects any `organizerId` that is not the caller's (`events.controller.ts:405-407`, `:426`), so no public organizer profile can exist |
-| 5 | The sticky bar is the product's most important control and never scrolls away |
+| #   | What this must prove                                                                                                                                                                                                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Decision-critical facts sit above the fold; prose is below. A user decides on _when · where · how much · still available_                                                                                                                                           |
+| 2   | Every tier states its availability in words **and** numbers — never a bare disabled control                                                                                                                                                                         |
+| 3   | The sold-out tier stays in the list with a re-check control. `soldQuantity` moves at **hold** time and is restored on expiry or cancellation, so availability is a per-fetch snapshot that can go back **up** — sold out is never terminal                          |
+| 4   | The organizer block is a name with **no link**. `GET /events/organizer/:organizerId` is `@Roles('ORGANIZER','ADMIN')` **and** rejects any `organizerId` that is not the caller's (`events.controller.ts:405-407`, `:426`), so no public organizer profile can exist |
+| 5   | The sticky bar is the product's most important control and never scrolls away                                                                                                                                                                                       |
 
 **States to draw:** `default` · `loading` · `cancelled` (danger banner above poster, bar replaced by text,
 imagery desaturated) · `completed` · `sold-out-entirely` · `error` · `404`.
@@ -581,14 +581,14 @@ PROVES   The complete arithmetic exists the instant a quantity does,
 └──────────────────────────────────────┘
 ```
 
-| # | What this must prove |
-|---|---|
-| 1 | The complete arithmetic appears the instant a quantity exists — never at the payment step |
-| 2 | The total is in the button label, so the thumb never leaves the commitment |
-| 3 | « Les billets sont à mon nom » is checked by default; most purchases are 1–2 tickets, and unchecking reveals one `{ name, email }` pair per ticket |
-| 4 | The stepper names *which* limit is binding: the tier's `availableQuantity`, or the **10 tickets per event per user** cap (`TICKET_LIMIT_EXCEEDED` → 400). The third limit — **5 orders per hour** (`RATE_LIMITED` → 403) — is not a stepper bound and surfaces only on submit |
-| 5 | Logged-out users reach this screen and see the price. Auth is requested on **Continuer**, and the selection survives it |
-| 6 | A 3 % event-override variant shows 3,000 DT fees and 103,000 DT total for the same subtotal |
+| #   | What this must prove                                                                                                                                                                                                                                                          |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | The complete arithmetic appears the instant a quantity exists — never at the payment step                                                                                                                                                                                     |
+| 2   | The total is in the button label, so the thumb never leaves the commitment                                                                                                                                                                                                    |
+| 3   | « Les billets sont à mon nom » is checked by default; most purchases are 1–2 tickets, and unchecking reveals one `{ name, email }` pair per ticket                                                                                                                            |
+| 4   | The stepper names _which_ limit is binding: the tier's `availableQuantity`, or the **10 tickets per event per user** cap (`TICKET_LIMIT_EXCEEDED` → 400). The third limit — **5 orders per hour** (`RATE_LIMITED` → 403) — is not a stepper bound and surfaces only on submit |
+| 5   | Logged-out users reach this screen and see the price. Auth is requested on **Continuer**, and the selection survives it                                                                                                                                                       |
+| 6   | A 3 % event-override variant shows 3,000 DT fees and 103,000 DT total for the same subtotal                                                                                                                                                                                   |
 
 **States to draw:** `default` · `qty-selected` · `limit-reached` — one frame per binding limit
 (`availableQuantity` · 10 billets par événement · the 403 « 5 commandes par heure » on submit) ·
@@ -645,13 +645,13 @@ PROVES   The only decisions left are provider and pay, with the
 └──────────────────────────────────────┘
 ```
 
-| # | What this must prove |
-|---|---|
-| 1 | The chrome is **stripped** — one wordmark, no navigation, nothing offering an exit mid-payment |
-| 2 | The countdown is stated in both forms, because only the absolute one survives the gateway round trip |
-| 3 | `paymentFees` is `0` for every gateway today, so its row is drawn **conditionally**. It is a reserved buyer surcharge, not an estimate of Tickr's processor cost; any future non-zero value requires approved policy and disclosure before payment |
-| 4 | Three named providers as radio cards, local first — never a dropdown |
-| 5 | The redirect is announced before it occurs |
+| #   | What this must prove                                                                                                                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | The chrome is **stripped** — one wordmark, no navigation, nothing offering an exit mid-payment                                                                                                                                                     |
+| 2   | The countdown is stated in both forms, because only the absolute one survives the gateway round trip                                                                                                                                               |
+| 3   | `paymentFees` is `0` for every gateway today, so its row is drawn **conditionally**. It is a reserved buyer surcharge, not an estimate of Tickr's processor cost; any future non-zero value requires approved policy and disclosure before payment |
+| 4   | Three named providers as radio cards, local first — never a dropdown                                                                                                                                                                               |
+| 5   | The redirect is announced before it occurs                                                                                                                                                                                                         |
 
 **States to draw:** `default` · `provider-selected` · `submitting` (button locked, idempotency key held) ·
 `expired` · `payment-failed` · `rate-limited (403)` · `error`.
@@ -696,12 +696,12 @@ PROVES   A screen whose truth has not arrived yet can wait honestly
 └──────────────────────────────────────┘
 ```
 
-| # | What this must prove |
-|---|---|
-| 1 | The outcome is **never** inferred from URL parameters — the screen polls `GET /orders/:id` |
-| 2 | A prolonged `PROCESSING` is presented as verification in progress, never as failure |
-| 3 | **No retry exists while the status is `PENDING`/`PROCESSING`** — a retry there is how double payments happen. A fresh attempt is offered only after a terminal `FAILED`, and then with a different provider |
-| 4 | The reference is visible in every state, so a user can always quote it. ⚠ `OrderDto` has **no `orderNumber`** — the reference is a short form of the `id` UUID and must be selectable |
+| #   | What this must prove                                                                                                                                                                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | The outcome is **never** inferred from URL parameters — the screen polls `GET /orders/:id`                                                                                                                  |
+| 2   | A prolonged `PROCESSING` is presented as verification in progress, never as failure                                                                                                                         |
+| 3   | **No retry exists while the status is `PENDING`/`PROCESSING`** — a retry there is how double payments happen. A fresh attempt is offered only after a terminal `FAILED`, and then with a different provider |
+| 4   | The reference is visible in every state, so a user can always quote it. ⚠ `OrderDto` has **no `orderNumber`** — the reference is a short form of the `id` UUID and must be selectable                      |
 
 **States to draw:** `polling` · `paid` → success · `failed` → recovery with a different provider ·
 `ceiling-reached` (above) · `expired`.
@@ -739,12 +739,12 @@ PROVES   The pass is a physical object at a dark door with no signal.
 └──────────────────────────────────────┘
 ```
 
-| # | What this must prove |
-|---|---|
-| 1 | The QR is the largest element and is reachable in **one tap** from the home surface |
-| 2 | The QR is rendered locally from the cached `qrCode` string with **no network** — venue basements have no signal, and no image endpoint is involved |
-| 3 | `CHECKED_IN` visually *spends* the ticket: dimmed QR, stamp, timestamp — the door must not be able to reuse it by accident |
-| 4 | The holder name is prominent, because multi-ticket orders need per-pass identification |
+| #   | What this must prove                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | The QR is the largest element and is reachable in **one tap** from the home surface                                                                |
+| 2   | The QR is rendered locally from the cached `qrCode` string with **no network** — venue basements have no signal, and no image endpoint is involved |
+| 3   | `CHECKED_IN` visually _spends_ the ticket: dimmed QR, stamp, timestamp — the door must not be able to reuse it by accident                         |
+| 4   | The holder name is prominent, because multi-ticket orders need per-pass identification                                                             |
 
 **States to draw:** `confirmed` · `checked-in` · `expired` · `cancelled` · `event-cancelled` · `offline` · `loading`.
 
@@ -762,15 +762,15 @@ life except across a transfer, which mints a new one (`ticket.entity.ts:461`), s
 The seven below follow the same conventions; they are specified rather than drawn because their
 layouts are conventional and carry no money risk. The Figma frames are still required.
 
-| Archetype | Route | Layout intent | Must prove |
-|---|---|---|---|
-| **Order confirmation** | `/orders/[id]` | Success moment, but informational | `total` paid, the reference, the event, « e-mail en route », one dominant CTA « Voir mes billets ». The refund rule — remboursement = `subtotal` + `paymentFees`, **la commission n'est pas remboursée** — is stated here, before it matters |
-| **My tickets** | `/tickets` | Vertical list of `TicketCard` | Today's event promoted to the top; `status` unmistakable per row. ⚠ `GET /tickets` **accepts `?status` and silently ignores it** — the handler calls `findByUserId(userId, page, limit)` only (`get-user-tickets.handler.ts:32-36`), so upcoming/past tabs filter the **loaded pages** and must say so |
-| **Login** | `/login`, `/register` | Centred card, no nav | Returns to `?next=` exactly; never blocks a price view. ⚠ A `403` on `POST /auth/login` means the e-mail is unverified and nothing else (`auth.controller.ts:188`); a deactivated account is a `401` indistinguishable from bad credentials (`local.strategy.ts:73`). **No resend-verification endpoint exists**, so the 403 has no recovery to draw yet |
-| **Organizer dashboard** | `/organizer` | 3 KPI tiles + event list | `totalRevenue` labelled **« Ventes de billets brutes · avant remboursements et ajustements »**; net/payable earnings unavailable |
-| **Create event** | `/organizer/events/new` | Poster → title → date → venue → tiers | Live participant-price arithmetic as the price is typed; DRAFT vs PUBLISHED unmistakable |
-| **Event analytics** | `/organizer/events/[id]/analytics` | Stat row + sales timeline | Empty state is a *first-run*, not an error; `lastUpdated` rendered verbatim; gross ticket sales clearly distinguished from unavailable net/payable earnings |
-| **Scanner** | `/organizer/scanner` | Full-bleed camera, huge targets | Valid/invalid unambiguous at a glance, in the dark, one-handed; a duplicate scan reads differently from an invalid one. `POST /tickets/check-in` requires `qrCode`, `deviceId` and `locationGate`, so the setup step is mandatory and happens once per shift |
+| Archetype               | Route                              | Layout intent                         | Must prove                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------- | ---------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Order confirmation**  | `/orders/[id]`                     | Success moment, but informational     | `total` paid, the reference, the event, « e-mail en route », one dominant CTA « Voir mes billets ». The refund rule — remboursement = `subtotal` + `paymentFees`, **la commission n'est pas remboursée** — is stated here, before it matters                                                                                                              |
+| **My tickets**          | `/tickets`                         | Vertical list of `TicketCard`         | Today's event promoted to the top; `status` unmistakable per row. ⚠ `GET /tickets` **accepts `?status` and silently ignores it** — the handler calls `findByUserId(userId, page, limit)` only (`get-user-tickets.handler.ts:32-36`), so upcoming/past tabs filter the **loaded pages** and must say so                                                   |
+| **Login**               | `/login`, `/register`              | Centred card, no nav                  | Returns to `?next=` exactly; never blocks a price view. ⚠ A `403` on `POST /auth/login` means the e-mail is unverified and nothing else (`auth.controller.ts:188`); a deactivated account is a `401` indistinguishable from bad credentials (`local.strategy.ts:73`). **No resend-verification endpoint exists**, so the 403 has no recovery to draw yet |
+| **Organizer dashboard** | `/organizer`                       | 3 KPI tiles + event list              | `totalRevenue` labelled **« Ventes de billets brutes · avant remboursements et ajustements »**; net/payable earnings unavailable                                                                                                                                                                                                                          |
+| **Create event**        | `/organizer/events/new`            | Poster → title → date → venue → tiers | Live participant-price arithmetic as the price is typed; DRAFT vs PUBLISHED unmistakable                                                                                                                                                                                                                                                                  |
+| **Event analytics**     | `/organizer/events/[id]/analytics` | Stat row + sales timeline             | Empty state is a _first-run_, not an error; `lastUpdated` rendered verbatim; gross ticket sales clearly distinguished from unavailable net/payable earnings                                                                                                                                                                                               |
+| **Scanner**             | `/check-in`                        | Full-bleed camera, huge targets       | Select from `GET /events/check-in-access/me`; valid/invalid unambiguous in the dark and one-handed; duplicate differs from invalid. `POST /tickets/check-in` requires `eventId`, `qrCode`, `deviceId`, and `locationGate`; revoked access returns to event selection                                                                                      |
 
 ---
 
@@ -779,22 +779,22 @@ layouts are conventional and carry no money risk. The Figma frames are still req
 One row per archetype, numbered exactly as in [§2.1](#21-the-fourteen-archetypes) — that number is
 the `<NN>` in the Figma frame name.
 
-| # | Archetype | ASCII spec | Figma frame | Reviewed |
-|---|---|---|---|---|
-| 01 | Landing | ✅ §3.1 | ☐ | ☐ |
-| 02 | Discovery | ✅ §3.2 | ☐ | ☐ |
-| 03 | Event detail | ✅ §3.3 | ☐ | ☐ |
-| 04 | Ticket selection sheet | ✅ §3.4 | ☐ | ☐ |
-| 05 | Checkout | ✅ §3.5 | ☐ | ☐ |
-| 06 | Payment return | ✅ §3.6 | ☐ | ☐ |
-| 07 | Order confirmation | ✅ §3.8 | ☐ | ☐ |
-| 08 | My tickets | ✅ §3.8 | ☐ | ☐ |
-| 09 | Ticket + QR | ✅ §3.7 | ☐ | ☐ |
-| 10 | Login | ✅ §3.8 | ☐ | ☐ |
-| 11 | Organizer dashboard | ✅ §3.8 | ☐ | ☐ |
-| 12 | Create event | ✅ §3.8 | ☐ | ☐ |
-| 13 | Event analytics | ✅ §3.8 | ☐ | ☐ |
-| 14 | Scanner | ✅ §3.8 | ☐ | ☐ |
+| #   | Archetype              | ASCII spec | Figma frame | Reviewed |
+| --- | ---------------------- | ---------- | ----------- | -------- |
+| 01  | Landing                | ✅ §3.1    | ☐           | ☐        |
+| 02  | Discovery              | ✅ §3.2    | ☐           | ☐        |
+| 03  | Event detail           | ✅ §3.3    | ☐           | ☐        |
+| 04  | Ticket selection sheet | ✅ §3.4    | ☐           | ☐        |
+| 05  | Checkout               | ✅ §3.5    | ☐           | ☐        |
+| 06  | Payment return         | ✅ §3.6    | ☐           | ☐        |
+| 07  | Order confirmation     | ✅ §3.8    | ☐           | ☐        |
+| 08  | My tickets             | ✅ §3.8    | ☐           | ☐        |
+| 09  | Ticket + QR            | ✅ §3.7    | ☐           | ☐        |
+| 10  | Login                  | ✅ §3.8    | ☐           | ☐        |
+| 11  | Organizer dashboard    | ✅ §3.8    | ☐           | ☐        |
+| 12  | Create event           | ✅ §3.8    | ☐           | ☐        |
+| 13  | Event analytics        | ✅ §3.8    | ☐           | ☐        |
+| 14  | Scanner                | ✅ §3.8    | ☐           | ☐        |
 
 **Figma file:** _link here once created._
 

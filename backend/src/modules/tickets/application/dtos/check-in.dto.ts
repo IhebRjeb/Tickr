@@ -1,10 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 
 /**
  * Request DTO for checking in a ticket at a venue entrance
  */
 export class CheckInDto {
+  @ApiProperty({
+    description: 'Event selected by the scanner operator',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  @IsUUID()
+  eventId!: string;
+
   @ApiProperty({
     description: 'The scanned QR code string',
     example: 'v1-550e8400-e29b-41d4-a716-446655440000-a1b2',

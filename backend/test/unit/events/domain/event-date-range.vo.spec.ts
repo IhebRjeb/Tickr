@@ -66,11 +66,17 @@ describe('EventDateRange Value Object', () => {
     });
 
     it('should accept start date exactly 1 hour from now', () => {
-      const start = futureDate(1.05); // Just over 1 hour (with buffer for test execution time)
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-09-01T12:00:00.000Z'));
+      const start = futureDate(1);
       const end = futureDate(24);
 
-      const dateRange = EventDateRangeVO.create(start, end);
-      expect(dateRange).toBeInstanceOf(EventDateRangeVO);
+      try {
+        const dateRange = EventDateRangeVO.create(start, end);
+        expect(dateRange).toBeInstanceOf(EventDateRangeVO);
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 

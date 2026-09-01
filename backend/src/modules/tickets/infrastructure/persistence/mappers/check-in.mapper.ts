@@ -29,6 +29,11 @@ export class CheckInMapper {
     entity.locationGate = domain.locationGate;
     entity.isValid = domain.isValid;
     entity.failureReason = domain.failureReason;
+    entity.authorizationSource =
+      domain.authorizationSource === 'LEGACY'
+        ? null
+        : domain.authorizationSource;
+    entity.assignmentId = domain.assignmentId;
     entity.createdAt = domain.createdAt;
 
     return entity;
@@ -51,6 +56,10 @@ export class CheckInMapper {
       timestamp: raw.timestamp,
       isValid: raw.isValid,
       failureReason: raw.failureReason,
+      authorizationSource: this.toAuthorizationSource(
+        raw.authorizationSource,
+      ),
+      assignmentId: raw.assignmentId,
       createdAt: raw.createdAt,
     });
   }
@@ -63,5 +72,18 @@ export class CheckInMapper {
    */
   toDomainArray(raws: CheckInOrmEntity[]): CheckInEntity[] {
     return raws.map((raw) => this.toDomain(raw));
+  }
+
+  private toAuthorizationSource(
+    value: string | null,
+  ): 'OWNER' | 'ADMIN' | 'ASSIGNMENT' | 'LEGACY' {
+    switch (value) {
+      case 'OWNER':
+      case 'ADMIN':
+      case 'ASSIGNMENT':
+        return value;
+      default:
+        return 'LEGACY';
+    }
   }
 }

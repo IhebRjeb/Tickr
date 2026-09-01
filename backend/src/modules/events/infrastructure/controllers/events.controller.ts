@@ -21,6 +21,7 @@ import {
   PayloadTooLargeException,
   UnsupportedMediaTypeException,
   InternalServerErrorException,
+  ConflictException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -34,6 +35,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '@shared/infrastructure/common/decorators/current-user.decorator';
 import { Public } from '@shared/infrastructure/common/decorators/public.decorator';
 import { Roles } from '@shared/infrastructure/common/decorators/roles.decorator';
@@ -60,6 +62,10 @@ import {
   UploadEventImageHandler,
   SetEventCommissionOverrideCommand,
   SetEventCommissionOverrideHandler,
+  AssignEventCheckInStaffCommand,
+  AssignEventCheckInStaffHandler,
+  RevokeEventCheckInStaffCommand,
+  RevokeEventCheckInStaffHandler,
   // Queries
   GetEventByIdQuery,
   GetEventByIdHandler,
@@ -73,6 +79,10 @@ import {
   GetUpcomingEventsHandler,
   GetOrganizerEventsQuery,
   GetOrganizerEventsHandler,
+  GetEventCheckInStaffQuery,
+  GetEventCheckInStaffHandler,
+  GetMyEventCheckInAccessQuery,
+  GetMyEventCheckInAccessHandler,
   // DTOs
   CreateEventDto,
   UpdateEventDto,
@@ -83,6 +93,11 @@ import {
   EventFilterDto,
   CancelEventDto,
   SetEventCommissionOverrideDto,
+  AssignEventCheckInStaffDto,
+  EventCheckInStaffAssignmentDto,
+  PaginatedEventCheckInStaffAssignmentsDto,
+  PaginatedEventCheckInAccessDto,
+  PaginationDto,
 } from '../../application';
 import { EventCategory } from '../../domain/value-objects/event-category.vo';
 import { EventStatus } from '../../domain/value-objects/event-status.vo';
@@ -223,6 +238,8 @@ export class EventsController {
     private readonly removeTicketTypeHandler: RemoveTicketTypeHandler,
     private readonly uploadEventImageHandler: UploadEventImageHandler,
     private readonly setEventCommissionOverrideHandler: SetEventCommissionOverrideHandler,
+    private readonly assignEventCheckInStaffHandler: AssignEventCheckInStaffHandler,
+    private readonly revokeEventCheckInStaffHandler: RevokeEventCheckInStaffHandler,
     // Query Handlers
     private readonly getEventByIdHandler: GetEventByIdHandler,
     private readonly getPublishedEventsHandler: GetPublishedEventsHandler,
@@ -230,6 +247,8 @@ export class EventsController {
     private readonly getEventsByCategoryHandler: GetEventsByCategoryHandler,
     private readonly getUpcomingEventsHandler: GetUpcomingEventsHandler,
     private readonly getOrganizerEventsHandler: GetOrganizerEventsHandler,
+    private readonly getEventCheckInStaffHandler: GetEventCheckInStaffHandler,
+    private readonly getMyEventCheckInAccessHandler: GetMyEventCheckInAccessHandler,
   ) {}
 
   // ============================================
@@ -394,6 +413,39 @@ export class EventsController {
     return result.value!;
   }
 
+  @Get('check-in-access/me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'List events the current user may check in' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated upcoming check-in events',
+    type: PaginatedEventCheckInAccessDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Account cannot access check-in' })
+  async getMyEventCheckInAccess(
+    @CurrentUser() user: RequestUser,
+    @Query() pagination: PaginationDto,
+  ): Promise<PaginatedEventCheckInAccessDto> {
+    const result = await this.getMyEventCheckInAccessHandler.execute(
+      new GetMyEventCheckInAccessQuery(
+        user.userId,
+        pagination.page ?? 1,
+        pagination.limit ?? 20,
+      ),
+    );
+
+    if (result.isFailure) {
+      throw new ForbiddenException(result.error.message);
+    }
+
+    return result.value;
+  }
+
   /**
    * Get event by ID
    *
@@ -470,6 +522,134 @@ export class EventsController {
 
     const result = await this.getOrganizerEventsHandler.execute(query);
     return result.value!;
+  }
+
+  @Post(':id/check-in-staff')
+  @UseGuards(JwtAuthGuard, RolesGuard, IsEventOwnerGuard)
+  @Roles('ORGANIZER')
+  @Throttle({
+    short: { ttl: 1000, limit: 3 },
+    medium: { ttl: 10000, limit: 10 },
+    long: { ttl: 3600000, limit: 20 },
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Assign check-in staff to an event' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiBody({ type: AssignEventCheckInStaffDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Check-in staff assigned',
+    type: EventCheckInStaffAssignmentDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not event owner' })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiResponse({ status: 409, description: 'User already assigned' })
+  @ApiResponse({ status: 422, description: 'User is not eligible' })
+  async assignEventCheckInStaff(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+    @Body() dto: AssignEventCheckInStaffDto,
+  ): Promise<EventCheckInStaffAssignmentDto> {
+    const result = await this.assignEventCheckInStaffHandler.execute(
+      new AssignEventCheckInStaffCommand(id, user.userId, dto.email),
+    );
+
+    if (result.isFailure) {
+      const error = result.error;
+      switch (error.type) {
+        case 'EVENT_NOT_FOUND':
+          throw new NotFoundException(error.message);
+        case 'ACCESS_DENIED':
+          throw new ForbiddenException(error.message);
+        case 'ALREADY_ASSIGNED':
+          throw new ConflictException(error.message);
+        case 'EVENT_NOT_ASSIGNABLE':
+          throw new BadRequestException(error.message);
+        case 'TARGET_NOT_ELIGIBLE':
+          throw new UnprocessableEntityException(error.message);
+        case 'PERSISTENCE_ERROR':
+          throw new InternalServerErrorException(error.message);
+      }
+    }
+
+    return result.value;
+  }
+
+  @Get(':id/check-in-staff')
+  @UseGuards(JwtAuthGuard, RolesGuard, IsEventOwnerGuard)
+  @Roles('ORGANIZER')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'List active check-in staff for an event' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated active check-in staff',
+    type: PaginatedEventCheckInStaffAssignmentsDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not event owner' })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventCheckInStaff(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: RequestUser,
+    @Query() pagination: PaginationDto,
+  ): Promise<PaginatedEventCheckInStaffAssignmentsDto> {
+    const result = await this.getEventCheckInStaffHandler.execute(
+      new GetEventCheckInStaffQuery(
+        id,
+        user.userId,
+        pagination.page ?? 1,
+        pagination.limit ?? 20,
+      ),
+    );
+
+    if (result.isFailure) {
+      if (result.error.type === 'EVENT_NOT_FOUND') {
+        throw new NotFoundException(result.error.message);
+      }
+      throw new ForbiddenException(result.error.message);
+    }
+
+    return result.value;
+  }
+
+  @Delete(':id/check-in-staff/:assignmentId')
+  @UseGuards(JwtAuthGuard, RolesGuard, IsEventOwnerGuard)
+  @Roles('ORGANIZER')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Revoke an event check-in staff assignment' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiParam({ name: 'assignmentId', description: 'Assignment UUID' })
+  @ApiResponse({ status: 204, description: 'Assignment revoked' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not event owner' })
+  @ApiResponse({ status: 404, description: 'Event or assignment not found' })
+  async revokeEventCheckInStaff(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+    @CurrentUser() user: RequestUser,
+  ): Promise<void> {
+    const result = await this.revokeEventCheckInStaffHandler.execute(
+      new RevokeEventCheckInStaffCommand(id, assignmentId, user.userId),
+    );
+
+    if (result.isFailure) {
+      switch (result.error.type) {
+        case 'EVENT_NOT_FOUND':
+        case 'ASSIGNMENT_NOT_FOUND':
+          throw new NotFoundException(result.error.message);
+        case 'ACCESS_DENIED':
+          throw new ForbiddenException(result.error.message);
+        case 'PERSISTENCE_ERROR':
+          throw new InternalServerErrorException(result.error.message);
+      }
+    }
   }
 
   // ============================================

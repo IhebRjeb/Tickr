@@ -10,9 +10,9 @@ import type { CheckInResultVO } from '../../../domain/value-objects/check-in-res
  * Error types for CheckInTicket operation
  */
 export type CheckInTicketErrorCommand =
+  | { type: 'CHECK_IN_FORBIDDEN'; message: string }
   | { type: 'INVALID_QR_CODE'; message: string }
   | { type: 'TICKET_NOT_FOUND'; message: string }
-  | { type: 'EVENT_NOT_FOUND'; message: string }
   | { type: 'CHECK_IN_OUTSIDE_WINDOW'; message: string }
   | { type: 'CHECK_IN_FAILED'; message: string }
   | { type: 'PERSISTENCE_ERROR'; message: string };
@@ -30,6 +30,8 @@ export type CheckInTicketResultCommand = CheckInResultVO;
  */
 export class CheckInTicketCommand extends BaseCommand {
   constructor(
+    /** Event selected by the authenticated scanner operator */
+    public readonly eventId: string,
     /** The scanned QR code string */
     public readonly qrCode: string,
     /** UUID of the staff member scanning */

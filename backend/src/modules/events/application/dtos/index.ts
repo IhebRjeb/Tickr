@@ -18,6 +18,13 @@ export {
 } from './update-event.dto';
 
 export { SetEventCommissionOverrideDto } from './set-event-commission.dto';
+export {
+  AssignEventCheckInStaffDto,
+  EventCheckInStaffAssignmentDto,
+  PaginatedEventCheckInStaffAssignmentsDto,
+  EventCheckInAccessListItemDto,
+  PaginatedEventCheckInAccessDto,
+} from './event-check-in-staff.dto';
 
 // ============================================
 // Ticket Types

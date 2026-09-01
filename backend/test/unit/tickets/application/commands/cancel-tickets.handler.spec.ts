@@ -55,6 +55,7 @@ describe('CancelTicketsHandler', () => {
     mockEventQuery = {
       getEventById: jest.fn(),
       getTicketTypeAvailability: jest.fn(),
+      getTicketTypesByIds: jest.fn(),
       decrementTicketTypeAvailability: jest.fn(),
       incrementTicketTypeAvailability: jest.fn().mockResolvedValue(true),
     };

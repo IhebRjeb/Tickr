@@ -15,12 +15,16 @@ import {
   RemoveTicketTypeHandler,
   UploadEventImageHandler,
   SetEventCommissionOverrideHandler,
+  AssignEventCheckInStaffHandler,
+  RevokeEventCheckInStaffHandler,
   GetEventByIdHandler,
   GetPublishedEventsHandler,
   SearchEventsHandler,
   GetEventsByCategoryHandler,
   GetUpcomingEventsHandler,
   GetOrganizerEventsHandler,
+  GetEventCheckInStaffHandler,
+  GetMyEventCheckInAccessHandler,
   CreateEventDto,
   UpdateEventDto,
   AddTicketTypeDto,
@@ -71,12 +75,16 @@ describe('EventsController', () => {
   let removeTicketTypeHandler: ReturnType<typeof createMockHandler>;
   let uploadEventImageHandler: ReturnType<typeof createMockHandler>;
   let setEventCommissionOverrideHandler: ReturnType<typeof createMockHandler>;
+  let assignEventCheckInStaffHandler: ReturnType<typeof createMockHandler>;
+  let revokeEventCheckInStaffHandler: ReturnType<typeof createMockHandler>;
   let getEventByIdHandler: ReturnType<typeof createMockHandler>;
   let getPublishedEventsHandler: ReturnType<typeof createMockHandler>;
   let searchEventsHandler: ReturnType<typeof createMockHandler>;
   let getEventsByCategoryHandler: ReturnType<typeof createMockHandler>;
   let getUpcomingEventsHandler: ReturnType<typeof createMockHandler>;
   let getOrganizerEventsHandler: ReturnType<typeof createMockHandler>;
+  let getEventCheckInStaffHandler: ReturnType<typeof createMockHandler>;
+  let getMyEventCheckInAccessHandler: ReturnType<typeof createMockHandler>;
   let mockEventRepository: ReturnType<typeof createMockRepository>;
 
   const mockUser = {
@@ -119,12 +127,16 @@ describe('EventsController', () => {
     removeTicketTypeHandler = createMockHandler();
     uploadEventImageHandler = createMockHandler();
     setEventCommissionOverrideHandler = createMockHandler();
+    assignEventCheckInStaffHandler = createMockHandler();
+    revokeEventCheckInStaffHandler = createMockHandler();
     getEventByIdHandler = createMockHandler();
     getPublishedEventsHandler = createMockHandler();
     searchEventsHandler = createMockHandler();
     getEventsByCategoryHandler = createMockHandler();
     getUpcomingEventsHandler = createMockHandler();
     getOrganizerEventsHandler = createMockHandler();
+    getEventCheckInStaffHandler = createMockHandler();
+    getMyEventCheckInAccessHandler = createMockHandler();
     mockEventRepository = createMockRepository();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -142,12 +154,28 @@ describe('EventsController', () => {
           provide: SetEventCommissionOverrideHandler,
           useValue: setEventCommissionOverrideHandler,
         },
+        {
+          provide: AssignEventCheckInStaffHandler,
+          useValue: assignEventCheckInStaffHandler,
+        },
+        {
+          provide: RevokeEventCheckInStaffHandler,
+          useValue: revokeEventCheckInStaffHandler,
+        },
         { provide: GetEventByIdHandler, useValue: getEventByIdHandler },
         { provide: GetPublishedEventsHandler, useValue: getPublishedEventsHandler },
         { provide: SearchEventsHandler, useValue: searchEventsHandler },
         { provide: GetEventsByCategoryHandler, useValue: getEventsByCategoryHandler },
         { provide: GetUpcomingEventsHandler, useValue: getUpcomingEventsHandler },
         { provide: GetOrganizerEventsHandler, useValue: getOrganizerEventsHandler },
+        {
+          provide: GetEventCheckInStaffHandler,
+          useValue: getEventCheckInStaffHandler,
+        },
+        {
+          provide: GetMyEventCheckInAccessHandler,
+          useValue: getMyEventCheckInAccessHandler,
+        },
         { provide: EVENT_REPOSITORY, useValue: mockEventRepository },
         IsEventOwnerGuard,
       ],
@@ -180,6 +208,86 @@ describe('EventsController', () => {
 
       expect(result).toEqual(response);
       expect(setEventCommissionOverrideHandler.execute).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('check-in staff management', () => {
+    it('assigns check-in staff by email', async () => {
+      const assignment = {
+        id: '550e8400-e29b-41d4-a716-446655440004',
+        eventId: '550e8400-e29b-41d4-a716-446655440001',
+        userId: '550e8400-e29b-41d4-a716-446655440003',
+        email: 'staff@example.com',
+        firstName: 'Door',
+        lastName: 'Staff',
+        isAccountAvailable: true,
+        assignedAt: new Date(),
+        revokedAt: null,
+      };
+      assignEventCheckInStaffHandler.execute.mockResolvedValue(
+        Result.ok(assignment),
+      );
+
+      const result = await controller.assignEventCheckInStaff(
+        assignment.eventId,
+        mockUser,
+        { email: assignment.email },
+      );
+
+      expect(result).toEqual(assignment);
+    });
+
+    it('maps duplicate assignment to conflict', async () => {
+      assignEventCheckInStaffHandler.execute.mockResolvedValue(
+        Result.fail({
+          type: 'ALREADY_ASSIGNED',
+          message: 'User is already assigned to this event',
+        }),
+      );
+
+      await expect(
+        controller.assignEventCheckInStaff(
+          '550e8400-e29b-41d4-a716-446655440001',
+          mockUser,
+          { email: 'staff@example.com' },
+        ),
+      ).rejects.toThrow('User is already assigned to this event');
+    });
+
+    it('revokes staff by assignment ID', async () => {
+      revokeEventCheckInStaffHandler.execute.mockResolvedValue(
+        Result.ok(undefined),
+      );
+
+      await controller.revokeEventCheckInStaff(
+        '550e8400-e29b-41d4-a716-446655440001',
+        '550e8400-e29b-41d4-a716-446655440004',
+        mockUser,
+      );
+
+      expect(revokeEventCheckInStaffHandler.execute).toHaveBeenCalledTimes(1);
+    });
+
+    it('lists the current user check-in events', async () => {
+      const response = {
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
+      getMyEventCheckInAccessHandler.execute.mockResolvedValue(
+        Result.ok(response),
+      );
+
+      const result = await controller.getMyEventCheckInAccess(mockUser, {
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result).toEqual(response);
     });
   });
 

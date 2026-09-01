@@ -41,12 +41,14 @@ describe('ReserveTicketsHandler', () => {
       findExpiredReservations: jest.fn(),
       countByEventId: jest.fn(),
       countCheckedInByEventId: jest.fn(),
+      getCheckInStats: jest.fn(),
       delete: jest.fn(),
     } as any;
 
     mockEventQuery = {
       getEventById: jest.fn(),
       getTicketTypeAvailability: jest.fn(),
+      getTicketTypesByIds: jest.fn(),
       decrementTicketTypeAvailability: jest.fn(),
       incrementTicketTypeAvailability: jest.fn(),
     };

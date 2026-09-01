@@ -46,6 +46,11 @@ export interface UserRepositoryPort extends IRepository<UserEntityPort> {
   findByEmail(email: string): Promise<UserEntityPort | null>;
 
   /**
+   * Find users by IDs for cross-module batch hydration
+   */
+  findByIds(ids: string[]): Promise<UserEntityPort[]>;
+
+  /**
    * Find user by email with password hash (for authentication)
    */
   findByEmailWithPassword(email: string): Promise<UserWithPasswordPort | null>;
