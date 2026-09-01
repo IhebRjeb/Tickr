@@ -24,6 +24,17 @@ export type {
 } from './commands/set-event-commission-override/set-event-commission-override.command';
 export { SetEventCommissionOverrideHandler } from './commands/set-event-commission-override/set-event-commission-override.handler';
 
+export { AssignEventCheckInStaffCommand } from './commands/assign-event-check-in-staff/assign-event-check-in-staff.command';
+export type {
+  AssignEventCheckInStaffError,
+  AssignEventCheckInStaffResult,
+} from './commands/assign-event-check-in-staff/assign-event-check-in-staff.command';
+export { AssignEventCheckInStaffHandler } from './commands/assign-event-check-in-staff/assign-event-check-in-staff.handler';
+
+export { RevokeEventCheckInStaffCommand } from './commands/revoke-event-check-in-staff/revoke-event-check-in-staff.command';
+export type { RevokeEventCheckInStaffError } from './commands/revoke-event-check-in-staff/revoke-event-check-in-staff.command';
+export { RevokeEventCheckInStaffHandler } from './commands/revoke-event-check-in-staff/revoke-event-check-in-staff.handler';
+
 // Add Ticket Type
 export { AddTicketTypeCommand } from './commands/add-ticket-type/add-ticket-type.command';
 export type { AddTicketTypeResultCommand, AddTicketTypeErrorCommand } from './commands/add-ticket-type/add-ticket-type.command';
@@ -83,6 +94,9 @@ export * from './dtos';
 // Ports (Repository Interfaces)
 // ============================================
 export * from './ports/event.repository.port';
+export * from './ports/event-check-in-staff-assignment.repository.port';
+export * from './ports/event-check-in-access-read.port';
+export * from './ports/event-staff-user-directory.port';
 export * from './ports/user-validation.service.port';
 
 // ============================================

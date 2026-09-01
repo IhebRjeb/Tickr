@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "tickr-api-v1",
+    "_postman_id": "1d8b8141-e645-4f62-8363-dca53376740c",
     "name": "Tickr API v1.0",
-    "description": "# Tickr Event Ticketing Platform API\n\nComplete API collection for the Tickr Tunisian online ticketing platform.\n\n## Base URL\n- **Local Development**: `http://localhost:3000/api`\n- **Staging**: `https://staging.tickr.com/api`\n- **Production**: `https://api.tickr.com/api`\n\n## Authentication\nMost endpoints require JWT Bearer authentication. Use the Login endpoint to obtain tokens.\n\n## Modules\n- **Authentication** — Register, login, token management\n- **Users** — Profile management (self + admin)\n- **Events** — Event lifecycle (create, publish, cancel)\n- **Ticket Types** — Event ticket type CRUD\n- **Tickets** — Reserve, confirm, transfer, check-in\n- **Orders** — Create orders, process payments, refunds\n- **Notifications** — Send, list, manage preferences\n- **Analytics** — Event metrics, dashboards, reports, export\n\n## Getting Started\n1. Register a new user (Register User)\n2. Login to get access token (Login)\n3. Token auto-saved to collection variables\n4. Use protected endpoints directly",
+    "description": "# Tickr Event Ticketing Platform API\n\nComplete API collection for the Tickr Tunisian online ticketing platform.\n\n## Base URL\n- **Local Development**: `http://localhost:3000/api`\n- **Staging**: `https://staging.tickr.com/api`\n- **Production**: `https://api.tickr.com/api`\n\n## Authentication\nMost endpoints require JWT Bearer authentication. Use the Login endpoint to obtain tokens.\n\n## Modules\n- **Authentication** \u2014 Register, login, token management\n- **Users** \u2014 Profile management (self + admin)\n- **Events** \u2014 Event lifecycle (create, publish, cancel)\n- **Ticket Types** \u2014 Event ticket type CRUD\n- **Tickets** \u2014 Reserve, confirm, transfer, check-in\n- **Orders** \u2014 Create orders, process payments, refunds\n- **Notifications** \u2014 Send, list, manage preferences\n- **Analytics** \u2014 Event metrics, dashboards, reports, export\n\n## Getting Started\n1. Register a new user (Register User)\n2. Login to get access token (Login)\n3. Token auto-saved to collection variables\n4. Use protected endpoints directly",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,26 +16,78 @@
     ]
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000/api", "type": "string" },
-    { "key": "accessToken", "value": "", "type": "string" },
-    { "key": "refreshToken", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" },
-    { "key": "eventId", "value": "", "type": "string" },
-    { "key": "ticketTypeId", "value": "", "type": "string" },
-    { "key": "ticketId", "value": "", "type": "string" },
-    { "key": "orderId", "value": "", "type": "string" },
-    { "key": "notificationId", "value": "", "type": "string" },
-    { "key": "qrCode", "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketTypeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "qrCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkInAssignmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staffEmail",
+      "value": "staff@example.com",
+      "type": "string"
+    }
   ],
   "item": [
     {
-      "name": "🏥 Health & Status",
+      "name": "Health & Status",
       "description": "Health check and status endpoints",
       "item": [
         {
           "name": "API Root",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -49,7 +101,9 @@
         {
           "name": "Health Check",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -64,7 +118,7 @@
       ]
     },
     {
-      "name": "🔐 Authentication",
+      "name": "Authentication",
       "description": "User authentication and authorization endpoints",
       "item": [
         {
@@ -90,10 +144,15 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -140,10 +199,15 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -181,10 +245,15 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -202,10 +271,15 @@
         {
           "name": "Verify Email",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -223,10 +297,15 @@
         {
           "name": "Request Password Reset",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -244,10 +323,15 @@
         {
           "name": "Reset Password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -265,7 +349,7 @@
       ]
     },
     {
-      "name": "👤 Users",
+      "name": "Users",
       "description": "User profile management endpoints",
       "item": [
         {
@@ -287,7 +371,10 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -307,7 +394,10 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -346,7 +436,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["users", ":id"],
               "variable": [
-                { "key": "id", "value": "{{userId}}", "description": "User UUID" }
+                {
+                  "key": "id",
+                  "value": "{{userId}}",
+                  "description": "User UUID"
+                }
               ]
             },
             "description": "Get a specific user by ID. **Admin only.**"
@@ -363,9 +457,22 @@
               "host": ["{{baseUrl}}"],
               "path": ["users"],
               "query": [
-                { "key": "page", "value": "1", "description": "Page number" },
-                { "key": "limit", "value": "20", "description": "Items per page" },
-                { "key": "role", "value": "ORGANIZER", "description": "Filter by role", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "role",
+                  "value": "ORGANIZER",
+                  "description": "Filter by role",
+                  "disabled": true
+                }
               ]
             },
             "description": "Get paginated list of users. **Admin only.**\n\n**Filters:**\n- `role`: ADMIN, ORGANIZER, PARTICIPANT"
@@ -375,7 +482,7 @@
       ]
     },
     {
-      "name": "🎫 Events (Public)",
+      "name": "Events (Public)",
       "description": "Public event endpoints - no authentication required",
       "item": [
         {
@@ -399,7 +506,9 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -407,15 +516,60 @@
               "host": ["{{baseUrl}}"],
               "path": ["events"],
               "query": [
-                { "key": "category", "value": "CONCERT", "disabled": true, "description": "Event category" },
-                { "key": "city", "value": "Tunis", "disabled": true, "description": "Filter by city" },
-                { "key": "country", "value": "Tunisia", "disabled": true, "description": "Filter by country" },
-                { "key": "dateFrom", "value": "2026-07-01T00:00:00Z", "disabled": true, "description": "Start date filter" },
-                { "key": "dateTo", "value": "2026-12-31T23:59:59Z", "disabled": true, "description": "End date filter" },
-                { "key": "minPrice", "value": "0", "disabled": true, "description": "Minimum ticket price" },
-                { "key": "maxPrice", "value": "500", "disabled": true, "description": "Maximum ticket price" },
-                { "key": "sortBy", "value": "startDate", "disabled": true, "description": "Sort field" },
-                { "key": "sortOrder", "value": "ASC", "disabled": true, "description": "Sort direction: ASC or DESC" }
+                {
+                  "key": "category",
+                  "value": "CONCERT",
+                  "disabled": true,
+                  "description": "Event category"
+                },
+                {
+                  "key": "city",
+                  "value": "Tunis",
+                  "disabled": true,
+                  "description": "Filter by city"
+                },
+                {
+                  "key": "country",
+                  "value": "Tunisia",
+                  "disabled": true,
+                  "description": "Filter by country"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2026-07-01T00:00:00Z",
+                  "disabled": true,
+                  "description": "Start date filter"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-12-31T23:59:59Z",
+                  "disabled": true,
+                  "description": "End date filter"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Minimum ticket price"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "500",
+                  "disabled": true,
+                  "description": "Maximum ticket price"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "startDate",
+                  "disabled": true,
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "disabled": true,
+                  "description": "Sort direction: ASC or DESC"
+                }
               ]
             },
             "description": "Get all published events with optional filters.\n\n**Categories:**\nCONCERT, CONFERENCE, SPORT, THEATER, WORKSHOP, FESTIVAL, EXHIBITION, NETWORKING, COMEDY, OTHER\n\n**Sort Fields:**\ncreatedAt, updatedAt, startDate, endDate, title, totalCapacity, soldTickets, publishedAt"
@@ -425,7 +579,9 @@
         {
           "name": "Search Events",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -433,7 +589,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", "search"],
               "query": [
-                { "key": "q", "value": "music", "description": "Search query (required)" }
+                {
+                  "key": "q",
+                  "value": "music",
+                  "description": "Search query (required)"
+                }
               ]
             },
             "description": "Search events by title.\n\n**Required:** `q` parameter with search term."
@@ -443,7 +603,9 @@
         {
           "name": "Get Events by Category",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -451,7 +613,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", "category", ":category"],
               "variable": [
-                { "key": "category", "value": "CONCERT", "description": "Event category" }
+                {
+                  "key": "category",
+                  "value": "CONCERT",
+                  "description": "Event category"
+                }
               ]
             },
             "description": "Get events filtered by category.\n\n**Valid Categories:**\nCONCERT, CONFERENCE, SPORT, THEATER, WORKSHOP, FESTIVAL, EXHIBITION, NETWORKING, COMEDY, OTHER"
@@ -461,7 +627,9 @@
         {
           "name": "Get Upcoming Events",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -469,8 +637,16 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", "upcoming"],
               "query": [
-                { "key": "city", "value": "Tunis", "disabled": true },
-                { "key": "country", "value": "Tunisia", "disabled": true }
+                {
+                  "key": "city",
+                  "value": "Tunis",
+                  "disabled": true
+                },
+                {
+                  "key": "country",
+                  "value": "Tunisia",
+                  "disabled": true
+                }
               ]
             },
             "description": "Get upcoming events (events starting in the future)."
@@ -499,7 +675,9 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -507,7 +685,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Get detailed information about a specific event, including ticket types."
@@ -517,7 +699,7 @@
       ]
     },
     {
-      "name": "🎫 Events (Protected)",
+      "name": "Events (Protected)",
       "description": "Protected event endpoints - authentication required (Organizer/Admin)",
       "item": [
         {
@@ -545,7 +727,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -565,7 +750,10 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -576,7 +764,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Update an existing event. Only the event owner or admin can update."
@@ -593,7 +785,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "publish"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Publish a draft event.\n\n**Requirements:**\n- Event must be in DRAFT status\n- Event must have at least one active ticket type"
@@ -605,7 +801,10 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -616,7 +815,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Cancel an event. A reason is required.\n\nAll ticket holders will be notified."
@@ -633,10 +836,19 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", "organizer", ":organizerId"],
               "query": [
-                { "key": "status", "value": "DRAFT", "disabled": true, "description": "DRAFT, PUBLISHED, CANCELLED, COMPLETED" }
+                {
+                  "key": "status",
+                  "value": "DRAFT",
+                  "disabled": true,
+                  "description": "DRAFT, PUBLISHED, CANCELLED, COMPLETED"
+                }
               ],
               "variable": [
-                { "key": "organizerId", "value": "{{userId}}", "description": "Organizer UUID" }
+                {
+                  "key": "organizerId",
+                  "value": "{{userId}}",
+                  "description": "Organizer UUID"
+                }
               ]
             },
             "description": "Get all events for an organizer.\n\n**Status filter:** DRAFT, PUBLISHED, CANCELLED, COMPLETED"
@@ -654,7 +866,8 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "description": "Image file (JPEG, PNG, WebP, max 5MB)"
+                  "description": "Image file (JPEG, PNG, WebP, max 5MB)",
+                  "src": ""
                 }
               ]
             },
@@ -663,7 +876,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "image"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Upload an image for an event.\n\n**Formats:** JPEG, PNG, WebP\n**Max size:** 5MB"
@@ -673,7 +890,7 @@
       ]
     },
     {
-      "name": "🎟️ Ticket Types",
+      "name": "Ticket Types",
       "description": "Ticket type management for events (Organizer only)",
       "item": [
         {
@@ -699,7 +916,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -710,7 +930,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "ticket-types"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Add a VIP ticket type to an event.\n\n**Currencies:** TND, EUR, USD"
@@ -722,7 +946,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -733,7 +960,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "ticket-types"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Add a standard general admission ticket type."
@@ -745,7 +976,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -756,7 +990,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "ticket-types"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Add a free ticket type."
@@ -768,7 +1006,10 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -779,8 +1020,16 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "ticket-types", ":typeId"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" },
-                { "key": "typeId", "value": "{{ticketTypeId}}", "description": "Ticket Type UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                },
+                {
+                  "key": "typeId",
+                  "value": "{{ticketTypeId}}",
+                  "description": "Ticket Type UUID"
+                }
               ]
             },
             "description": "Update an existing ticket type."
@@ -797,18 +1046,139 @@
               "host": ["{{baseUrl}}"],
               "path": ["events", ":id", "ticket-types", ":typeId"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" },
-                { "key": "typeId", "value": "{{ticketTypeId}}", "description": "Ticket Type UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                },
+                {
+                  "key": "typeId",
+                  "value": "{{ticketTypeId}}",
+                  "description": "Ticket Type UUID"
+                }
               ]
             },
             "description": "Remove a ticket type from an event.\n\n**Note:** Cannot remove if tickets have been sold."
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Event Check-In Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('checkInAssignmentId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staffEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/:id/check-in-staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ":id", "check-in-staff"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
+              ]
+            },
+            "description": "Assign an existing active, email-verified Tickr account to this event. Event owner only."
+          },
+          "response": []
+        },
+        {
+          "name": "List Event Check-In Staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/:id/check-in-staff?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ":id", "check-in-staff"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
+              ]
+            },
+            "description": "List active check-in staff assignments. Event owner only."
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Event Check-In Staff",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/:id/check-in-staff/:assignmentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ":id", "check-in-staff", ":assignmentId"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                },
+                {
+                  "key": "assignmentId",
+                  "value": "{{checkInAssignmentId}}",
+                  "description": "Check-in staff assignment UUID"
+                }
+              ]
+            },
+            "description": "Revoke one active assignment while retaining its audit history. Event owner only."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Event Check-In Access",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/check-in-access/me?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "check-in-access", "me"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "List published, non-ended events the current account may scan as owner, current admin, or assigned staff."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "🎫 Tickets",
+      "name": "Tickets",
       "description": "Ticket reservation, management, check-in, and transfer endpoints",
       "item": [
         {
@@ -837,7 +1207,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"ticketTypeId\": \"{{ticketTypeId}}\",\n  \"holders\": [\n    {\n      \"name\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"phone\": \"+21612345678\"\n    }\n  ]\n}"
@@ -855,7 +1230,12 @@
           "name": "Confirm Tickets",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"ticketIds\": [\"{{ticketId}}\"],\n  \"orderId\": \"{{orderId}}\"\n}"
@@ -879,9 +1259,22 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets"],
               "query": [
-                { "key": "page", "value": "1", "description": "Page number" },
-                { "key": "limit", "value": "20", "description": "Items per page" },
-                { "key": "status", "value": "CONFIRMED", "description": "Filter by status", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "CONFIRMED",
+                  "description": "Filter by status",
+                  "disabled": true
+                }
               ]
             },
             "description": "Get the authenticated user's tickets with optional pagination and status filter.\n\n**Status values:** RESERVED, CONFIRMED, CANCELLED, CHECKED_IN, EXPIRED"
@@ -915,7 +1308,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets", ":id"],
               "variable": [
-                { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
+                {
+                  "key": "id",
+                  "value": "{{ticketId}}",
+                  "description": "Ticket UUID"
+                }
               ]
             },
             "description": "Get detailed information about a specific ticket.\n\nAccessible by ticket owner or the event organizer."
@@ -932,7 +1329,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets", ":id", "pdf"],
               "variable": [
-                { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
+                {
+                  "key": "id",
+                  "value": "{{ticketId}}",
+                  "description": "Ticket UUID"
+                }
               ]
             },
             "description": "Download the ticket PDF.\n\nRedirects (302) to a signed S3 URL. Only the ticket owner can download."
@@ -943,7 +1344,12 @@
           "name": "Transfer Ticket",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"newOwnerEmail\": \"friend@example.com\"\n}"
@@ -953,7 +1359,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets", ":id", "transfer"],
               "variable": [
-                { "key": "id", "value": "{{ticketId}}", "description": "Ticket UUID" }
+                {
+                  "key": "id",
+                  "value": "{{ticketId}}",
+                  "description": "Ticket UUID"
+                }
               ]
             },
             "description": "Transfer a ticket to another user by email.\n\n**Limits:** Max 3 transfers per ticket.\n**Effect:** Generates a new QR code and assigns to the new owner."
@@ -964,17 +1374,22 @@
           "name": "Check In Ticket",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}"
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/tickets/check-in",
               "host": ["{{baseUrl}}"],
               "path": ["tickets", "check-in"]
             },
-            "description": "Check in a ticket at venue entrance using QR code.\n\n**Requires:** ORGANIZER or ADMIN role.\n**Time window:** Event start - 1 hour to Event end.\n\nDuplicate check-in attempts are rejected and logged as security alerts."
+            "description": "Check in a ticket at venue entrance using QR code.\n\n**Requires:** event owner, current ADMIN, or active event staff assignment.\n**Time window:** Event start - 1 hour to Event end.\n\nThe QR must belong to eventId. Duplicate and concurrent check-in attempts are rejected and audited."
           },
           "response": []
         },
@@ -988,17 +1403,21 @@
               "host": ["{{baseUrl}}"],
               "path": ["tickets", "event", ":eventId", "stats"],
               "variable": [
-                { "key": "eventId", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "eventId",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
-            "description": "Get aggregated check-in statistics for an event.\n\n**Requires:** ORGANIZER or ADMIN role.\n\n**Returns:** Total tickets, checked-in count, rate, breakdown by ticket type."
+            "description": "Get aggregated check-in statistics for an event.\n\n**Requires:** event owner, current ADMIN, or active event staff assignment.\n\n**Returns:** Eligible tickets, checked-in count, remaining count, rate, and real breakdown by ticket type."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "💳 Orders & Payments",
+      "name": "Orders & Payments",
       "description": "Order creation, payment processing, and refund management",
       "item": [
         {
@@ -1026,7 +1445,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1070,8 +1492,16 @@
               "host": ["{{baseUrl}}"],
               "path": ["orders"],
               "query": [
-                { "key": "page", "value": "1", "description": "Page number (default: 1)" },
-                { "key": "limit", "value": "20", "description": "Items per page (default: 20)" }
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20)"
+                }
               ]
             },
             "description": "List the current user's orders with pagination."
@@ -1088,7 +1518,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["orders", ":id"],
               "variable": [
-                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+                {
+                  "key": "id",
+                  "value": "{{orderId}}",
+                  "description": "Order UUID"
+                }
               ]
             },
             "description": "Get detailed information about a specific order.\n\nOnly the order owner or admin can access."
@@ -1119,7 +1553,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1130,7 +1567,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["orders", ":id", "pay"],
               "variable": [
-                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+                {
+                  "key": "id",
+                  "value": "{{orderId}}",
+                  "description": "Order UUID"
+                }
               ]
             },
             "description": "Process payment using Konnect (Tunisian gateway - TND).\n\n**Payment Methods:** KONNECT, PAYMEE, STRIPE\n\n**Returns:** `redirectUrl` to redirect user to payment page.\n\n**Idempotency:** Provide `idempotencyKey` to prevent duplicate charges on retry."
@@ -1142,7 +1583,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1153,7 +1597,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["orders", ":id", "pay"],
               "variable": [
-                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+                {
+                  "key": "id",
+                  "value": "{{orderId}}",
+                  "description": "Order UUID"
+                }
               ]
             },
             "description": "Process payment using Stripe (international, EUR/USD).\n\n**Returns:** `clientSecret` for Stripe.js to confirm on the frontend."
@@ -1165,7 +1613,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1176,7 +1627,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["orders", ":id", "pay"],
               "variable": [
-                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+                {
+                  "key": "id",
+                  "value": "{{orderId}}",
+                  "description": "Order UUID"
+                }
               ]
             },
             "description": "Process payment using Paymee (Tunisian gateway - TND).\n\n**Returns:** `redirectUrl` to redirect user to payment page."
@@ -1188,7 +1643,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1199,7 +1657,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["orders", ":id", "refund"],
               "variable": [
-                { "key": "id", "value": "{{orderId}}", "description": "Order UUID" }
+                {
+                  "key": "id",
+                  "value": "{{orderId}}",
+                  "description": "Order UUID"
+                }
               ]
             },
             "description": "Request a refund for a paid order.\n\n**Requirements:**\n- Order must be in PAID status\n- A reason must be provided\n\n**Note:** Refund processing time depends on the payment gateway."
@@ -1209,7 +1671,7 @@
       ]
     },
     {
-      "name": "🔔 Notifications",
+      "name": "Notifications",
       "description": "Notification management and preference endpoints",
       "item": [
         {
@@ -1234,7 +1696,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1259,8 +1724,16 @@
               "host": ["{{baseUrl}}"],
               "path": ["notifications", "me"],
               "query": [
-                { "key": "page", "value": "1", "description": "Page number (default: 1)" },
-                { "key": "limit", "value": "20", "description": "Items per page (default: 20)" }
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20)"
+                }
               ]
             },
             "description": "Get the current user's notifications with pagination."
@@ -1277,7 +1750,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["notifications", ":id"],
               "variable": [
-                { "key": "id", "value": "{{notificationId}}", "description": "Notification UUID" }
+                {
+                  "key": "id",
+                  "value": "{{notificationId}}",
+                  "description": "Notification UUID"
+                }
               ]
             },
             "description": "Get detailed information about a specific notification."
@@ -1303,7 +1780,10 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1321,7 +1801,9 @@
         {
           "name": "Unsubscribe via Email Link",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1329,8 +1811,16 @@
               "host": ["{{baseUrl}}"],
               "path": ["notifications", "unsubscribe", ":token", ":category"],
               "variable": [
-                { "key": "token", "value": "YOUR_UNSUBSCRIBE_TOKEN", "description": "Unsubscribe token from email" },
-                { "key": "category", "value": "marketing", "description": "Category: marketing or event_reminders" }
+                {
+                  "key": "token",
+                  "value": "YOUR_UNSUBSCRIBE_TOKEN",
+                  "description": "Unsubscribe token from email"
+                },
+                {
+                  "key": "category",
+                  "value": "marketing",
+                  "description": "Category: marketing or event_reminders"
+                }
               ]
             },
             "description": "Unsubscribe from notifications via email link.\n\n**No authentication required.**\n\n**Categories:** `marketing`, `event_reminders`"
@@ -1340,7 +1830,7 @@
       ]
     },
     {
-      "name": "📊 Analytics",
+      "name": "Analytics",
       "description": "Event analytics, dashboards, revenue reports, and data export",
       "item": [
         {
@@ -1353,7 +1843,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "events", ":id"],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Get analytics for a specific event.\n\n**Returns:** Total revenue, tickets sold, views, conversion rate, attendance metrics.\n\n**Access:** Event owner or admin only."
@@ -1370,9 +1864,23 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "dashboard"],
               "query": [
-                { "key": "timeRange", "value": "30d", "description": "Time range: 7d, 30d, or 90d" },
-                { "key": "page", "value": "1", "disabled": true, "description": "Page number" },
-                { "key": "limit", "value": "10", "disabled": true, "description": "Items per page" }
+                {
+                  "key": "timeRange",
+                  "value": "30d",
+                  "description": "Time range: 7d, 30d, or 90d"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "disabled": true,
+                  "description": "Items per page"
+                }
               ]
             },
             "description": "Get the organizer's dashboard analytics.\n\n**Time ranges:** `7d`, `30d`, `90d`\n\n**Returns:** Summary metrics across all organizer events, top events, recent activity."
@@ -1389,8 +1897,18 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "platform"],
               "query": [
-                { "key": "startDate", "value": "2026-01-01T00:00:00Z", "disabled": true, "description": "Start date (ISO 8601)" },
-                { "key": "endDate", "value": "2026-12-31T23:59:59Z", "disabled": true, "description": "End date (ISO 8601)" }
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01T00:00:00Z",
+                  "disabled": true,
+                  "description": "Start date (ISO 8601)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31T23:59:59Z",
+                  "disabled": true,
+                  "description": "End date (ISO 8601)"
+                }
               ]
             },
             "description": "Get platform-wide analytics.\n\n**Admin only.**\n\n**Returns:** Total platform revenue, active users, events created, payment method breakdown, top organizers."
@@ -1407,12 +1925,28 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "events", ":id", "sales-timeline"],
               "query": [
-                { "key": "granularity", "value": "day", "description": "Granularity: hour or day" },
-                { "key": "startDate", "value": "2026-01-01T00:00:00Z", "description": "Start date (ISO 8601)" },
-                { "key": "endDate", "value": "2026-12-31T23:59:59Z", "description": "End date (ISO 8601)" }
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "Granularity: hour or day"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Start date (ISO 8601)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31T23:59:59Z",
+                  "description": "End date (ISO 8601)"
+                }
               ],
               "variable": [
-                { "key": "id", "value": "{{eventId}}", "description": "Event UUID" }
+                {
+                  "key": "id",
+                  "value": "{{eventId}}",
+                  "description": "Event UUID"
+                }
               ]
             },
             "description": "Get time series sales data for an event.\n\n**Granularity:** `hour` or `day`\n\n**Returns:** Array of data points with timestamp, ticket count, and revenue for each interval."
@@ -1429,8 +1963,16 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "revenue-report"],
               "query": [
-                { "key": "startDate", "value": "2026-01-01T00:00:00Z", "description": "Start date (ISO 8601, required)" },
-                { "key": "endDate", "value": "2026-12-31T23:59:59Z", "description": "End date (ISO 8601, required)" }
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Start date (ISO 8601, required)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31T23:59:59Z",
+                  "description": "End date (ISO 8601, required)"
+                }
               ]
             },
             "description": "Get a revenue report for a date range.\n\n**Returns:** Revenue breakdown by event, currency totals, commission earned, payment method distribution."
@@ -1461,7 +2003,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1472,14 +2017,14 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "export"]
             },
-            "description": "Generate and export an analytics report.\n\n**Report Types:** `EVENT_REVENUE`, `PLATFORM_SUMMARY`, `TICKET_SALES`\n\n**Formats:** `CSV`, `PDF`\n\n**Returns:** `downloadUrl` — signed S3 URL to download the generated report."
+            "description": "Generate and export an analytics report.\n\n**Report Types:** `EVENT_REVENUE`, `PLATFORM_SUMMARY`, `TICKET_SALES`\n\n**Formats:** `CSV`, `PDF`\n\n**Returns:** `downloadUrl` \u2014 signed S3 URL to download the generated report."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "📋 Workflow: Full Purchase Flow",
+      "name": "Workflow: Full Purchase Flow",
       "description": "Complete end-to-end flow: browse events, create order, pay, get tickets",
       "item": [
         {
@@ -1498,11 +2043,25 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"participant@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"participant@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
           }
         },
         {
@@ -1525,10 +2084,16 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
           }
         },
         {
@@ -1547,9 +2112,21 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"items\": [{\n    \"ticketTypeId\": \"{{ticketTypeId}}\",\n    \"quantity\": 1,\n    \"holders\": [{ \"name\": \"Ahmed Ben Ali\", \"email\": \"ahmed@example.com\" }]\n  }],\n  \"holder\": {\n    \"firstName\": \"Ahmed\",\n    \"lastName\": \"Ben Ali\",\n    \"email\": \"ahmed@example.com\"\n  }\n}" },
-            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"items\": [{\n    \"ticketTypeId\": \"{{ticketTypeId}}\",\n    \"quantity\": 1,\n    \"holders\": [{ \"name\": \"Ahmed Ben Ali\", \"email\": \"ahmed@example.com\" }]\n  }],\n  \"holder\": {\n    \"firstName\": \"Ahmed\",\n    \"lastName\": \"Ben Ali\",\n    \"email\": \"ahmed@example.com\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            }
           }
         },
         {
@@ -1568,8 +2145,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"paymentMethod\": \"KONNECT\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"KONNECT\"\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderId}}/pay",
               "host": ["{{baseUrl}}"],
@@ -1609,13 +2194,17 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] }
+            "url": {
+              "raw": "{{baseUrl}}/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"]
+            }
           }
         }
       ]
     },
     {
-      "name": "📋 Workflow: Create & Publish Event",
+      "name": "Workflow: Create & Publish Event",
       "description": "Complete workflow to create, configure, and publish an event",
       "item": [
         {
@@ -1635,11 +2224,25 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
           }
         },
         {
@@ -1658,9 +2261,21 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Tech Conference 2026\",\n  \"description\": \"Annual tech conference featuring top speakers in AI, Cloud, and DevOps.\",\n  \"category\": \"CONFERENCE\",\n  \"location\": {\n    \"address\": \"Centre des Congres\",\n    \"city\": \"Tunis\",\n    \"country\": \"Tunisia\",\n    \"postalCode\": \"1000\"\n  },\n  \"startDate\": \"2026-09-15T09:00:00Z\",\n  \"endDate\": \"2026-09-16T18:00:00Z\"\n}" },
-            "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tech Conference 2026\",\n  \"description\": \"Annual tech conference featuring top speakers in AI, Cloud, and DevOps.\",\n  \"category\": \"CONFERENCE\",\n  \"location\": {\n    \"address\": \"Centre des Congres\",\n    \"city\": \"Tunis\",\n    \"country\": \"Tunisia\",\n    \"postalCode\": \"1000\"\n  },\n  \"startDate\": \"2026-09-15T09:00:00Z\",\n  \"endDate\": \"2026-09-16T18:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
           }
         },
         {
@@ -1682,18 +2297,42 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"VIP\",\n  \"description\": \"Front row + speaker dinner\",\n  \"price\": 200,\n  \"currency\": \"TND\",\n  \"quantity\": 50,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}" },
-            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/ticket-types", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "ticket-types"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP\",\n  \"description\": \"Front row + speaker dinner\",\n  \"price\": 200,\n  \"currency\": \"TND\",\n  \"quantity\": 50,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/ticket-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "ticket-types"]
+            }
           }
         },
         {
           "name": "4. Add Standard Ticket Type",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Standard\",\n  \"description\": \"General admission\",\n  \"price\": 75,\n  \"currency\": \"TND\",\n  \"quantity\": 200,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}" },
-            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/ticket-types", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "ticket-types"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard\",\n  \"description\": \"General admission\",\n  \"price\": 75,\n  \"currency\": \"TND\",\n  \"quantity\": 200,\n  \"salesStartDate\": \"2026-08-01T00:00:00Z\",\n  \"salesEndDate\": \"2026-09-14T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/ticket-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "ticket-types"]
+            }
           }
         },
         {
@@ -1701,23 +2340,33 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/publish", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "publish"] }
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "publish"]
+            }
           }
         },
         {
           "name": "6. Verify Published",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}"] }
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            }
           }
         }
       ]
     },
     {
-      "name": "📋 Workflow: Check-In at Venue",
-      "description": "Organizer workflow: check in attendees and monitor stats",
+      "name": "Workflow: Check-In at Venue",
+      "description": "Event-scoped workflow: owner, current admin, or assigned staff checks in attendees and monitors basic stats",
       "item": [
         {
           "name": "1. Login (Organizer)",
@@ -1734,20 +2383,46 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"organizer@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
           }
         },
         {
           "name": "2. Check In Ticket (QR Scan)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}" },
-            "url": { "raw": "{{baseUrl}}/tickets/check-in", "host": ["{{baseUrl}}"], "path": ["tickets", "check-in"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"qrCode\": \"{{qrCode}}\",\n  \"deviceId\": \"scanner-gate-a\",\n  \"locationGate\": \"Gate A\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "check-in"]
+            }
           }
         },
         {
@@ -1777,7 +2452,7 @@
       ]
     },
     {
-      "name": "📋 Workflow: Analytics & Reporting",
+      "name": "Workflow: Analytics & Reporting",
       "description": "Admin/Organizer workflow: view analytics and export reports",
       "item": [
         {
@@ -1795,11 +2470,25 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@tickr.tn\",\n  \"password\": \"AdminPass123!\"\n}" },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@tickr.tn\",\n  \"password\": \"AdminPass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
           }
         },
         {
@@ -1811,7 +2500,12 @@
               "raw": "{{baseUrl}}/analytics/dashboard?timeRange=30d",
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "dashboard"],
-              "query": [{ "key": "timeRange", "value": "30d" }]
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "30d"
+                }
+              ]
             }
           }
         },
@@ -1820,7 +2514,11 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/analytics/platform", "host": ["{{baseUrl}}"], "path": ["analytics", "platform"] }
+            "url": {
+              "raw": "{{baseUrl}}/analytics/platform",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "platform"]
+            }
           }
         },
         {
@@ -1833,8 +2531,14 @@
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "revenue-report"],
               "query": [
-                { "key": "startDate", "value": "2026-01-01T00:00:00Z" },
-                { "key": "endDate", "value": "2026-12-31T23:59:59Z" }
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31T23:59:59Z"
+                }
               ]
             }
           }
@@ -1843,9 +2547,21 @@
           "name": "5. Export to CSV",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"reportType\": \"PLATFORM_SUMMARY\",\n  \"format\": \"CSV\",\n  \"startDate\": \"2026-01-01T00:00:00Z\",\n  \"endDate\": \"2026-12-31T23:59:59Z\"\n}" },
-            "url": { "raw": "{{baseUrl}}/analytics/export", "host": ["{{baseUrl}}"], "path": ["analytics", "export"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"PLATFORM_SUMMARY\",\n  \"format\": \"CSV\",\n  \"startDate\": \"2026-01-01T00:00:00Z\",\n  \"endDate\": \"2026-12-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytics/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "export"]
+            }
           }
         }
       ]

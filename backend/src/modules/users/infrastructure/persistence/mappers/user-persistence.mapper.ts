@@ -23,6 +23,7 @@ export class UserPersistenceMapper {
       lastName: entity.lastName,
       role: entity.role,
       phone: entity.phone,
+      emailVerified: entity.emailVerified,
       isActive: entity.isActive,
       lastLoginAt: entity.lastLoginAt,
       createdAt: entity.createdAt,
@@ -59,6 +60,10 @@ export class UserPersistenceMapper {
 
     if (domain.phone !== undefined) {
       entity.phone = domain.phone;
+    }
+
+    if (domain.emailVerified !== undefined) {
+      entity.emailVerified = domain.emailVerified;
     }
 
     if (domain.isActive !== undefined) {

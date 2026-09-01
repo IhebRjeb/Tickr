@@ -5,7 +5,9 @@
 import { CheckInTicketCommand } from '@modules/tickets/application/commands/check-in-ticket/check-in-ticket.command';
 import { CheckInTicketHandler } from '@modules/tickets/application/commands/check-in-ticket/check-in-ticket.handler';
 import type { CheckInRepositoryPort } from '@modules/tickets/application/ports/check-in.repository.port';
+import type { EventCheckInAccessPort } from '@modules/tickets/application/ports/event-check-in-access.port';
 import type { EventQueryPort } from '@modules/tickets/application/ports/event-query.port';
+import type { TicketCheckInPersistencePort } from '@modules/tickets/application/ports/ticket-check-in-persistence.port';
 import type { TicketRepositoryPort } from '@modules/tickets/application/ports/ticket.repository.port';
 import { TicketEntity, QRCodeVO, TicketStatus } from '@modules/tickets/domain';
 import { Logger } from '@nestjs/common';
@@ -15,8 +17,10 @@ describe('CheckInTicketHandler', () => {
   let handler: CheckInTicketHandler;
   let mockTicketRepository: jest.Mocked<TicketRepositoryPort>;
   let mockCheckInRepository: jest.Mocked<CheckInRepositoryPort>;
+  let mockEventCheckInAccess: jest.Mocked<EventCheckInAccessPort>;
   let mockEventQuery: jest.Mocked<EventQueryPort>;
   let mockEventPublisher: jest.Mocked<DomainEventPublisher>;
+  let mockTicketCheckInPersistence: jest.Mocked<TicketCheckInPersistencePort>;
 
   const validStaffId = '550e8400-e29b-41d4-a716-446655440004';
   const validEventId = '550e8400-e29b-41d4-a716-446655440001';
@@ -83,6 +87,7 @@ describe('CheckInTicketHandler', () => {
       save: jest.fn(),
       findById: jest.fn(),
       findByQRCode: jest.fn(),
+      getCheckInStats: jest.fn(),
     } as any;
 
     mockCheckInRepository = {
@@ -93,22 +98,41 @@ describe('CheckInTicketHandler', () => {
       countByEventId: jest.fn(),
     } as any;
 
-    mockEventQuery = {
-      getEventById: jest.fn(),
-      getTicketTypeAvailability: jest.fn(),
-      decrementTicketTypeAvailability: jest.fn(),
-      incrementTicketTypeAvailability: jest.fn(),
+    mockEventCheckInAccess = {
+      resolve: jest.fn().mockResolvedValue({
+        eventId: validEventId,
+        startDate: eventStartDate,
+        endDate: eventEndDate,
+        authorizationSource: 'ASSIGNMENT',
+        assignmentId: '550e8400-e29b-41d4-a716-446655440020',
+        canCheckIn: true,
+        canViewBasicStats: true,
+      }),
     };
+    mockEventQuery = {
+      getTicketTypesByIds: jest.fn().mockResolvedValue([
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          name: 'VIP Access',
+        },
+      ]),
+    } as unknown as jest.Mocked<EventQueryPort>;
 
     mockEventPublisher = {
       publishFromAggregate: jest.fn(),
     } as any;
 
+    mockTicketCheckInPersistence = {
+      commitSuccessfulCheckIn: jest.fn().mockResolvedValue(true),
+    };
+
     handler = new CheckInTicketHandler(
       mockTicketRepository,
       mockCheckInRepository,
+      mockEventCheckInAccess,
       mockEventQuery,
       mockEventPublisher,
+      mockTicketCheckInPersistence,
     );
 
     jest.spyOn(Logger.prototype, 'debug').mockImplementation();
@@ -121,14 +145,8 @@ describe('CheckInTicketHandler', () => {
     it('should check in a confirmed ticket within event window', async () => {
       const ticket = createConfirmedTicket();
       mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
-      mockEventQuery.getEventById.mockResolvedValue({
-        id: validEventId,
-        status: 'PUBLISHED',
-        startDate: eventStartDate,
-        endDate: eventEndDate,
-      });
-
       const command = new CheckInTicketCommand(
+        validEventId,
         ticket.qrCode.value,
         validStaffId,
         'scanner-001',
@@ -139,20 +157,15 @@ describe('CheckInTicketHandler', () => {
       expect(result.isSuccess).toBe(true);
       expect(result.value.isValid).toBe(true);
       expect(result.value.holderName).toBe('John Doe');
+      expect(result.value.ticketTypeName).toBe('VIP Access');
       expect(ticket.status).toBe(TicketStatus.CHECKED_IN);
     });
 
     it('should create check-in audit record', async () => {
       const ticket = createConfirmedTicket();
       mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
-      mockEventQuery.getEventById.mockResolvedValue({
-        id: validEventId,
-        status: 'PUBLISHED',
-        startDate: eventStartDate,
-        endDate: eventEndDate,
-      });
-
       const command = new CheckInTicketCommand(
+        validEventId,
         ticket.qrCode.value,
         validStaffId,
         'scanner-001',
@@ -160,20 +173,16 @@ describe('CheckInTicketHandler', () => {
       );
       await handler.execute(command);
 
-      expect(mockCheckInRepository.save).toHaveBeenCalled();
+      expect(
+        mockTicketCheckInPersistence.commitSuccessfulCheckIn,
+      ).toHaveBeenCalled();
     });
 
     it('should publish domain events', async () => {
       const ticket = createConfirmedTicket();
       mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
-      mockEventQuery.getEventById.mockResolvedValue({
-        id: validEventId,
-        status: 'PUBLISHED',
-        startDate: eventStartDate,
-        endDate: eventEndDate,
-      });
-
       const command = new CheckInTicketCommand(
+        validEventId,
         ticket.qrCode.value,
         validStaffId,
         'scanner-001',
@@ -183,11 +192,32 @@ describe('CheckInTicketHandler', () => {
 
       expect(mockEventPublisher.publishFromAggregate).toHaveBeenCalled();
     });
+
+    it('returns success when post-commit event publication fails', async () => {
+      const ticket = createConfirmedTicket();
+      mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
+      mockEventPublisher.publishFromAggregate.mockRejectedValue(
+        new Error('Event bus unavailable'),
+      );
+
+      const result = await handler.execute(
+        new CheckInTicketCommand(
+          validEventId,
+          ticket.qrCode.value,
+          validStaffId,
+          'scanner-001',
+          'Gate A',
+        ),
+      );
+
+      expect(result.isSuccess).toBe(true);
+    });
   });
 
   describe('QR Code Validation', () => {
     it('should fail with invalid QR code format', async () => {
       const command = new CheckInTicketCommand(
+        validEventId,
         'invalid-qr-code',
         validStaffId,
         'scanner-001',
@@ -206,6 +236,7 @@ describe('CheckInTicketHandler', () => {
       mockTicketRepository.findByQRCode.mockResolvedValue(null);
 
       const command = new CheckInTicketCommand(
+        validEventId,
         validQr,
         validStaffId,
         'scanner-001',
@@ -215,6 +246,87 @@ describe('CheckInTicketHandler', () => {
 
       expect(result.isFailure).toBe(true);
       expect(result.error.type).toBe('TICKET_NOT_FOUND');
+    });
+
+    it('does not accept a valid QR code from another event', async () => {
+      const ticket = createConfirmedTicket();
+      const otherEventId = '550e8400-e29b-41d4-a716-446655440099';
+      mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
+
+      const command = new CheckInTicketCommand(
+        otherEventId,
+        ticket.qrCode.value,
+        validStaffId,
+        'scanner-001',
+        'Gate A',
+      );
+      mockEventCheckInAccess.resolve.mockResolvedValue({
+        eventId: otherEventId,
+        startDate: eventStartDate,
+        endDate: eventEndDate,
+        authorizationSource: 'ASSIGNMENT',
+        assignmentId: '550e8400-e29b-41d4-a716-446655440020',
+        canCheckIn: true,
+        canViewBasicStats: true,
+      });
+
+      const result = await handler.execute(command);
+
+      expect(result.error.type).toBe('TICKET_NOT_FOUND');
+      expect(
+        mockTicketCheckInPersistence.commitSuccessfulCheckIn,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Atomic Persistence', () => {
+    it('returns duplicate failure when another scanner wins the transition', async () => {
+      const ticket = createConfirmedTicket();
+      mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
+      mockTicketCheckInPersistence.commitSuccessfulCheckIn.mockResolvedValue(
+        false,
+      );
+
+      const result = await handler.execute(
+        new CheckInTicketCommand(
+          validEventId,
+          ticket.qrCode.value,
+          validStaffId,
+          'scanner-001',
+          'Gate A',
+        ),
+      );
+
+      expect(result.error.type).toBe('CHECK_IN_FAILED');
+      expect(mockCheckInRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ isValid: false }),
+      );
+      expect(mockEventPublisher.publishFromAggregate).not.toHaveBeenCalled();
+    });
+
+    it('persists assignment authorization provenance', async () => {
+      const ticket = createConfirmedTicket();
+      mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
+
+      await handler.execute(
+        new CheckInTicketCommand(
+          validEventId,
+          ticket.qrCode.value,
+          validStaffId,
+          'scanner-001',
+          'Gate A',
+        ),
+      );
+
+      expect(
+        mockTicketCheckInPersistence.commitSuccessfulCheckIn,
+      ).toHaveBeenCalledWith(
+        ticket,
+        expect.objectContaining({
+          authorizationSource: 'ASSIGNMENT',
+          assignmentId: '550e8400-e29b-41d4-a716-446655440020',
+        }),
+      );
     });
   });
 
@@ -227,14 +339,18 @@ describe('CheckInTicketHandler', () => {
       const futureStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
       const futureEnd = new Date(Date.now() + 8 * 60 * 60 * 1000);
 
-      mockEventQuery.getEventById.mockResolvedValue({
-        id: validEventId,
-        status: 'PUBLISHED',
+      mockEventCheckInAccess.resolve.mockResolvedValue({
+        eventId: validEventId,
         startDate: futureStart,
         endDate: futureEnd,
+        authorizationSource: 'ASSIGNMENT',
+        assignmentId: '550e8400-e29b-41d4-a716-446655440020',
+        canCheckIn: true,
+        canViewBasicStats: true,
       });
 
       const command = new CheckInTicketCommand(
+        validEventId,
         ticket.qrCode.value,
         validStaffId,
         'scanner-001',
@@ -253,14 +369,18 @@ describe('CheckInTicketHandler', () => {
       const pastStart = new Date(Date.now() - 5 * 60 * 60 * 1000);
       const pastEnd = new Date(Date.now() - 1 * 60 * 60 * 1000);
 
-      mockEventQuery.getEventById.mockResolvedValue({
-        id: validEventId,
-        status: 'PUBLISHED',
+      mockEventCheckInAccess.resolve.mockResolvedValue({
+        eventId: validEventId,
         startDate: pastStart,
         endDate: pastEnd,
+        authorizationSource: 'ASSIGNMENT',
+        assignmentId: '550e8400-e29b-41d4-a716-446655440020',
+        canCheckIn: true,
+        canViewBasicStats: true,
       });
 
       const command = new CheckInTicketCommand(
+        validEventId,
         ticket.qrCode.value,
         validStaffId,
         'scanner-001',
@@ -272,13 +392,12 @@ describe('CheckInTicketHandler', () => {
       expect(result.error.type).toBe('CHECK_IN_OUTSIDE_WINDOW');
     });
 
-    it('should fail when event not found', async () => {
-      const ticket = createConfirmedTicket();
-      mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
-      mockEventQuery.getEventById.mockResolvedValue(null);
+    it('should fail when event access is denied', async () => {
+      mockEventCheckInAccess.resolve.mockResolvedValue(null);
 
       const command = new CheckInTicketCommand(
-        ticket.qrCode.value,
+        validEventId,
+        QRCodeVO.generate().value,
         validStaffId,
         'scanner-001',
         'Gate A',
@@ -286,7 +405,8 @@ describe('CheckInTicketHandler', () => {
       const result = await handler.execute(command);
 
       expect(result.isFailure).toBe(true);
-      expect(result.error.type).toBe('EVENT_NOT_FOUND');
+      expect(result.error.type).toBe('CHECK_IN_FORBIDDEN');
+      expect(mockTicketRepository.findByQRCode).not.toHaveBeenCalled();
     });
   });
 
@@ -294,14 +414,8 @@ describe('CheckInTicketHandler', () => {
     it('should fail on duplicate check-in and create audit trail', async () => {
       const ticket = createCheckedInTicket();
       mockTicketRepository.findByQRCode.mockResolvedValue(ticket);
-      mockEventQuery.getEventById.mockResolvedValue({
-        id: validEventId,
-        status: 'PUBLISHED',
-        startDate: eventStartDate,
-        endDate: eventEndDate,
-      });
-
       const command = new CheckInTicketCommand(
+        validEventId,
         ticket.qrCode.value,
         validStaffId,
         'scanner-001',

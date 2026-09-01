@@ -55,4 +55,14 @@ export interface TicketRepositoryPort extends IRepository<TicketEntity> {
   countByEventId(eventId: string): Promise<number>;
 
   countCheckedInByEventId(eventId: string): Promise<number>;
+
+  getCheckInStats(eventId: string): Promise<{
+    totalEligible: number;
+    checkedIn: number;
+    byTicketType: Array<{
+      ticketTypeId: string;
+      totalEligible: number;
+      checkedIn: number;
+    }>;
+  }>;
 }

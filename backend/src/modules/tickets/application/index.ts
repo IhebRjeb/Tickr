@@ -60,7 +60,9 @@ export * from './dtos';
 // ============================================
 export * from './ports/ticket.repository.port';
 export * from './ports/check-in.repository.port';
+export * from './ports/ticket-check-in-persistence.port';
 export * from './ports/event-query.port';
+export * from './ports/event-check-in-access.port';
 export * from './ports/user-query.port';
 
 // ============================================

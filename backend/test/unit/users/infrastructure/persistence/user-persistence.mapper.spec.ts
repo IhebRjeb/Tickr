@@ -41,6 +41,7 @@ describe('UserPersistenceMapper', () => {
         lastName: 'Doe',
         role: UserRole.PARTICIPANT,
         phone: '+33612345678',
+        emailVerified: true,
         isActive: true,
         lastLoginAt: new Date('2024-06-01T10:00:00Z'),
         createdAt: new Date('2024-01-01T00:00:00Z'),
@@ -71,7 +72,6 @@ describe('UserPersistenceMapper', () => {
 
       expect(result).not.toHaveProperty('passwordHash');
       expect(result).not.toHaveProperty('isOrganizer');
-      expect(result).not.toHaveProperty('emailVerified');
       expect(result).not.toHaveProperty('phoneVerified');
     });
 

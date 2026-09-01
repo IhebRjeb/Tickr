@@ -13,10 +13,11 @@
 import type {
   EventInfo,
   TicketTypeAvailability,
+  TicketTypeInfo,
 } from '../models/event-query.model';
 
 // Re-export for convenience
-export type { EventInfo, TicketTypeAvailability };
+export type { EventInfo, TicketTypeAvailability, TicketTypeInfo };
 
 /**
  * Injection token for EventQueryPort
@@ -35,6 +36,8 @@ export interface EventQueryPort {
   getTicketTypeAvailability(
     ticketTypeId: string,
   ): Promise<TicketTypeAvailability | null>;
+
+  getTicketTypesByIds(ticketTypeIds: string[]): Promise<TicketTypeInfo[]>;
 
   /**
    * Decrement available quantity after reservation

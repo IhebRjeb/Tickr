@@ -11,6 +11,7 @@
 ### Objectif
 
 Livrer plateforme fonctionnelle permettant de:
+
 - Créer et publier événements
 - Vendre billets en ligne
 - Payer par carte (Tunisie + international)
@@ -20,6 +21,7 @@ Livrer plateforme fonctionnelle permettant de:
 ### Non-Scope V1
 
 ❌ **Exclus de V1:**
+
 - Application mobile native
 - Paiement D17/Mobicash
 - Système affiliation
@@ -35,11 +37,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 1: Authentification & Utilisateurs
 
 #### US-1.1: Inscription Participant
+
 **En tant que** participant  
 **Je veux** créer un compte  
 **Pour** acheter des billets
 
 **Critères acceptation:**
+
 - [ ] Formulaire: email, téléphone (+216), mot de passe, nom/prénom
 - [ ] Validation email unique
 - [ ] Validation téléphone format tunisien
@@ -52,11 +56,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-1.2: Connexion
+
 **En tant qu'** utilisateur  
 **Je veux** me connecter  
 **Pour** accéder à mon compte
 
 **Critères acceptation:**
+
 - [ ] Login par email OU téléphone + mot de passe
 - [ ] JWT token généré (expiration 24h)
 - [ ] Refresh token (expiration 30 jours)
@@ -68,11 +74,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-1.3: Profil Organisateur
+
 **En tant qu'** utilisateur  
 **Je veux** devenir organisateur  
 **Pour** créer des événements
 
 **Critères acceptation:**
+
 - [ ] Switch "Devenir Organisateur" dans profil
 - [ ] Informations additionnelles:
   - Nom organisation
@@ -89,11 +97,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 2: Événements
 
 #### US-2.1: Créer Événement
+
 **En tant qu'** organisateur  
 **Je veux** créer un événement  
 **Pour** vendre des billets
 
 **Critères acceptation:**
+
 - [ ] Formulaire création:
   - Nom événement (max 200 char)
   - Description riche (WYSIWYG editor)
@@ -111,11 +121,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-2.2: Définir Types Billets
+
 **En tant qu'** organisateur  
 **Je veux** définir différents types de billets  
 **Pour** proposer plusieurs tarifs
 
 **Critères acceptation:**
+
 - [ ] Ajouter 1 à 5 types billets par événement
 - [ ] Chaque type:
   - Nom (ex: VIP, Standard, Early Bird)
@@ -132,11 +144,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-2.3: Publier Événement
+
 **En tant qu'** organisateur  
 **Je veux** publier mon événement  
 **Pour** le rendre visible au public
 
 **Critères acceptation:**
+
 - [ ] Bouton "Publier" visible si événement complet
 - [ ] Validation avant publication:
   - Au moins 1 type billet défini
@@ -151,11 +165,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-2.4: Modifier Événement
+
 **En tant qu'** organisateur  
 **Je veux** modifier mon événement  
 **Pour** corriger des informations
 
 **Critères acceptation:**
+
 - [ ] Possibilité modifier tous champs sauf:
   - Date (si < 48h)
   - Prix billets (si ventes en cours)
@@ -169,11 +185,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 3: Recherche & Découverte
 
 #### US-3.1: Rechercher Événements
+
 **En tant que** participant  
 **Je veux** rechercher des événements  
 **Pour** trouver ce qui m'intéresse
 
 **Critères acceptation:**
+
 - [ ] Barre recherche: texte libre (nom événement)
 - [ ] Filtres:
   - Ville (Tunis, Sousse, Sfax, Autre)
@@ -189,11 +207,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-3.2: Consulter Détails Événement
+
 **En tant que** participant  
 **Je veux** voir les détails d'un événement  
 **Pour** décider d'acheter
 
 **Critères acceptation:**
+
 - [ ] Page détails affiche:
   - Image couverture en grand
   - Nom + description complète
@@ -213,11 +233,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 4: Achat & Paiement
 
 #### US-4.1: Panier Billets
+
 **En tant que** participant  
 **Je veux** ajouter des billets au panier  
 **Pour** les acheter ensemble
 
 **Critères acceptation:**
+
 - [ ] Sélection type + quantité billets
 - [ ] Validation disponibilité temps réel
 - [ ] Affichage prix unitaire + total
@@ -231,11 +253,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-4.2: Paiement Konnect/Paymee (Tunisie)
+
 **En tant que** participant  
 **Je veux** payer via un gateway de paiement tunisien  
 **Pour** obtenir mes billets
 
 **Critères acceptation:**
+
 - [ ] Redirection vers gateway Konnect (principal) OU Paymee (fallback)
 - [ ] Passage paramètres:
   - Montant TND
@@ -255,11 +279,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-4.3: Paiement Stripe International
+
 **En tant que** participant  
 **Je veux** payer par carte internationale  
 **Pour** obtenir mes billets si carte tunisienne refusée
 
 **Critères acceptation:**
+
 - [ ] Intégration Stripe Checkout
 - [ ] Support cartes: Visa, Mastercard, Amex
 - [ ] 3D Secure activé
@@ -272,11 +298,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-4.4: Confirmation Achat
+
 **En tant que** participant  
 **Je veux** recevoir confirmation immédiate  
 **Pour** avoir mes billets
 
 **Critères acceptation:**
+
 - [ ] Après paiement réussi:
   - Redirection page confirmation
   - Email avec PDF billets (QR codes)
@@ -297,11 +325,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 5: Billets & QR Codes
 
 #### US-5.1: Génération QR Codes
+
 **En tant que** système  
 **Je veux** générer QR codes uniques  
 **Pour** chaque billet vendu
 
 **Critères acceptation:**
+
 - [ ] QR code contient: `{eventId}|{ticketId}|{userId}|{hash}`
 - [ ] Hash HMAC-SHA256 pour sécurité
 - [ ] Format image: PNG 300x300px
@@ -314,11 +344,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-5.2: Consulter Mes Billets
+
 **En tant que** participant  
 **Je veux** voir tous mes billets  
 **Pour** les retrouver facilement
 
 **Critères acceptation:**
+
 - [ ] Page "Mes Billets" dans menu utilisateur
 - [ ] Liste billets:
   - Événements à venir en premier
@@ -338,17 +370,24 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 6: Check-in Entrée
 
 #### US-6.1: Scanner QR Code
+
 **En tant que** staff événement  
 **Je veux** scanner les QR codes  
 **Pour** valider l'entrée
 
 **Critères acceptation:**
-- [ ] Page dédiée: `/checkin/{eventId}`
-- [ ] Authentification staff requise
+
+- [ ] L'organisateur affecte un compte Tickr existant par email à son événement
+- [ ] L'affectation est limitée au check-in et révocable immédiatement
+- [ ] Aucun rôle global `STAFF` n'est créé
+- [ ] Page dédiée: `/check-in`, avec sélection d'un événement autorisé
+- [ ] Authentification et sélection d'un événement autorisé requises
 - [ ] Activation caméra smartphone/webcam
 - [ ] Scan QR code:
   - Décodage données
-  - Appel API validation
+  - Appel API validation avec `eventId`, identifiant appareil et porte
+  - Rejet si le billet appartient à un autre événement
+  - Une seule validation possible même avec plusieurs scanners simultanés
   - Affichage résultat < 1s
 - [ ] Si valide:
   - ✅ Écran vert "ACCÈS AUTORISÉ"
@@ -368,11 +407,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 7: Dashboard Organisateur
 
 #### US-7.1: Statistiques Ventes
+
 **En tant qu'** organisateur  
 **Je veux** voir mes statistiques  
 **Pour** suivre les ventes
 
 **Critères acceptation:**
+
 - [ ] Dashboard affiche:
   - Billets vendus / Total (%)
   - Chiffre affaires brut (TND)
@@ -389,11 +430,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-7.2: Liste Participants
+
 **En tant qu'** organisateur  
 **Je veux** voir la liste des participants  
 **Pour** gérer l'événement
 
 **Critères acceptation:**
+
 - [ ] Table participants:
   - Nom, Email, Téléphone
   - Type billet
@@ -411,11 +454,13 @@ Livrer plateforme fonctionnelle permettant de:
 ### Module 8: Notifications
 
 #### US-8.1: Email Transactionnel
+
 **En tant que** système  
 **Je veux** envoyer des emails  
 **Pour** confirmer les actions
 
 **Critères acceptation:**
+
 - [ ] Templates emails:
   - Confirmation inscription
   - Confirmation achat + PDF billets
@@ -431,11 +476,13 @@ Livrer plateforme fonctionnelle permettant de:
 ---
 
 #### US-8.2: SMS Notifications
+
 **En tant que** participant  
 **Je veux** recevoir SMS  
 **Pour** ne pas manquer l'événement
 
 **Critères acceptation:**
+
 - [ ] SMS envoyés:
   - Confirmation achat (avec lien billets)
   - Rappel J-1 événement
@@ -452,17 +499,17 @@ Livrer plateforme fonctionnelle permettant de:
 
 ### Par Module
 
-| Module | User Stories | Points | Priorité |
-|--------|-------------|--------|----------|
-| 1. Auth & Users | 3 | 8 | P0 |
-| 2. Événements | 4 | 21 | P0 |
-| 3. Recherche | 2 | 13 | P0 |
-| 4. Achat & Paiement | 4 | 34 | P0 |
-| 5. Billets & QR | 2 | 10 | P0 |
-| 6. Check-in | 1 | 13 | P1 |
-| 7. Dashboard | 2 | 13 | P1 |
-| 8. Notifications | 2 | 10 | P1 |
-| **TOTAL** | **20** | **122** | - |
+| Module              | User Stories | Points  | Priorité |
+| ------------------- | ------------ | ------- | -------- |
+| 1. Auth & Users     | 3            | 8       | P0       |
+| 2. Événements       | 4            | 21      | P0       |
+| 3. Recherche        | 2            | 13      | P0       |
+| 4. Achat & Paiement | 4            | 34      | P0       |
+| 5. Billets & QR     | 2            | 10      | P0       |
+| 6. Check-in         | 1            | 13      | P1       |
+| 7. Dashboard        | 2            | 13      | P1       |
+| 8. Notifications    | 2            | 10      | P1       |
+| **TOTAL**           | **20**       | **122** | -        |
 
 ### Vélocité Estimée
 
@@ -478,6 +525,7 @@ Livrer plateforme fonctionnelle permettant de:
 ## 🎯 Roadmap MVP V1
 
 ### Sprint 1-2: Infrastructure & Auth (Semaines 1-4)
+
 ```
 - Setup projet NestJS + React
 - Configuration AWS (ECS, RDS, S3)
@@ -487,6 +535,7 @@ Livrer plateforme fonctionnelle permettant de:
 ```
 
 ### Sprint 3-4: Événements (Semaines 5-8)
+
 ```
 - Création événements
 - Types billets
@@ -495,6 +544,7 @@ Livrer plateforme fonctionnelle permettant de:
 ```
 
 ### Sprint 5-6: Recherche & Achat (Semaines 9-12)
+
 ```
 - Recherche événements
 - Page détails
@@ -503,6 +553,7 @@ Livrer plateforme fonctionnelle permettant de:
 ```
 
 ### Sprint 7-8: Billets & QR (Semaines 13-16)
+
 ```
 - Génération QR codes
 - PDF billets
@@ -511,6 +562,7 @@ Livrer plateforme fonctionnelle permettant de:
 ```
 
 ### Sprint 9-10: Check-in & Dashboard (Semaines 17-20)
+
 ```
 - Scanner QR code
 - Validation entrée
@@ -519,6 +571,7 @@ Livrer plateforme fonctionnelle permettant de:
 ```
 
 ### Sprint 11-12: Polish & Tests (Semaines 21-24)
+
 ```
 - Tests E2E
 - Optimisations performance

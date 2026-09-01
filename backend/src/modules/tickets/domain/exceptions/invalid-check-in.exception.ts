@@ -28,6 +28,12 @@ export class InvalidCheckInException extends DomainException {
     return new InvalidCheckInException('Check-in location gate is required');
   }
 
+  static missingAssignmentForAuthorization(): InvalidCheckInException {
+    return new InvalidCheckInException(
+      'Assignment authorization requires an assignment ID',
+    );
+  }
+
   static invalidUUID(fieldName: string): InvalidCheckInException {
     return new InvalidCheckInException(
       `${fieldName} must be a valid UUID`,

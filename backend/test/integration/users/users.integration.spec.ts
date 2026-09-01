@@ -5,7 +5,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
@@ -247,13 +246,6 @@ describe('Users Module Integration Tests', () => {
           signOptions: { expiresIn: '15m' },
         }),
         CqrsModule,
-        ThrottlerModule.forRoot([
-          {
-            name: 'short',
-            ttl: 1000,
-            limit: 100,  // Higher limit for tests
-          },
-        ]),
       ],
       controllers: [AuthController, UsersController],
       providers: [
@@ -294,7 +286,7 @@ describe('Users Module Integration Tests', () => {
         // Global guards
         {
           provide: APP_GUARD,
-          useClass: ThrottlerGuard,
+          useValue: { canActivate: () => true },
         },
       ],
     }).compile();

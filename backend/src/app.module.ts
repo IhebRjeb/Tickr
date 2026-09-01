@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import * as Joi from 'joi';
 
 import { AppController } from './app.controller';
@@ -71,6 +72,12 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
       },
     }),
 
+    ThrottlerModule.forRoot([
+      { name: 'short', ttl: 1000, limit: 3 },
+      { name: 'medium', ttl: 10000, limit: 20 },
+      { name: 'long', ttl: 60000, limit: 100 },
+    ]),
+
     // Shared Infrastructure
     DatabaseModule,
     CacheModule,
@@ -87,6 +94,11 @@ import { EventBusModule } from './shared/infrastructure/events/event-bus.module'
   controllers: [AppController],
   providers: [
     AppService,
+
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     
     // Global Exception Filter
     {

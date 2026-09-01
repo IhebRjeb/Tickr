@@ -13,12 +13,14 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 ### Proposition de Valeur
 
 **Pour Organisateurs:**
+
 - Création événement en < 5 minutes
 - Paiement en ligne sécurisé (Konnect/Paymee/Stripe)
 - Gestion billets temps réel
 - Statistiques ventes instantanées
 
 **Pour Participants:**
+
 - Achat billets mobile-first
 - Paiement carte locale + internationale
 - Billet QR code instantané
@@ -34,6 +36,7 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 **Objectif:** Vendre des billets et gérer son événement
 
 **Capacités:**
+
 - Créer/modifier/supprimer événements
 - Définir types billets (VIP, Standard, Early Bird)
 - Configurer prix et disponibilités
@@ -47,6 +50,7 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 **Objectif:** Acheter billets et accéder événements
 
 **Capacités:**
+
 - Rechercher événements (ville, catégorie, date)
 - Acheter billets en ligne
 - Recevoir QR code par email/SMS
@@ -59,6 +63,7 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 **Objectif:** Administrer la plateforme
 
 **Capacités:**
+
 - Modérer événements
 - Gérer utilisateurs
 - Support client
@@ -161,6 +166,10 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 
 ### Workflow 3: Check-in Entrée (Staff Événement)
 
+Le staff de porte utilise un compte Tickr existant affecté à cet événement par son organisateur.
+Il conserve son rôle global (`PARTICIPANT` ou `ORGANIZER`) et ne reçoit aucun accès aux prix,
+revenus, exports participants ou réglages de l'organisateur.
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                  CHECK-IN ENTRÉE                         │
@@ -168,7 +177,7 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 
 1. Staff se connecte à l'app Check-in
    • Authentification
-   • Sélectionne événement
+   • Sélectionne un événement autorisé
    ↓
 2. Participant arrive à l'entrée
    • Présente QR code (smartphone ou papier)
@@ -270,43 +279,46 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 
 ### Pour Organisateurs
 
-| ID | Cas d'Usage | Priorité | Complexité |
-|----|-------------|----------|------------|
-| UC-O1 | Créer événement | P0 | Moyenne |
-| UC-O2 | Modifier événement | P0 | Faible |
-| UC-O3 | Publier événement | P0 | Faible |
-| UC-O4 | Définir types billets | P0 | Moyenne |
-| UC-O5 | Consulter statistiques | P0 | Moyenne |
-| UC-O6 | Exporter liste participants | P1 | Faible |
-| UC-O7 | Gérer check-in | P1 | Moyenne |
-| UC-O8 | Annuler événement | P2 | Moyenne |
+| ID    | Cas d'Usage                 | Priorité | Complexité |
+| ----- | --------------------------- | -------- | ---------- |
+| UC-O1 | Créer événement             | P0       | Moyenne    |
+| UC-O2 | Modifier événement          | P0       | Faible     |
+| UC-O3 | Publier événement           | P0       | Faible     |
+| UC-O4 | Définir types billets       | P0       | Moyenne    |
+| UC-O5 | Consulter statistiques      | P0       | Moyenne    |
+| UC-O6 | Exporter liste participants | P1       | Faible     |
+| UC-O7 | Gérer check-in              | P1       | Moyenne    |
+| UC-O8 | Annuler événement           | P2       | Moyenne    |
 
 ### Pour Participants
 
-| ID | Cas d'Usage | Priorité | Complexité |
-|----|-------------|----------|------------|
-| UC-P1 | Rechercher événements | P0 | Moyenne |
-| UC-P2 | Consulter détails événement | P0 | Faible |
-| UC-P3 | Acheter billets | P0 | Élevée |
-| UC-P4 | Payer en ligne | P0 | Élevée |
-| UC-P5 | Recevoir billets QR | P0 | Moyenne |
-| UC-P6 | Consulter historique achats | P1 | Faible |
-| UC-P7 | Partager événement | P2 | Faible |
-| UC-P8 | Demander remboursement | P2 | Moyenne |
+| ID    | Cas d'Usage                 | Priorité | Complexité |
+| ----- | --------------------------- | -------- | ---------- |
+| UC-P1 | Rechercher événements       | P0       | Moyenne    |
+| UC-P2 | Consulter détails événement | P0       | Faible     |
+| UC-P3 | Acheter billets             | P0       | Élevée     |
+| UC-P4 | Payer en ligne              | P0       | Élevée     |
+| UC-P5 | Recevoir billets QR         | P0       | Moyenne    |
+| UC-P6 | Consulter historique achats | P1       | Faible     |
+| UC-P7 | Partager événement          | P2       | Faible     |
+| UC-P8 | Demander remboursement      | P2       | Moyenne    |
 
 ---
 
 ## 🎨 Types Événements Ciblés V1
 
 ### 1. Concerts / Musique 🎵
+
 - **Exemples:** Concerts, festivals, DJ sets
 - **Spécificités:** Places numérotées optionnelles, merchandising
 
 ### 2. Événements Sportifs ⚽
+
 - **Exemples:** Matchs football, marathons, tournois
 - **Spécificités:** Tribunes/catégories, billets saison
 
 ### 3. Formations / Workshops 📚
+
 - **Exemples:** Conférences, séminaires, ateliers
 - **Spécificités:** Early bird pricing, certificats participation
 

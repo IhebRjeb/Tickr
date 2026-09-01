@@ -2,6 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Result } from '@shared/domain/result';
 
 import type { CheckInStatsDto } from '../../dtos/check-in-stats.dto';
+import { EVENT_CHECK_IN_ACCESS_PORT } from '../../ports/event-check-in-access.port';
+import type { EventCheckInAccessPort } from '../../ports/event-check-in-access.port';
 import { EVENT_QUERY_PORT } from '../../ports/event-query.port';
 import type { EventQueryPort } from '../../ports/event-query.port';
 import { TICKET_REPOSITORY } from '../../ports/ticket.repository.port';
@@ -24,6 +26,8 @@ export class GetEventCheckInStatsHandler {
   constructor(
     @Inject(TICKET_REPOSITORY)
     private readonly ticketRepository: TicketRepositoryPort,
+    @Inject(EVENT_CHECK_IN_ACCESS_PORT)
+    private readonly eventCheckInAccess: EventCheckInAccessPort,
     @Inject(EVENT_QUERY_PORT)
     private readonly eventQuery: EventQueryPort,
   ) {}
@@ -35,34 +39,50 @@ export class GetEventCheckInStatsHandler {
       `Getting check-in stats for event ${query.eventId}`,
     );
 
-    // Validate event exists
-    const event = await this.eventQuery.getEventById(query.eventId);
-    if (!event) {
+    const access = await this.eventCheckInAccess.resolve(
+      query.eventId,
+      query.actorId,
+    );
+    if (!access?.canViewBasicStats) {
       return Result.fail({
-        type: 'EVENT_NOT_FOUND',
-        message: `Event '${query.eventId}' not found`,
+        type: 'ACCESS_DENIED',
+        message: 'Check-in statistics access denied',
       });
     }
 
-    const totalTickets = await this.ticketRepository.countByEventId(
+    const { totalEligible, checkedIn, byTicketType } =
+      await this.ticketRepository.getCheckInStats(
       query.eventId,
     );
-    const checkedIn = await this.ticketRepository.countCheckedInByEventId(
-      query.eventId,
+    const ticketTypes = await this.eventQuery.getTicketTypesByIds(
+      byTicketType.map((item) => item.ticketTypeId),
+    );
+    const ticketTypeNames = new Map(
+      ticketTypes.map((ticketType) => [ticketType.id, ticketType.name]),
     );
 
     const checkInRate =
-      totalTickets > 0 ? Math.round((checkedIn / totalTickets) * 100) : 0;
+      totalEligible > 0 ? Math.round((checkedIn / totalEligible) * 100) : 0;
 
     const stats: CheckInStatsDto = {
-      totalTickets,
+      totalTickets: totalEligible,
       checkedIn,
+      remaining: totalEligible - checkedIn,
       checkInRate,
-      byType: [], // TODO: Populate per-type stats when ticket type query is available
+      byType: byTicketType.map((item) => ({
+        ticketTypeName:
+          ticketTypeNames.get(item.ticketTypeId) ?? 'Unknown ticket type',
+        total: item.totalEligible,
+        checkedIn: item.checkedIn,
+        rate:
+          item.totalEligible > 0
+            ? Math.round((item.checkedIn / item.totalEligible) * 100)
+            : 0,
+      })),
     };
 
     this.logger.debug(
-      `Check-in stats for event ${query.eventId}: ${checkedIn}/${totalTickets} (${checkInRate}%)`,
+      `Check-in stats for event ${query.eventId}: ${checkedIn}/${totalEligible} (${checkInRate}%)`,
     );
 
     return Result.ok(stats);

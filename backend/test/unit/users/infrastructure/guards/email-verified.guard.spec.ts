@@ -133,18 +133,19 @@ describe('EmailVerifiedGuard', () => {
       );
     });
 
-    it('should default to verified when emailVerified field is missing', async () => {
-      const userWithoutEmailVerified = { ...mockUser };
-      delete (userWithoutEmailVerified as any).emailVerified;
-      
+    it('should reject when emailVerified field is missing', async () => {
+      const { emailVerified: _emailVerified, ...userWithoutEmailVerified } =
+        mockUser;
+
       const context = createMockExecutionContext({ userId: mockUser.id, email: 'test@example.com', role: 'PARTICIPANT' });
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
       mockUserRepository.findById.mockResolvedValue(userWithoutEmailVerified);
 
-      const result = await guard.canActivate(context);
-
-      // Should default to true (verified) when field is missing
-      expect(result).toBe(true);
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        new ForbiddenException(
+          'Email verification required. Please verify your email address.',
+        ),
+      );
     });
   });
 });

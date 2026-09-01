@@ -23,6 +23,7 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 
 **JWT Token:**
+
 - Expiration: **7 jours** (`JWT_EXPIRES_IN`, défaut `'7d'` — `jwt.service.ts:74`)
 - Refresh token: **30 jours** (`JWT_REFRESH_EXPIRES_IN`, défaut `'30d'` — `jwt.service.ts:75`)
 - Algorithme: HS256
@@ -49,6 +50,7 @@ GET /events?page=1&limit=12
 ```
 
 **Response:**
+
 ```json
 {
   "data": [...],
@@ -88,6 +90,7 @@ GET /events?page=1&limit=12
 **Authentification:** Non requise (public)
 
 **Response 200:**
+
 ```json
 {
   "globalCommissionRate": 0.06,
@@ -99,12 +102,14 @@ GET /events?page=1&limit=12
 ```
 
 **Utilisation Frontend:**
+
 - Sans `eventId`: cache recommandé 1 heure
 - Avec `eventId`: rafraîchir à l'ouverture de la sélection de billets
 - Ne pas inventer un fallback à 6 % pour un événement; une surcharge peut s'appliquer
 - Les montants retournés par `POST /orders` restent autoritaires
 
 **Notes:**
+
 - ✅ Endpoint public (pas de token requis)
 - ✅ Permet changement commission sans redéployer frontend
 
@@ -115,6 +120,7 @@ GET /events?page=1&limit=12
 **Auth:** Required (`ADMIN` uniquement)
 
 **Body:**
+
 ```json
 { "commissionRate": 0.03 }
 ```
@@ -122,6 +128,7 @@ GET /events?page=1&limit=12
 Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, maximum 4 décimales.
 
 **Response 200:**
+
 ```json
 {
   "eventId": "uuid",
@@ -140,6 +147,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Inscription nouveau participant
 
 **Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -151,6 +159,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 201:**
+
 ```json
 {
   "user": {
@@ -172,6 +181,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Connexion utilisateur
 
 **Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -180,6 +190,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 200:**
+
 ```json
 {
   "user": {
@@ -199,6 +210,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Renouveler access token
 
 **Body:**
+
 ```json
 {
   "refreshToken": "eyJhbGc..."
@@ -206,6 +218,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 200:**
+
 ```json
 {
   "accessToken": "eyJhbGc...",
@@ -223,6 +236,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Profil utilisateur connecté
 
 **Response 200:**
+
 ```json
 {
   "id": "uuid",
@@ -244,6 +258,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Modifier profil
 
 **Body:**
+
 ```json
 {
   "firstName": "Johnny",
@@ -252,6 +267,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 200:**
+
 ```json
 {
   "id": "uuid",
@@ -268,6 +284,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Devenir organisateur
 
 **Body:**
+
 ```json
 {
   "organizationName": "TunisConcerts",
@@ -281,6 +298,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 200:**
+
 ```json
 {
   "id": "uuid",
@@ -303,6 +321,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Créer événement (brouillon)
 
 **Body:**
+
 ```json
 {
   "name": "Concert Balti 2024",
@@ -323,6 +342,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 201:**
+
 ```json
 {
   "id": "uuid",
@@ -341,6 +361,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Détails événement
 
 **Response 200:**
+
 ```json
 {
   "id": "uuid",
@@ -369,7 +390,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
     {
       "id": "uuid",
       "name": "Standard",
-      "price": 50.00,
+      "price": 50.0,
       "quantity": 500,
       "sold": 120,
       "available": 380
@@ -377,7 +398,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
     {
       "id": "uuid",
       "name": "VIP",
-      "price": 100.00,
+      "price": 100.0,
       "quantity": 100,
       "sold": 45,
       "available": 55
@@ -386,7 +407,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
   "stats": {
     "views": 1250,
     "sold": 165,
-    "revenue": 10500.00
+    "revenue": 10500.0
   }
 }
 ```
@@ -399,6 +420,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Rechercher événements
 
 **Query Params:**
+
 ```
 ?q=concert              # Recherche texte
 &category=CONCERT       # CONCERT|SPORT|TRAINING
@@ -414,6 +436,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 200:**
+
 ```json
 {
   "data": [
@@ -431,7 +454,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
       "ticketTypes": [
         {
           "name": "Standard",
-          "price": 50.00,
+          "price": 50.0,
           "available": 380
         }
       ]
@@ -454,6 +477,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Modifier événement
 
 **Body:**
+
 ```json
 {
   "description": "<p>Nouvelle description...</p>",
@@ -462,6 +486,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 ```
 
 **Response 200:**
+
 ```json
 {
   "id": "uuid",
@@ -478,11 +503,12 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 **Description:** Ajouter type billet
 
 **Body:**
+
 ```json
 {
   "name": "Early Bird",
   "description": "Prix réduit pour les premiers",
-  "price": 35.000,
+  "price": 35.0,
   "currency": "TND",
   "quantity": 200,
   "salesStartDate": "2026-06-01T00:00:00Z",
@@ -495,6 +521,7 @@ Utiliser `null` pour rétablir le taux global. Valeurs acceptées: 0 à 0.20, ma
 Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 
 **Response 201:**
+
 ```json
 {
   "ticketTypeId": "uuid",
@@ -510,6 +537,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Publier événement
 
 **Response 200:**
+
 ```json
 {
   "id": "uuid",
@@ -528,6 +556,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Ajouter billets au panier
 
 **Body:**
+
 ```json
 {
   "ticketTypeId": "uuid",
@@ -536,6 +565,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 ```
 
 **Response 200:**
+
 ```json
 {
   "cart": {
@@ -544,14 +574,14 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
         "ticketTypeId": "uuid",
         "eventName": "Concert Balti 2024",
         "ticketTypeName": "Standard",
-        "unitPrice": 50.00,
+        "unitPrice": 50.0,
         "quantity": 2,
-        "subtotal": 100.00
+        "subtotal": 100.0
       }
     ],
-    "subtotal": 100.00,
-    "platformFee": 4.00,
-    "total": 104.00,
+    "subtotal": 100.0,
+    "platformFee": 4.0,
+    "total": 104.0,
     "expiresAt": "2024-01-15T10:45:00Z"
   }
 }
@@ -565,6 +595,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Voir panier
 
 **Response 200:**
+
 ```json
 {
   "items": [...],
@@ -583,6 +614,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Créer commande (avant paiement)
 
 **Body:**
+
 ```json
 {
   "paymentMethod": "KONNECT"
@@ -590,10 +622,11 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 ```
 
 **Response 201:**
+
 ```json
 {
   "orderId": "uuid",
-  "amount": 104.00,
+  "amount": 104.0,
   "status": "PENDING",
   "paymentUrl": "https://gateway.konnect.network/pay/abc123",
   "expiresAt": "2024-01-15T10:45:00Z"
@@ -610,18 +643,20 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Callback Konnect (gateway TN principal)
 
 **Body:**
+
 ```json
 {
   "orderId": "uuid",
   "status": "COMPLETED",
   "transactionId": "CTP123456789",
-  "amount": 104.00,
+  "amount": 104.0,
   "timestamp": "2024-01-15T10:35:00Z",
   "signature": "sha256..."
 }
 ```
 
 **Response 200:**
+
 ```json
 {
   "received": true
@@ -654,6 +689,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Mes billets
 
 **Response 200:**
+
 ```json
 {
   "upcoming": [
@@ -694,65 +730,94 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 
 ## ✅ Check-in
 
-### GET /checkin/:eventId/init
+Le staff de check-in n'est pas un rôle global. Un compte `PARTICIPANT` ou `ORGANIZER` peut recevoir
+une affectation limitée à un événement. Le propriétaire de l'événement et un `ADMIN` ont un accès
+implicite. Toutes les décisions relisent l'état courant du compte, de l'événement et de
+l'affectation.
 
-**Auth:** Required (Staff)  
-**Description:** Initialiser session check-in
+### POST /events/:eventId/check-in-staff
+
+**Auth:** Required (`ORGANIZER`, propriétaire uniquement)  
+**Description:** Affecter un compte Tickr existant et vérifié au check-in de l'événement
+
+```json
+{ "email": "staff@example.com" }
+```
+
+**Response 201:** affectation avec `id`, `eventId`, identité du compte et `assignedAt`.
+
+**Erreurs:** `403` non-propriétaire, `404` événement absent, `409` déjà affecté, `422` compte
+absent/inactif/non vérifié. Le `422` reste volontairement générique pour ne pas révéler l'existence
+d'un compte.
+
+### GET /events/:eventId/check-in-staff
+
+**Auth:** Required (`ORGANIZER`, propriétaire uniquement)  
+**Description:** Lister les affectations actives avec pagination plate (`page`, `limit`).
+
+### DELETE /events/:eventId/check-in-staff/:assignmentId
+
+**Auth:** Required (`ORGANIZER`, propriétaire uniquement)  
+**Description:** Révoquer une affectation précise. La révocation est conservée pour audit.
+
+**Response:** `204 No Content`
+
+### GET /events/check-in-access/me
+
+**Auth:** Required (tout compte actif et vérifié)  
+**Description:** Lister les événements publiés non terminés que le compte peut scanner comme
+propriétaire, administrateur ou staff affecté.
+
+### POST /tickets/check-in
+
+**Auth:** Required (propriétaire, `ADMIN` actuel ou staff activement affecté à l'événement)  
+**Description:** Valider un billet dans la fenêtre `début - 1 h` jusqu'à la fin de l'événement.
+
+```json
+{
+  "eventId": "550e8400-e29b-41d4-a716-446655440001",
+  "qrCode": "v1-550e8400-e29b-41d4-a716-446655440010-a1b2",
+  "deviceId": "scanner-gate-a-001",
+  "locationGate": "Gate A"
+}
+```
 
 **Response 200:**
+
 ```json
 {
-  "event": {
-    "id": "uuid",
-    "name": "Concert Balti 2024",
-    "startDate": "2024-06-15T20:00:00Z"
-  },
-  "stats": {
-    "totalSold": 165,
-    "checkedIn": 42,
-    "remaining": 123
-  }
+  "isValid": true,
+  "ticketId": "550e8400-e29b-41d4-a716-446655440010",
+  "holderName": "John Doe",
+  "ticketTypeName": "General Admission",
+  "checkedInAt": "2026-09-01T19:45:00Z",
+  "failureReason": null
 }
 ```
 
----
+Le billet doit appartenir à `eventId`. La transition vers `CHECKED_IN` et l'audit sont atomiques:
+deux scanners concurrents ne peuvent pas valider le même billet. Les refus sont `400`, un billet
+inconnu pour l'événement est `404`, et un opérateur non autorisé reçoit `403`.
 
-### POST /checkin/:eventId/scan
+### GET /tickets/event/:eventId/stats
 
-**Auth:** Required (Staff)  
-**Description:** Valider QR code
+**Auth:** Required (propriétaire, `ADMIN` actuel ou staff activement affecté)  
+**Description:** Compteurs agrégés limités aux billets `CONFIRMED` et `CHECKED_IN`.
 
-**Body:**
 ```json
 {
-  "qrCodeData": "TICKR|evt-uuid|tkt-uuid|hash"
-}
-```
-
-**Response 200 (Success):**
-```json
-{
-  "valid": true,
-  "ticket": {
-    "id": "uuid",
-    "ticketNumber": "TICKR-001234",
-    "ticketType": "Standard",
-    "participant": {
-      "firstName": "John",
-      "lastName": "Doe"
+  "totalTickets": 165,
+  "checkedIn": 42,
+  "remaining": 123,
+  "checkInRate": 25,
+  "byType": [
+    {
+      "ticketTypeName": "Standard",
+      "total": 120,
+      "checkedIn": 30,
+      "rate": 25
     }
-  },
-  "checkedInAt": "2024-06-15T19:45:00Z"
-}
-```
-
-**Response 409 (Conflict - already used):**
-```json
-{
-  "valid": false,
-  "reason": "ALREADY_USED",
-  "message": "Billet déjà scanné à 19:30",
-  "checkedInAt": "2024-06-15T19:30:00Z"
+  ]
 }
 ```
 
@@ -766,6 +831,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Description:** Statistiques événement
 
 **Response 200:**
+
 ```json
 {
   "sales": {
@@ -773,28 +839,28 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
     "total": 600,
     "soldPercentage": 27.5,
     "revenue": {
-      "gross": 10500.00,
-      "platformFee": 420.00,
-      "net": 10080.00
+      "gross": 10500.0,
+      "platformFee": 420.0,
+      "net": 10080.0
     }
   },
   "salesByTicketType": [
     {
       "name": "Standard",
       "sold": 120,
-      "revenue": 6000.00
+      "revenue": 6000.0
     },
     {
       "name": "VIP",
       "sold": 45,
-      "revenue": 4500.00
+      "revenue": 4500.0
     }
   ],
   "salesByDay": [
     {
       "date": "2024-01-10",
       "sold": 23,
-      "revenue": 1380.00
+      "revenue": 1380.0
     }
   ],
   "conversion": {
@@ -815,6 +881,7 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Query:** `?page=1&limit=50&search=john`
 
 **Response 200:**
+
 ```json
 {
   "data": [
@@ -849,11 +916,13 @@ Le backend V1 n'accepte ni `pricingMode` ni `targetBuyerTotal`.
 **Content-Type:** `multipart/form-data`
 
 **Body:**
+
 ```
 file: [Binary]
 ```
 
 **Response 201:**
+
 ```json
 {
   "url": "https://s3.amazonaws.com/tickr-images/evt-uuid-123456.jpg",
@@ -873,14 +942,18 @@ Limite: 5 requêtes / 15 min / IP
 Endpoint: /orders
 Limite: 10 requêtes / min / user
 
-Endpoint: /checkin/:id/scan
-Limite: 60 requêtes / min / staff
+Endpoint: /tickets/check-in
+Limite: 10 requêtes / s, 80 / 10 s, 300 / min / client
+
+Endpoint: /events/:id/check-in-staff
+Limite: 3 requêtes / s, 10 / 10 s, 20 / heure / organisateur
 
 Général (autres endpoints):
 Limite: 100 requêtes / min / IP
 ```
 
 **Response 429:**
+
 ```json
 {
   "statusCode": 429,

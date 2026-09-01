@@ -17,3 +17,10 @@ export * from './get-upcoming-events';
 
 // Get Organizer Events
 export * from './get-organizer-events';
+
+export * from './get-event-check-in-staff/get-event-check-in-staff.query';
+export * from './get-event-check-in-staff/get-event-check-in-staff.handler';
+export * from './get-my-event-check-in-access/get-my-event-check-in-access.query';
+export * from './get-my-event-check-in-access/get-my-event-check-in-access.handler';
+export * from './resolve-event-check-in-access/resolve-event-check-in-access.query';
+export * from './resolve-event-check-in-access/resolve-event-check-in-access.handler';

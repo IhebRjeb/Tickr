@@ -1,14 +1,14 @@
 # [FRONTEND] Define Frontend Plan & Design Direction
 
-| Field | Value |
-| --- | --- |
-| **Type** | Epic / Discovery |
-| **Priority** | High |
-| **Status** | 🚧 Phases 1–7 & 11 delivered · 8–10 spec-complete, Figma artefacts pending |
-| **Sprint** | Frontend Sprint 0 (Foundation) |
-| **Depends on** | Backend REST API (`/api`) — complete |
-| **Blocks** | All frontend implementation tickets |
-| **Owner** | Frontend Lead / Product Design |
+| Field          | Value                                                                      |
+| -------------- | -------------------------------------------------------------------------- |
+| **Type**       | Epic / Discovery                                                           |
+| **Priority**   | High                                                                       |
+| **Status**     | 🚧 Phases 1–7 & 11 delivered · 8–10 spec-complete, Figma artefacts pending |
+| **Sprint**     | Frontend Sprint 0 (Foundation)                                             |
+| **Depends on** | Backend REST API (`/api`) — complete                                       |
+| **Blocks**     | All frontend implementation tickets                                        |
+| **Owner**      | Frontend Lead / Product Design                                             |
 
 ---
 
@@ -24,30 +24,30 @@ It is built as a **Modular Hexagonal (Ports & Adapters) Monolith** on **NestJS 1
 
 All six bounded contexts are implemented, tested, and documented (Swagger + Postman):
 
-| Bounded Context | Status | Public Surface (REST) |
-| --- | --- | --- |
-| Authentication & Users | ✅ Complete | `/auth/*`, `/users/*` |
-| Events | ✅ Complete | `/events/*` |
-| Tickets | ✅ Complete | `/tickets/*` |
-| Payments & Orders | ✅ Complete | `/orders/*`, `/payments/webhooks/*` |
-| Analytics | ✅ Complete | `/analytics/*` |
-| Notifications | ✅ Complete | `/notifications/*` |
+| Bounded Context        | Status      | Public Surface (REST)               |
+| ---------------------- | ----------- | ----------------------------------- |
+| Authentication & Users | ✅ Complete | `/auth/*`, `/users/*`               |
+| Events                 | ✅ Complete | `/events/*`                         |
+| Tickets                | ✅ Complete | `/tickets/*`                        |
+| Payments & Orders      | ✅ Complete | `/orders/*`, `/payments/webhooks/*` |
+| Analytics              | ✅ Complete | `/analytics/*`                      |
+| Notifications          | ✅ Complete | `/notifications/*`                  |
 
 Functional specs, personas, workflows, business rules, user stories, and acceptance criteria for the MVP are finalized (see `docs/01-fonctionnel` and `docs/02-technique`).
 
 **This Epic is a design & architecture discovery phase — not implementation.** Its purpose is to remove all UX/UI ambiguity and produce a single source of truth before the first React component is written, so that the frontend maps 1:1 to the existing backend contracts.
 
-> **Correction vs. prior drafts:** Payment gateways are **Stripe, Konnect, and Paymee** (multi-provider, `PaymentProviderFactory`) — *not* Clictopay/Edinar. Commission is **configurable (default 6%)**, added **on top** of the ticket price. All monetary values are in **TND**.
+> **Correction vs. prior drafts:** Payment gateways are **Stripe, Konnect, and Paymee** (multi-provider, `PaymentProviderFactory`) — _not_ Clictopay/Edinar. Commission is **configurable (default 6%)**, added **on top** of the ticket price. All monetary values are in **TND**.
 
 > ### 🔴 Wiring gaps that block the purchase path (verified 2026-08-20)
 >
 > These are not documentation errors — they are unwired code paths. Each was read in the source.
 >
-> | # | Gap | Evidence | Consequence |
-> |---|---|---|---|
-> | 1 | **Ticket reservation is a stub** | `TICKET_RESERVATION_PORT` → `TicketReservationAdapter`, whose `reserveTickets()` logs `[STUB]` and returns mock IDs (`payments.module.ts`) | `POST /orders` creates no ticket rows and moves no `soldQuantity`. **No purchase completes end to end** |
-> | 2 — Resolved | **The shared Events/Tickets/Notifications guard now verifies JWTs** | It extends Passport `AuthGuard('jwt')`, preserves `@Public()`, and rejects missing/invalid tokens | Protected Events lifecycle is E2E-validated; Tickets and Notifications use the same guard |
-> | 3 | **Registration never mints a verification token** | the token issuance is commented out in `auth.controller.ts`; `POST /auth/login` returns `403` for an unverified e-mail, and no resend endpoint exists | A new account can never log in |
+> | #            | Gap                                                                 | Evidence                                                                                                                                              | Consequence                                                                                             |
+> | ------------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+> | 1            | **Ticket reservation is a stub**                                    | `TICKET_RESERVATION_PORT` → `TicketReservationAdapter`, whose `reserveTickets()` logs `[STUB]` and returns mock IDs (`payments.module.ts`)            | `POST /orders` creates no ticket rows and moves no `soldQuantity`. **No purchase completes end to end** |
+> | 2 — Resolved | **The shared Events/Tickets/Notifications guard now verifies JWTs** | It extends Passport `AuthGuard('jwt')`, preserves `@Public()`, and rejects missing/invalid tokens                                                     | Protected Events lifecycle is E2E-validated; Tickets and Notifications use the same guard               |
+> | 3            | **Registration never mints a verification token**                   | the token issuance is commented out in `auth.controller.ts`; `POST /auth/login` returns `403` for an unverified e-mail, and no resend endpoint exists | A new account can never log in                                                                          |
 >
 > **The frontend design is unaffected and remains correct** — build to the documented contracts.
 > But the Epic's Definition of Done cannot be honestly closed until the remaining stubs are wired, and no
@@ -59,13 +59,13 @@ Functional specs, personas, workflows, business rules, user stories, and accepta
 > Epic body that do **not** match the implemented backend. The deliverables follow the code; this
 > Epic text is corrected here so the two agree.
 >
-> | Epic originally said | Verified reality | Source |
-> |---|---|---|
-> | Base path `/v1` | **`/api`** — `setGlobalPrefix(apiPrefix)`, `API_PREFIX \|\| 'api'` | `main.ts:17`, `config/app.config.ts:6` |
-> | Commission fetched via `GET /config/public` | **Implemented.** Without `eventId` it returns the global default; with `?eventId=<uuid>` it resolves the event override or falls back to global | `public-config.controller.ts`; `event-query.adapter.ts` |
-> | Pagination `{ data, meta: { … } }` | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }` | `event-list.dto.ts`, `order.dto.ts` |
-> | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, code, message, details, timestamp, path, method }`; only *validation* errors carry `errors[]` | `http-exception.filter.ts`, `validation-exception.filter.ts` |
-> | Sold out → `409`, rate limited → `429` | Sold out returns **`400`** (`INSUFFICIENT_AVAILABILITY`); order-creation rate limiting returns **`403`** (`RATE_LIMITED` → `ForbiddenException`) | `tickets.controller.ts`, `orders.controller.ts:90` |
+> | Epic originally said                                          | Verified reality                                                                                                                                 | Source                                                       |
+> | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+> | Base path `/v1`                                               | **`/api`** — `setGlobalPrefix(apiPrefix)`, `API_PREFIX \|\| 'api'`                                                                               | `main.ts:17`, `config/app.config.ts:6`                       |
+> | Commission fetched via `GET /config/public`                   | **Implemented.** Without `eventId` it returns the global default; with `?eventId=<uuid>` it resolves the event override or falls back to global  | `public-config.controller.ts`; `event-query.adapter.ts`      |
+> | Pagination `{ data, meta: { … } }`                            | **Flat**: `{ data, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`                                                               | `event-list.dto.ts`, `order.dto.ts`                          |
+> | Error envelope `{ statusCode, message, errors[], timestamp }` | `{ statusCode, code, message, details, timestamp, path, method }`; only _validation_ errors carry `errors[]`                                     | `http-exception.filter.ts`, `validation-exception.filter.ts` |
+> | Sold out → `409`, rate limited → `429`                        | Sold out returns **`400`** (`INSUFFICIENT_AVAILABILITY`); order-creation rate limiting returns **`403`** (`RATE_LIMITED` → `ForbiddenException`) | `tickets.controller.ts`, `orders.controller.ts:90`           |
 >
 > One remaining item is a **backend work item**, not a documentation fix: adding a machine-readable
 > `code` to the error envelope so the UI can tell "sold out" from
@@ -80,21 +80,21 @@ These are already fixed by the repository and backend and are **inputs**, not op
 
 ### 2.1 Frontend stack (from `frontend/package.json`)
 
-| Concern | Decision |
-| --- | --- |
-| Framework | **Next.js 16** (App Router), **React 19** |
-| Language | **TypeScript 5** (strict) |
-| Styling | **TailwindCSS 4** |
-| Server state / data fetching | **@tanstack/react-query 5** |
-| HTTP client | **axios** (single configured instance) |
-| Client/UI state | **zustand** |
-| Forms + validation | **react-hook-form** + **zod** (+ `@hookform/resolvers`) |
-| Headless UI primitives | **@headlessui/react**, **@heroicons/react** |
-| Dates | **date-fns** |
-| Class utilities | **clsx**, **tailwind-merge** |
-| Unit/component tests | **Vitest** + **@testing-library/react** |
-| E2E tests | **Playwright** |
-| Dev server port | **3001** |
+| Concern                      | Decision                                                |
+| ---------------------------- | ------------------------------------------------------- |
+| Framework                    | **Next.js 16** (App Router), **React 19**               |
+| Language                     | **TypeScript 5** (strict)                               |
+| Styling                      | **TailwindCSS 4**                                       |
+| Server state / data fetching | **@tanstack/react-query 5**                             |
+| HTTP client                  | **axios** (single configured instance)                  |
+| Client/UI state              | **zustand**                                             |
+| Forms + validation           | **react-hook-form** + **zod** (+ `@hookform/resolvers`) |
+| Headless UI primitives       | **@headlessui/react**, **@heroicons/react**             |
+| Dates                        | **date-fns**                                            |
+| Class utilities              | **clsx**, **tailwind-merge**                            |
+| Unit/component tests         | **Vitest** + **@testing-library/react**                 |
+| E2E tests                    | **Playwright**                                          |
+| Dev server port              | **3001**                                                |
 
 > Design deliverables must be expressed in terms of this stack (e.g. design tokens as Tailwind theme values, components using Headless UI primitives). No new UI framework is to be introduced in this Epic.
 
@@ -123,6 +123,7 @@ Produce **every design and frontend-architecture artifact** required to begin Re
 Each phase below lists **concrete, Tickr-specific** outputs. Generic placeholders are intentionally avoided — every screen, route, and component maps to a real backend capability.
 
 ### Phase 1 — Product Design Brief
+
 **Output:** `docs/08-frontend/02-product-design-brief.md`
 
 - Product positioning for the Tunisian market (mobile-first, local payment methods, TND pricing).
@@ -136,24 +137,26 @@ Each phase below lists **concrete, Tickr-specific** outputs. Generic placeholder
 ---
 
 ### Phase 2 — Information Architecture
+
 **Output:** `docs/08-frontend/03-information-architecture.md` + sitemap diagram.
 
 Route tree grouped by access level and mapped to Next.js App Router segments and required role:
 
-| Zone | Example routes | Role required |
-| --- | --- | --- |
-| Public | `/`, `/events`, `/events/[id]`, `/categories/[category]`, `/search`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | none |
-| Participant | `/checkout/[orderId]`, `/tickets`, `/tickets/[id]`, `/orders`, `/orders/[id]`, `/notifications`, `/profile`, `/settings` | any authenticated role |
-| Organizer | `/organizer`, `/organizer/events`, `/organizer/events/new`, `/organizer/events/[id]/edit`, `/organizer/events/[id]/ticket-types`, `/organizer/events/[id]/participants`, `/organizer/events/[id]/analytics`, `/organizer/scanner` | `ORGANIZER` (`ADMIN` read-only) |
-| Admin | `/admin`, `/admin/moderation`, `/admin/users`, `/admin/reports` | `ADMIN` |
+| Zone                 | Example routes                                                                                                                                                                                              | Role required                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Public               | `/`, `/events`, `/events/[id]`, `/categories/[category]`, `/search`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`                                                          | none                                                                 |
+| Authenticated shared | `/checkout/[orderId]`, `/tickets`, `/tickets/[id]`, `/orders`, `/orders/[id]`, `/notifications`, `/profile`, `/settings`, `/check-in`                                                                       | any authenticated role; `/check-in` is resource-authorized per event |
+| Organizer            | `/organizer`, `/organizer/events`, `/organizer/events/new`, `/organizer/events/[id]/edit`, `/organizer/events/[id]/ticket-types`, `/organizer/events/[id]/participants`, `/organizer/events/[id]/analytics` | `ORGANIZER` (`ADMIN` read-only)                                      |
+| Admin                | `/admin`, `/admin/moderation`, `/admin/users`, `/admin/reports`                                                                                                                                             | `ADMIN`                                                              |
 
-The delivered tree fixes **33 canonical routes** plus the `/legal/*` static group: Public 11 · Participant 9 · Organizer 9 · Admin 4 (see [Phase 2 §1.6](03-information-architecture.md#16-route-count-reconciliation)).
+The delivered tree fixes **33 canonical routes** plus the `/legal/*` static group: Public 11 · authenticated shared 10 · Organizer 8 · Admin 4 (see [Phase 2 §1.6](03-information-architecture.md#16-route-count-reconciliation)).
 
 **Acceptance:** Every route maps to at least one backend endpoint (or is explicitly static); navigation hierarchy validated per role.
 
 ---
 
 ### Phase 3 — User Journey Mapping
+
 **Output:** `docs/08-frontend/04-user-journeys.md`
 
 Document each journey as steps → screen → API call → result state. Journeys must reflect the **real reservation → order → payment** flow:
@@ -164,9 +167,10 @@ Document each journey as steps → screen → API call → result state. Journey
   3. **Create the order → `POST /orders` — this reserves the tickets internally** (`create-order.handler.ts`, step 5), returning the 15-minute `expiresAt`.
      ⚠️ **Corrected:** earlier drafts inserted a separate `POST /tickets/reserve` here. The participant flow must **not** call it — a second hold would be orphaned against the same stock.
   4. Pay → `POST /orders/:id/pay` (Konnect / Paymee → `paymentUrl`; Stripe → `clientSecret`)
-  5. Confirmation is **webhook-driven** → poll `GET /orders/:id` until a terminal status. `POST /tickets/confirm` is called by the Payments module, **not** by the UI. Prolonged `PENDING`/`PROCESSING` is shown as *payment verification in progress* — never as a failure, never with a retry.
+  5. Confirmation is **webhook-driven** → poll `GET /orders/:id` until a terminal status. `POST /tickets/confirm` is called by the Payments module, **not** by the UI. Prolonged `PENDING`/`PROCESSING` is shown as _payment verification in progress_ — never as a failure, never with a retry.
   6. View ticket + QR → `GET /tickets/:id`, download `GET /tickets/:id/pdf`
-- **Organizer:** create event → `POST /events`; add ticket types → `POST /events/:id/ticket-types`; upload cover → `POST /events/:id/image`; publish → `POST /events/:id/publish`; analytics → `GET /analytics/dashboard`, `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline`; check-in → `POST /tickets/check-in`, `GET /tickets/event/:eventId/stats`.
+- **Organizer:** create event → `POST /events`; add ticket types → `POST /events/:id/ticket-types`; upload cover → `POST /events/:id/image`; publish → `POST /events/:id/publish`; assign staff → `POST|GET|DELETE /events/:id/check-in-staff[/:assignmentId]`; analytics → `GET /analytics/dashboard`, `GET /analytics/events/:id`, `GET /analytics/events/:id/sales-timeline`.
+- **Door check-in:** owner, current admin, or assigned staff discovers events through `GET /events/check-in-access/me`, then scans with `POST /tickets/check-in` and reads `GET /tickets/event/:eventId/stats`.
 - **Edge cases (each must have a defined screen/state):** reservation hold expired, order/payment failed (`POST /orders/:id/pay` failure), session/token expired (`401` → refresh flow), sold out (**currently `400`**, not `409`), ticket limit exceeded (`TICKET_LIMIT_EXCEEDED`, 10 tickets/event/user → `400`), refund (`POST /orders/:id/refund`), event cancelled, empty organizer dashboard, empty search results, no notifications, rate limited (`429`; order creation instead returns **`403`** `RATE_LIMITED` at 5 orders/h/user).
 
 **Acceptance:** Every journey names the exact endpoints and the UI state for both success and each failure branch.
@@ -174,6 +178,7 @@ Document each journey as steps → screen → API call → result state. Journey
 ---
 
 ### Phase 4 — Screen Inventory
+
 **Output:** `docs/08-frontend/05-screen-inventory.md` (table).
 
 One row per screen with: route, role, primary endpoints, and whether it is SSR/CSR. Minimum set derived from IA (Phase 2). No "example" screens — the list must be exhaustive for the MVP.
@@ -183,9 +188,11 @@ One row per screen with: route, role, primary endpoints, and whether it is SSR/C
 ---
 
 ### Phase 5 — Feature Inventory
+
 **Output:** `docs/08-frontend/06-feature-inventory.md`
 
 For every screen from Phase 4, specify:
+
 - Features & interactions
 - Components consumed (links to Phase 6)
 - Required API calls (method + path)
@@ -197,6 +204,7 @@ For every screen from Phase 4, specify:
 ---
 
 ### Phase 6 — Component Inventory
+
 **Output:** `docs/08-frontend/07-component-inventory.md`
 
 Catalog reusable components with props contract and states. Tickr-specific components (not generic examples): `EventCard`, `EventFilters`, `TicketTypeSelector`, `ReservationTimer` (countdown for the hold), `PaymentMethodPicker` (Stripe/Konnect/Paymee), `OrderSummary` (commission line — default 6 %, added on top of the subtotal), `TicketCard`, `QrTicket`, `CheckInScanner`, `AnalyticsChart`, `SalesTimelineChart`, `RevenueStat`, plus base primitives (Button, Input, Select, Modal, Drawer, Toast, Skeleton, Badge, Pagination, DatePicker, SearchBar) built on Headless UI.
@@ -206,6 +214,7 @@ Catalog reusable components with props contract and states. Tickr-specific compo
 ---
 
 ### Phase 7 — Design System
+
 **Output:** `docs/08-frontend/08-design-system.md` + Tailwind theme tokens.
 
 - Foundations expressed as **Tailwind 4 theme tokens**: color palette, typography scale, spacing, radius, shadows/elevation, grid, iconography (Heroicons), motion durations/easings.
@@ -217,6 +226,7 @@ Catalog reusable components with props contract and states. Tickr-specific compo
 ---
 
 ### Phase 8 — Low-Fidelity Wireframes
+
 **Output:** Figma (or equivalent) B/W wireframes, linked in `docs/08-frontend/09-wireframes.md`.
 
 - Mobile-first, black & white only, no visual styling.
@@ -227,6 +237,7 @@ Catalog reusable components with props contract and states. Tickr-specific compo
 ---
 
 ### Phase 9 — High-Fidelity Designs
+
 **Output:** Figma hi-fi mockups + link doc in `docs/08-frontend/10-hifi-and-responsive.md`.
 
 - Apply the Phase 7 design system to all Phase 8 wireframes.
@@ -237,6 +248,7 @@ Catalog reusable components with props contract and states. Tickr-specific compo
 ---
 
 ### Phase 10 — Responsive & Prototype
+
 **Output:** Responsive specs (mobile / tablet / desktop) + one interactive prototype of the core participant purchase flow, tracked in `docs/08-frontend/10-hifi-and-responsive.md`.
 
 **Acceptance:** Prototype demonstrates the end-to-end purchase journey including at least one failure branch (sold out or payment failed).
@@ -244,6 +256,7 @@ Catalog reusable components with props contract and states. Tickr-specific compo
 ---
 
 ### Phase 11 — Frontend Architecture
+
 **Output:** `docs/08-frontend/11-frontend-architecture.md`
 
 Define the implementation blueprint, **mirroring backend bounded contexts** as feature modules:
@@ -268,6 +281,7 @@ frontend/src/
 ```
 
 Must specify:
+
 - **API layer:** single axios instance, base URL `/api`, request/response interceptors, **automatic token refresh on `401`**, error normalization to the backend error envelope.
 - **Data layer:** react-query key conventions, cache/stale times (`GET /config/public` global config cached ~1h; event-specific config refreshed when ticket selection opens), flat pagination handling.
 - **State management:** what lives in zustand (auth/session, reservation timer, UI) vs. react-query (server data).
@@ -287,9 +301,9 @@ Must specify:
 - [ ] Feature Inventory: every API path verified against backend Swagger/Postman
 - [ ] Component Inventory with props + states, each mapped to ≥1 screen
 - [ ] Design System established as Tailwind-consumable tokens (AA verified)
-- [ ] Low-fidelity wireframes for all screens — *spec complete (`09-wireframes.md`, 14 archetypes); Figma frames pending*
-- [ ] High-fidelity mockups for all screens (manual review passed) — *process + review gate specified (`10-hifi-and-responsive.md`); Figma pending*
-- [ ] Responsive specs + interactive prototype of the purchase flow — *responsive specs delivered (`10-hifi-and-responsive.md` §3–§4); prototype pending*
+- [ ] Low-fidelity wireframes for all screens — _spec complete (`09-wireframes.md`, 14 archetypes); Figma frames pending_
+- [ ] High-fidelity mockups for all screens (manual review passed) — _process + review gate specified (`10-hifi-and-responsive.md`); Figma pending_
+- [ ] Responsive specs + interactive prototype of the purchase flow — _responsive specs delivered (`10-hifi-and-responsive.md` §3–§4); prototype pending_
 - [ ] Frontend Architecture documented and mirrors backend modules
 - [ ] All deliverable docs committed under `docs/08-frontend/`
 - [ ] Ready for React implementation (downstream tickets can be created)

@@ -169,4 +169,53 @@ export class TicketTypeOrmRepository implements TicketRepositoryPort {
       },
     });
   }
+
+  async getCheckInStats(eventId: string): Promise<{
+    totalEligible: number;
+    checkedIn: number;
+    byTicketType: Array<{
+      ticketTypeId: string;
+      totalEligible: number;
+      checkedIn: number;
+    }>;
+  }> {
+    const rows = await this.repository
+      .createQueryBuilder('ticket')
+      .select('ticket.ticketTypeId', 'ticketTypeId')
+      .addSelect('COUNT(*)', 'totalEligible')
+      .addSelect(
+        `COUNT(*) FILTER (WHERE ticket.status = :checkedInStatus)`,
+        'checkedIn',
+      )
+      .where('ticket.eventId = :eventId', { eventId })
+      .andWhere('ticket.status IN (:...eligibleStatuses)')
+      .groupBy('ticket.ticketTypeId')
+      .setParameters({
+        eligibleStatuses: [TicketStatus.CONFIRMED, TicketStatus.CHECKED_IN],
+        checkedInStatus: TicketStatus.CHECKED_IN,
+      })
+      .getRawMany<{
+        ticketTypeId: string;
+        totalEligible: string;
+        checkedIn: string;
+      }>();
+
+    const byTicketType = rows.map((row) => ({
+      ticketTypeId: row.ticketTypeId,
+      totalEligible: Number(row.totalEligible),
+      checkedIn: Number(row.checkedIn),
+    }));
+
+    return {
+      totalEligible: byTicketType.reduce(
+        (total, item) => total + item.totalEligible,
+        0,
+      ),
+      checkedIn: byTicketType.reduce(
+        (total, item) => total + item.checkedIn,
+        0,
+      ),
+      byTicketType,
+    };
+  }
 }

@@ -5,10 +5,15 @@
 
 import type { CheckInRepositoryPort } from '@modules/tickets/application/ports/check-in.repository.port';
 import type {
+  EventCheckInAccessDecision,
+  EventCheckInAccessPort,
+} from '@modules/tickets/application/ports/event-check-in-access.port';
+import type {
   EventQueryPort,
   EventInfo,
   TicketTypeAvailability,
 } from '@modules/tickets/application/ports/event-query.port';
+import type { TicketCheckInPersistencePort } from '@modules/tickets/application/ports/ticket-check-in-persistence.port';
 import type { TicketRepositoryPort } from '@modules/tickets/application/ports/ticket.repository.port';
 import type { UserQueryPort, UserInfo } from '@modules/tickets/application/ports/user-query.port';
 import { CheckInEntity } from '@modules/tickets/domain/entities/check-in.entity';
@@ -118,6 +123,31 @@ export class InMemoryTicketRepository implements TicketRepositoryPort {
     return [...this.tickets.values()].filter(
       (t) => t.eventId === eventId && t.status === TicketStatus.CHECKED_IN,
     ).length;
+  }
+
+  async getCheckInStats(eventId: string): Promise<{
+    totalEligible: number;
+    checkedIn: number;
+    byTicketType: Array<{
+      ticketTypeId: string;
+      totalEligible: number;
+      checkedIn: number;
+    }>;
+  }> {
+    const eventTickets = [...this.tickets.values()].filter(
+      (ticket) =>
+        ticket.eventId === eventId &&
+        [TicketStatus.CONFIRMED, TicketStatus.CHECKED_IN].includes(
+          ticket.status,
+        ),
+    );
+    return {
+      totalEligible: eventTickets.length,
+      checkedIn: eventTickets.filter(
+        (ticket) => ticket.status === TicketStatus.CHECKED_IN,
+      ).length,
+      byTicketType: [],
+    };
   }
 
   // ============================================
@@ -232,6 +262,10 @@ export class InMemoryCheckInRepository implements CheckInRepositoryPort {
 // ============================================
 
 export class MockEventQueryAdapter implements EventQueryPort {
+  async getTicketTypesByIds(): Promise<[]> {
+    return [];
+  }
+
   private availabilityMap: Map<string, number> = new Map();
 
   constructor() {
@@ -311,6 +345,92 @@ export class MockEventQueryAdapter implements EventQueryPort {
     this.availabilityMap.set(TEST_TICKET_TYPE_IDS.standard, 100);
     this.availabilityMap.set(TEST_TICKET_TYPE_IDS.vip, 50);
     this.eventOverrides.clear();
+  }
+}
+
+// ============================================
+// Mock Event Check-In Access Adapter
+// ============================================
+
+export class MockEventCheckInAccessAdapter
+  implements EventCheckInAccessPort
+{
+  private assignedUsers = new Set<string>();
+
+  constructor(private readonly eventQuery: MockEventQueryAdapter) {}
+
+  async resolve(
+    eventId: string,
+    actorId: string,
+  ): Promise<EventCheckInAccessDecision | null> {
+    const event = await this.eventQuery.getEventById(eventId);
+    if (!event) {
+      return null;
+    }
+
+    const isOwner = actorId === TEST_USER_IDS.organizer;
+    const isAdmin = actorId === TEST_USER_IDS.admin;
+    const isAssigned = this.assignedUsers.has(`${eventId}:${actorId}`);
+    if (!isOwner && !isAdmin && !isAssigned) {
+      return null;
+    }
+
+    return {
+      eventId,
+      startDate: event.startDate,
+      endDate: event.endDate,
+      authorizationSource: isAdmin
+        ? 'ADMIN'
+        : isOwner
+          ? 'OWNER'
+          : 'ASSIGNMENT',
+      assignmentId: isAssigned
+        ? '40000000-0000-4000-8000-000000000001'
+        : null,
+      canCheckIn: event.status === 'PUBLISHED',
+      canViewBasicStats: isOwner || isAdmin || event.status === 'PUBLISHED',
+    };
+  }
+
+  assign(eventId: string, userId: string): void {
+    this.assignedUsers.add(`${eventId}:${userId}`);
+  }
+
+  clear(): void {
+    this.assignedUsers.clear();
+  }
+}
+
+// ============================================
+// In-Memory Atomic Check-In Persistence
+// ============================================
+
+export class InMemoryTicketCheckInPersistence
+  implements TicketCheckInPersistencePort
+{
+  private committedTicketIds = new Set<string>();
+
+  constructor(
+    private readonly ticketRepository: InMemoryTicketRepository,
+    private readonly checkInRepository: InMemoryCheckInRepository,
+  ) {}
+
+  async commitSuccessfulCheckIn(
+    ticket: TicketEntity,
+    checkIn: CheckInEntity,
+  ): Promise<boolean> {
+    if (this.committedTicketIds.has(ticket.id)) {
+      return false;
+    }
+
+    this.committedTicketIds.add(ticket.id);
+    await this.ticketRepository.save(ticket);
+    await this.checkInRepository.save(checkIn);
+    return true;
+  }
+
+  clear(): void {
+    this.committedTicketIds.clear();
   }
 }
 

@@ -66,6 +66,17 @@ export class CheckInOrmEntity {
   @Column({ name: 'failure_reason', type: 'text', nullable: true })
   failureReason!: string | null;
 
+  @Column({
+    name: 'authorization_source',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  authorizationSource!: string | null;
+
+  @Column({ name: 'assignment_id', type: 'uuid', nullable: true })
+  assignmentId!: string | null;
+
   // ============================================
   // Timestamps
   // ============================================

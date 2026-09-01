@@ -21,6 +21,8 @@ interface CreateCheckInProps {
   locationGate: string;
   isValid: boolean;
   failureReason?: string | null;
+  authorizationSource?: 'OWNER' | 'ADMIN' | 'ASSIGNMENT' | 'LEGACY';
+  assignmentId?: string | null;
 }
 
 /**
@@ -37,6 +39,8 @@ interface CheckInProps {
   timestamp: Date;
   isValid: boolean;
   failureReason: string | null;
+  authorizationSource?: 'OWNER' | 'ADMIN' | 'ASSIGNMENT' | 'LEGACY';
+  assignmentId?: string | null;
   createdAt: Date;
 }
 
@@ -58,6 +62,8 @@ export class CheckInEntity extends BaseEntity<CheckInEntity> {
   private _timestamp: Date;
   private _isValid: boolean;
   private _failureReason: string | null;
+  private readonly _authorizationSource: 'OWNER' | 'ADMIN' | 'ASSIGNMENT' | 'LEGACY';
+  private readonly _assignmentId: string | null;
 
   private constructor(props: CheckInProps) {
     super(props.id, props.createdAt);
@@ -69,6 +75,8 @@ export class CheckInEntity extends BaseEntity<CheckInEntity> {
     this._timestamp = props.timestamp;
     this._isValid = props.isValid;
     this._failureReason = props.failureReason;
+    this._authorizationSource = props.authorizationSource ?? 'LEGACY';
+    this._assignmentId = props.assignmentId ?? null;
   }
 
   // ============================================
@@ -105,6 +113,14 @@ export class CheckInEntity extends BaseEntity<CheckInEntity> {
 
   get failureReason(): string | null {
     return this._failureReason;
+  }
+
+  get authorizationSource(): 'OWNER' | 'ADMIN' | 'ASSIGNMENT' | 'LEGACY' {
+    return this._authorizationSource;
+  }
+
+  get assignmentId(): string | null {
+    return this._assignmentId;
   }
 
   // ============================================
@@ -150,6 +166,20 @@ export class CheckInEntity extends BaseEntity<CheckInEntity> {
       return Result.fail(InvalidCheckInException.missingLocationGate());
     }
 
+    if (props.assignmentId && !isUUID(props.assignmentId)) {
+      return Result.fail(InvalidCheckInException.invalidUUID('assignmentId'));
+    }
+
+    const authorizationSource = props.authorizationSource ?? 'LEGACY';
+    if (
+      authorizationSource === 'ASSIGNMENT' &&
+      !props.assignmentId
+    ) {
+      return Result.fail(
+        InvalidCheckInException.missingAssignmentForAuthorization(),
+      );
+    }
+
     const id = props.id || generateUUID();
 
     const checkIn = new CheckInEntity({
@@ -162,6 +192,8 @@ export class CheckInEntity extends BaseEntity<CheckInEntity> {
       timestamp: new Date(),
       isValid: props.isValid,
       failureReason: props.failureReason?.trim() || null,
+      authorizationSource,
+      assignmentId: props.assignmentId ?? null,
       createdAt: new Date(),
     });
 
@@ -191,6 +223,8 @@ export class CheckInEntity extends BaseEntity<CheckInEntity> {
       timestamp: this._timestamp,
       isValid: this._isValid,
       failureReason: this._failureReason,
+      authorizationSource: this._authorizationSource,
+      assignmentId: this._assignmentId,
       createdAt: this._createdAt,
     });
   }
