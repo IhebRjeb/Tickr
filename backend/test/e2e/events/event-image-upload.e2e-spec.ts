@@ -17,6 +17,7 @@ import {
   RemoveTicketTypeHandler,
   CompleteEventHandler,
   UploadEventImageHandler,
+  SetEventCommissionOverrideHandler,
   GetEventByIdHandler,
   GetPublishedEventsHandler,
   GetEventsByCategoryHandler,
@@ -34,6 +35,7 @@ import { IsEventOwnerGuard } from '../../../src/modules/events/infrastructure/gu
 import { EventMapper } from '../../../src/modules/events/infrastructure/persistence/mappers/event.mapper';
 import { TicketTypeMapper } from '../../../src/modules/events/infrastructure/persistence/mappers/ticket-type.mapper';
 import { S3StorageService } from '../../../src/modules/events/infrastructure/services/s3-storage.service';
+import { JwtStrategy } from '../../../src/modules/users/infrastructure/strategies/jwt.strategy';
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/shared/application/interfaces/domain-event-publisher.port';
 import { JwtAuthGuard } from '../../../src/shared/infrastructure/common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../src/shared/infrastructure/common/guards/roles.guard';
@@ -112,6 +114,7 @@ describe('E2E: Event Image Upload', () => {
         { provide: DOMAIN_EVENT_PUBLISHER, useValue: domainEventPublisher },
         { provide: S3StorageService, useValue: mockS3Service },
         JwtAuthGuard,
+        JwtStrategy,
         RolesGuard,
         IsEventOwnerGuard,
         CreateEventHandler,
@@ -123,6 +126,7 @@ describe('E2E: Event Image Upload', () => {
         RemoveTicketTypeHandler,
         CompleteEventHandler,
         UploadEventImageHandler,
+        SetEventCommissionOverrideHandler,
         GetEventByIdHandler,
         GetPublishedEventsHandler,
         GetEventsByCategoryHandler,
@@ -141,7 +145,7 @@ describe('E2E: Event Image Upload', () => {
         try {
           const payload = jwtSvc.verify(authHeader.substring(7));
           req.user = {
-            userId: payload.sub,
+            userId: payload.userId ?? payload.sub,
             email: payload.email,
             role: payload.role,
           };

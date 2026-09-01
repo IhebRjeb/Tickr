@@ -45,6 +45,7 @@ export class EventMapper {
     entity.category = domain.category;
     entity.status = domain.status;
     entity.imageUrl = domain.imageUrl;
+    entity.commissionRateOverride = domain.commissionRateOverride;
 
     // Location fields (embedded value object)
     entity.locationAddress = domain.location.address ?? null;
@@ -119,6 +120,10 @@ export class EventMapper {
       location,
       dateRange,
       imageUrl: raw.imageUrl,
+      commissionRateOverride:
+        raw.commissionRateOverride === null
+          ? null
+          : Number(raw.commissionRateOverride),
       status: raw.status as EventStatus,
       ticketTypes,
       totalCapacity: raw.totalCapacity,
@@ -178,6 +183,10 @@ export class EventMapper {
       location,
       dateRange,
       imageUrl: raw.imageUrl,
+      commissionRateOverride:
+        raw.commissionRateOverride === null
+          ? null
+          : Number(raw.commissionRateOverride),
       status: raw.status as EventStatus,
       ticketTypes: [],
       totalCapacity: raw.totalCapacity,
@@ -207,6 +216,7 @@ export class EventMapper {
     target.category = source.category;
     target.status = source.status;
     target.imageUrl = source.imageUrl;
+    target.commissionRateOverride = source.commissionRateOverride;
 
     // Location fields
     target.locationAddress = source.location.address ?? null;

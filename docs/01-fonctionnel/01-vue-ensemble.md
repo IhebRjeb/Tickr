@@ -14,7 +14,7 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 
 **Pour Organisateurs:**
 - Création événement en < 5 minutes
-- Paiement en ligne sécurisé (Clictopay/Edinar)
+- Paiement en ligne sécurisé (Konnect/Paymee/Stripe)
 - Gestion billets temps réel
 - Statistiques ventes instantanées
 
@@ -139,9 +139,9 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
    • Prix total (prix + commission 6%)
    ↓
 6. Choisit mode paiement:
-   • Carte bancaire locale (Clictopay/Edinar)
+   • Paiement local Tunisie (Konnect - gateway principal)
+   • Paiement local Tunisie (Paymee - fallback)
    • Carte internationale (Stripe)
-   • Paiement sur place (événements test)
    ↓
 7. Effectue paiement
    ↓
@@ -249,7 +249,7 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 4. Système:
    • Annule billet (status: REMBOURSÉ)
    • Crée transaction remboursement
-   • Appelle gateway paiement (Stripe/Clictopay)
+   • Appelle gateway paiement (Konnect/Paymee/Stripe)
    ↓
 5. Gateway traite remboursement:
    • Montant recrédité carte participant
@@ -316,9 +316,8 @@ Plateforme web de billetterie en ligne permettant aux organisateurs d'événemen
 
 ### Paiements
 
-- **Carte bancaire locale:** Clictopay, Edinar (priorité)
+- **Paiement local Tunisie:** Konnect (gateway principal), Paymee (fallback)
 - **Carte internationale:** Stripe (secondaire)
-- **Paiement sur place:** Pour événements test/pilotes
 
 ### Communication
 

@@ -23,17 +23,17 @@ Documenter la gestion de la configuration applicative, notamment les paramètres
 
 **Variable:** `PLATFORM_COMMISSION_RATE`
 
-**Description:** Pourcentage de commission prélevé par la plateforme sur chaque billet vendu.
+**Description:** taux global hérité par tout événement sans surcharge Admin.
 
 **Spécifications:**
 ```yaml
 Nom: PLATFORM_COMMISSION_RATE
-Type: Decimal (0.00 - 1.00)
+Type: Decimal (0.00 - 0.20)
 Valeur par défaut: 0.06 (6%)
 Valeur minimale: 0.00 (0% - pour promotions/lancement)
 Valeur maximale: 0.20 (20% - limite raisonnable)
-Format: Décimal avec 2 décimales
-Exemple: 0.06 = 6%, 0.00 = 0%, 0.15 = 15%
+Format: Décimal, jusqu'à 4 décimales
+Exemple: 0.06 = 6%, 0.03 = 3%, 0.025 = 2.5%
 ```
 
 **Cas d'usage:**
@@ -59,17 +59,13 @@ VIP/Partenaires Premium:
   Justification: Tarif négocié pour gros volumes
 ```
 
-**Variables associées:**
-```bash
-# Validation des limites
-PLATFORM_COMMISSION_MIN=0.00
-PLATFORM_COMMISSION_MAX=0.20
+### 2. Surcharge de commission par événement
 
-# Pour futures évolutions (multi-tier pricing)
-PLATFORM_COMMISSION_VIP_RATE=0.04
-PLATFORM_COMMISSION_PREMIUM_RATE=0.05
-PLATFORM_COMMISSION_STANDARD_RATE=0.06
-```
+- Stockage: `events.events.commission_rate_override`, nullable, contrainte 0–20 %.
+- Écriture: `PATCH /events/:id/commission`, rôle `ADMIN` uniquement.
+- Héritage: `null` utilise le taux global courant.
+- Effet: nouvelles commandes uniquement; les commandes existantes gardent leurs montants.
+- Audit: `EventCommissionOverrideUpdatedEvent` enregistre ancien/nouveau taux et Admin.
 
 ---
 
@@ -79,15 +75,15 @@ PLATFORM_COMMISSION_STANDARD_RATE=0.06
 
 ```
 ┌─────────────────────────────────────────┐
-│  1. Variables Environnement (.env)      │  ← PRIORITÉ MAXIMALE
+│  1. Override événement en base          │  ← PRIORITÉ MAXIMALE
 └────────────────┬────────────────────────┘
-                 │ Override
+                 │ null → héritage
 ┌────────────────▼────────────────────────┐
-│  2. Fichier Configuration (config.yml)  │
+│  2. PLATFORM_COMMISSION_RATE (.env)     │
 └────────────────┬────────────────────────┘
-                 │ Override
+                 │ absent
 ┌────────────────▼────────────────────────┐
-│  3. Valeurs par Défaut (code)           │  ← PRIORITÉ MINIMALE
+│  3. Défaut code 0.06                    │  ← PRIORITÉ MINIMALE
 └─────────────────────────────────────────┘
 ```
 
@@ -179,17 +175,12 @@ export class BusinessConfigService {
     return ticketPrice + commission;
   }
 
-  /**
-   * Calcule le montant reçu par l'organisateur (prix - commission)
-   * @param {number} ticketPrice - Prix du billet
-   * @returns {number} Montant net organisateur
-   */
-  calculateOrganizerAmount(ticketPrice: number): number {
-    const commission = this.calculateCommission(ticketPrice);
-    return ticketPrice - commission;
-  }
 }
 ```
+
+Ce service calcule uniquement le prix participant. La commission est ajoutée au prix facial; elle
+n'est pas déduite une seconde fois de l'organisateur. Le montant réellement reversé exige un ledger
+de règlement, les ajustements/remboursements et le rapprochement gateway, absents du backend V1.
 
 ### Utilisation dans les Use Cases
 
@@ -233,33 +224,38 @@ export class CalculateOrderTotalHandler {
 
 ## 🌐 Exposition Frontend
 
-### API Endpoint Configuration Publique
+### API de configuration publique
 
-```typescript
-// backend/src/shared/infrastructure/http/controllers/config.controller.ts
+```http
+GET /api/config/public
+GET /api/config/public?eventId=<uuid>
+```
 
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { BusinessConfigService } from '@shared/domain/services/business-config.service';
-
-@ApiTags('Configuration')
-@Controller('config')
-export class ConfigController {
-  constructor(private readonly businessConfig: BusinessConfigService) {}
-
-  @Get('public')
-  @ApiOperation({ summary: 'Get public platform configuration' })
-  getPublicConfig() {
-    return {
-      commission: {
-        rate: this.businessConfig.getPlatformCommissionRate(),
-        displayPercentage: (this.businessConfig.getPlatformCommissionRate() * 100).toFixed(1) + '%',
-      },
-      version: process.env.APP_VERSION || '1.0.0',
-    };
-  }
+```json
+{
+  "globalCommissionRate": 0.06,
+  "commissionRateOverride": 0.03,
+  "effectiveCommissionRate": 0.03,
+  "currency": "TND",
+  "reservationTtlMinutes": 15
 }
 ```
+
+Sans `eventId`, `commissionRateOverride` vaut `null` et le taux effectif est global. Un événement
+inconnu retourne `404`.
+
+### API Admin
+
+```http
+PATCH /api/events/:id/commission
+Authorization: Bearer <admin-jwt>
+Content-Type: application/json
+
+{ "commissionRate": 0.03 }
+```
+
+Envoyer `{ "commissionRate": null }` rétablit l'héritage global. L'API refuse les taux hors 0–20 %
+et vérifie le rôle Admin au contrôleur et dans le use case.
 
 ### Frontend - Récupération Dynamique
 
@@ -267,15 +263,16 @@ export class ConfigController {
 // frontend/src/lib/api/config.ts
 
 export interface PlatformConfig {
-  commission: {
-    rate: number;
-    displayPercentage: string;
-  };
-  version: string;
+  globalCommissionRate: number;
+  commissionRateOverride: number | null;
+  effectiveCommissionRate: number;
+  currency: 'TND';
+  reservationTtlMinutes: number;
 }
 
-export async function getPlatformConfig(): Promise<PlatformConfig> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config/public`);
+export async function getPlatformConfig(eventId?: string): Promise<PlatformConfig> {
+  const query = eventId ? `?eventId=${encodeURIComponent(eventId)}` : '';
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config/public${query}`);
   return response.json();
 }
 ```
@@ -286,20 +283,21 @@ export async function getPlatformConfig(): Promise<PlatformConfig> {
 import { useQuery } from '@tanstack/react-query';
 import { getPlatformConfig } from '@/lib/api/config';
 
-export function PriceBreakdown({ ticketPrice }: { ticketPrice: number }) {
+export function PriceBreakdown({ ticketPrice, eventId }: { ticketPrice: number; eventId: string }) {
   const { data: config } = useQuery({
-    queryKey: ['platform-config'],
-    queryFn: getPlatformConfig,
-    staleTime: 1000 * 60 * 60, // Cache 1 heure
+    queryKey: ['platform-config', eventId],
+    queryFn: () => getPlatformConfig(eventId),
+    staleTime: 0,
   });
 
-  const commissionAmount = ticketPrice * (config?.commission.rate || 0.06);
+  if (!config) return null;
+  const commissionAmount = ticketPrice * config.effectiveCommissionRate;
   const totalPrice = ticketPrice + commissionAmount;
 
   return (
     <div className="price-breakdown">
       <div>Prix billet: {ticketPrice.toFixed(2)} TND</div>
-      <div>Commission ({config?.commission.displayPercentage || '6%'}): {commissionAmount.toFixed(2)} TND</div>
+      <div>Frais de service ({config.effectiveCommissionRate * 100}%): {commissionAmount.toFixed(3)} TND</div>
       <div className="font-bold">Total: {totalPrice.toFixed(2)} TND</div>
     </div>
   );

@@ -25,6 +25,8 @@ describe('AnalyticsEventListener', () => {
       eventId: '550e8400-e29b-41d4-a716-446655440002',
       userId: '550e8400-e29b-41d4-a716-446655440003',
       totalAmount: 150,
+      subtotalAmount: 140,
+      platformFeeAmount: 10,
       currency: 'TND',
       ticketCount: 3,
     };
@@ -39,7 +41,13 @@ describe('AnalyticsEventListener', () => {
       expect(revenueCall.metricType).toBe(MetricType.REVENUE);
       expect(revenueCall.entityId).toBe(payload.eventId);
       expect(revenueCall.entityType).toBe(EntityType.EVENT);
-      expect(revenueCall.value).toBe(150);
+      expect(revenueCall.value).toBe(140);
+      expect(revenueCall.dimensions).toEqual({
+        orderId: payload.orderId,
+        userId: payload.userId,
+        totalAmount: 150,
+        platformFeeAmount: 10,
+      });
 
       // Second call: TICKET_SOLD
       const ticketCall = mockRecordMetricHandler.execute.mock.calls[1][0];

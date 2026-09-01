@@ -62,9 +62,11 @@ describe('AddTicketTypeHandler', () => {
       city: 'Tunis',
       country: 'Tunisia',
     });
+    const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 2 * 24 * 60 * 60 * 1000);
     const dateRange = EventDateRangeVO.create(
-      new Date('2026-07-15T18:00:00Z'),
-      new Date('2026-07-17T23:00:00Z'),
+      startDate,
+      endDate,
       true,
     );
 
@@ -223,7 +225,7 @@ describe('AddTicketTypeHandler', () => {
     it('should fail with sales end after event start', async () => {
       const event = createDraftEvent();
       const command = createValidCommand({
-        salesEndDate: new Date('2026-07-16T00:00:00Z'),
+        salesEndDate: new Date(event.dateRange.startDate.getTime() + 24 * 60 * 60 * 1000),
       });
 
       mockEventRepository.findById.mockResolvedValue(event);

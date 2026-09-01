@@ -25,6 +25,10 @@ describe('JwtAuthGuard', () => {
     guard = new JwtAuthGuard(reflector);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should allow access for public routes', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(true);
     
@@ -33,20 +37,21 @@ describe('JwtAuthGuard', () => {
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should allow access for authenticated user', () => {
+  it('should delegate authentication for protected routes', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
-    
+
     const context = mockExecutionContext({ id: '123', email: 'test@test.com' });
-    
+    const parentCanActivate = jest.spyOn(
+      Object.getPrototypeOf(Object.getPrototypeOf(guard)),
+      'canActivate',
+    ).mockReturnValue(true);
+
     expect(guard.canActivate(context)).toBe(true);
+    expect(parentCanActivate).toHaveBeenCalledWith(context);
   });
 
   it('should throw UnauthorizedException for unauthenticated user on protected route', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
-    
-    const context = mockExecutionContext(null);
-    
-    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+    expect(() => guard.handleRequest(null, null, null)).toThrow(UnauthorizedException);
   });
 
   it('should check IS_PUBLIC_KEY metadata', () => {

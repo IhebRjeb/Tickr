@@ -333,7 +333,7 @@ TicketCheckedInEvent       → Analytics temps réel
 
 ```yaml
 ✅ Création commandes
-✅ Intégration gateways (Clictopay, Stripe)
+✅ Intégration gateways (Konnect, Paymee, Stripe)
 ✅ Gestion webhooks paiement
 ✅ Remboursements
 ```

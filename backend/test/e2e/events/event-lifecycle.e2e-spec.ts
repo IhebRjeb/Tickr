@@ -17,6 +17,7 @@ import {
   RemoveTicketTypeHandler,
   CompleteEventHandler,
   UploadEventImageHandler,
+  SetEventCommissionOverrideHandler,
   GetEventByIdHandler,
   GetPublishedEventsHandler,
   GetEventsByCategoryHandler,
@@ -34,6 +35,7 @@ import { IsEventOwnerGuard } from '../../../src/modules/events/infrastructure/gu
 import { EventMapper } from '../../../src/modules/events/infrastructure/persistence/mappers/event.mapper';
 import { TicketTypeMapper } from '../../../src/modules/events/infrastructure/persistence/mappers/ticket-type.mapper';
 import { S3StorageService } from '../../../src/modules/events/infrastructure/services/s3-storage.service';
+import { JwtStrategy } from '../../../src/modules/users/infrastructure/strategies/jwt.strategy';
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/shared/application/interfaces/domain-event-publisher.port';
 import { JwtAuthGuard } from '../../../src/shared/infrastructure/common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../src/shared/infrastructure/common/guards/roles.guard';
@@ -124,6 +126,7 @@ describe('E2E: Event Lifecycle', () => {
 
         // Guards
         JwtAuthGuard,
+        JwtStrategy,
         RolesGuard,
         IsEventOwnerGuard,
 
@@ -137,6 +140,7 @@ describe('E2E: Event Lifecycle', () => {
         RemoveTicketTypeHandler,
         CompleteEventHandler,
         UploadEventImageHandler,
+        SetEventCommissionOverrideHandler,
 
         // Query Handlers
         GetEventByIdHandler,
@@ -158,7 +162,7 @@ describe('E2E: Event Lifecycle', () => {
         try {
           const payload = jwtSvc.verify(authHeader.substring(7));
           req.user = {
-            userId: payload.sub,
+            userId: payload.userId ?? payload.sub,
             email: payload.email,
             role: payload.role,
           };
@@ -400,6 +404,58 @@ describe('E2E: Event Lifecycle', () => {
 
       expect(response.body.id).toBe(TEST_EVENT_IDS.draftOwn);
       expect(response.body.status).toBe('DRAFT');
+    });
+  });
+
+  describe('PATCH /api/events/:id/commission — Configure Commission', () => {
+    beforeEach(async () => {
+      await eventRepository.seedEvent({
+        id: TEST_EVENT_IDS.published,
+        title: 'Commission Event',
+        status: EventStatus.PUBLISHED,
+        organizerId,
+        category: EventCategory.CONCERT,
+        startDate: futureDate(48),
+        endDate: futureDate(52),
+        location: { city: 'Tunis', country: 'Tunisia' },
+        ticketTypes: [],
+      });
+    });
+
+    it('should let an admin set an event commission override', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/api/events/${TEST_EVENT_IDS.published}/commission`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ commissionRate: 0.03 })
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toMatchObject({
+        commissionRateOverride: 0.03,
+        effectiveCommissionRate: 0.03,
+        usesGlobalRate: false,
+      });
+    });
+
+    it('should reject an organizer changing commission', async () => {
+      await request(app.getHttpServer())
+        .patch(`/api/events/${TEST_EVENT_IDS.published}/commission`)
+        .set('Authorization', `Bearer ${organizerToken}`)
+        .send({ commissionRate: 0.03 })
+        .expect(HttpStatus.FORBIDDEN);
+    });
+
+    it('should let an admin restore global commission inheritance', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/api/events/${TEST_EVENT_IDS.published}/commission`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ commissionRate: null })
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toMatchObject({
+        commissionRateOverride: null,
+        effectiveCommissionRate: 0.06,
+        usesGlobalRate: true,
+      });
     });
   });
 

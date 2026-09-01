@@ -31,6 +31,7 @@ import { PaymentProviderFactoryAdapter } from './adapters/payment-provider-facto
 import { StripeAdapter } from './adapters/stripe.adapter';
 import { TicketReservationAdapter } from './adapters/ticket-reservation.adapter';
 import { OrdersController } from './controllers/orders.controller';
+import { PublicConfigController } from './controllers/public-config.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
 import { OrderCreatedInfraHandler } from './event-handlers/order-created-infra.listener';
 import { OrderFailedInfraHandler } from './event-handlers/order-failed-infra.listener';
@@ -173,7 +174,7 @@ const webhookEventStoreProvider: Provider = {
     EventsModule,
     TicketsModule,
   ],
-  controllers: [OrdersController, WebhooksController],
+  controllers: [OrdersController, PublicConfigController, WebhooksController],
   providers: [
     // Mappers
     OrderMapper,

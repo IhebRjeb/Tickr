@@ -54,6 +54,12 @@ export class InvalidEventException extends DomainException {
     return new InvalidEventException(`Invalid event category: ${category}`);
   }
 
+  static invalidCommissionRate(rate: number): InvalidEventException {
+    return new InvalidEventException(
+      `Event commission rate must be between 0 and 0.2, received ${rate}`,
+    );
+  }
+
   /**
    * Factory method for cannot modify after published
    */

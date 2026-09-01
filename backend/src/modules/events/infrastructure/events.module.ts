@@ -12,6 +12,7 @@ import { CompleteEventHandler } from '../application/commands/complete-event/com
 import { CreateEventHandler } from '../application/commands/create-event/create-event.handler';
 import { PublishEventHandler } from '../application/commands/publish-event/publish-event.handler';
 import { RemoveTicketTypeHandler } from '../application/commands/remove-ticket-type/remove-ticket-type.handler';
+import { SetEventCommissionOverrideHandler } from '../application/commands/set-event-commission-override/set-event-commission-override.handler';
 import { UpdateEventHandler } from '../application/commands/update-event/update-event.handler';
 import { UpdateTicketTypeHandler } from '../application/commands/update-ticket-type/update-ticket-type.handler';
 import { UploadEventImageHandler } from '../application/commands/upload-event-image/upload-event-image.handler';
@@ -51,6 +52,7 @@ const CommandHandlers = [
   AddTicketTypeHandler,
   UpdateTicketTypeHandler,
   RemoveTicketTypeHandler,
+  SetEventCommissionOverrideHandler,
   UploadEventImageHandler,
   CompleteEventHandler,
 ];

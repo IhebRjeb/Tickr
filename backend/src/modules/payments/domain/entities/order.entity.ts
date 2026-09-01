@@ -454,6 +454,8 @@ export class OrderEntity extends BaseEntity<OrderEntity> {
         this._totalAmount,
         this._currency,
         this._platformFeeAmount,
+        this._subtotalAmount,
+        this._items.reduce((count, item) => count + item.quantity, 0),
       ),
     );
 

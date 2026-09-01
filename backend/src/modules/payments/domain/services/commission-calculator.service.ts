@@ -18,7 +18,7 @@ export interface CommissionBreakdown {
  * No framework dependencies — testable in isolation.
  *
  * Business Rules:
- * - Commission is a percentage of subtotal (default 4%)
+ * - Commission is a percentage of subtotal (default configured as 6%)
  * - Minimum commission applies (e.g. 0.5 TND)
  * - Commission is non-refundable
  * - Rounded to currency precision (TND: 3 decimals, EUR/USD: 2)

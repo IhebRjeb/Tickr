@@ -43,6 +43,7 @@ export class PaymentEventQueryAdapter implements PaymentEventQueryPort {
       status: event.status,
       startDate: event.dateRange.startDate,
       organizerId: event.organizerId,
+      commissionRateOverride: event.commissionRateOverride,
     };
   }
 

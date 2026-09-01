@@ -17,6 +17,7 @@ export * from './value-objects/sales-period.vo';
 export * from './events/event-created.event';
 export * from './events/event-published.event';
 export * from './events/event-updated.event';
+export * from './events/event-commission-override-updated.event';
 export * from './events/event-cancelled.event';
 export * from './events/ticket-type-added.event';
 export * from './events/ticket-type-updated.event';
